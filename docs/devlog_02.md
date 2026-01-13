@@ -5,6 +5,7 @@
 2. [Runtime Switching](#22---runtime-switching)
     1. [Splitting the `testlib`](#221---splitting-the-testlib)
     2. [Expanding `Main`](#222---expanding-main)
+3. [Transitioning to Real Graphic Library Interfacing](#23-transitioning-to-real-graphic-library-interfacing)
 
 <br>
 <br>
@@ -264,4 +265,40 @@ Now, let's break down some of the new stuff added to `Main`:
 
 > Question to self: **Will the switching be visually translated in some kind of screen flashing or hiccup?** If so, I'll need to research how to avoid it, if possible at all.
 
-    
+<br>
+<br>
+<br>
+
+## 2.3. Transitioning to Real Graphic Library Interfacing
+First of all, the transition calls for a revision of the **High-Level Architecture** scheme. The current structure in mind is:
+```
+nibbler/
+├── libs/
+│   ├── SDL2/           # Cloned/built SDL2
+│   ├── SFML/           # Cloned/built SFML
+│   └── ncurses/        # System ncurses (usually pre-installed)
+├── srcs/
+│   ├── graphics/
+│   │   ├── SDLGraphic.cpp      # SDL2 implementation
+│   │   ├── SFMLGraphic.cpp     # SFML implementation
+│   │   └── NCursesGraphic.cpp  # ncurses implementation
+│   └── main.cpp
+├── nibbler_sdl.so      # Built from SDLGraphic.cpp
+├── nibbler_sfml.so     # Built from SFMLGraphic.cpp
+└── nibbler_ncurses.so  # Built from NCursesGraphic.cpp
+```
+Let's also restate the choice of libraries, their types and paradigms:
+| Library | Type | Paradigm |
+| ------- | ---- | -------- |
+| Ncurses | Terminal | Text-based |
+| SDL2    | Low-Level | Event-driven |
+| Raylib  | Game-engine | Frame-based loop  | 
+
+And let's plan our steps:
+1. Makefile modifications to handle library fetching in a fresh compilation **(Remember: no graphic library resources should be commited!!)**
+2. Write boilerplate Cpp files for each binding `.so` file, related to each chosen graphic library
+    1. Implement the set up interfaces
+    2. Write a basic rendering entry point
+3. Adjust `Main` as needed to finish the transition
+
+### 2.3.1 - Makefile modifications

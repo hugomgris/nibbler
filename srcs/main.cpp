@@ -82,9 +82,9 @@ class GraphicLibrary {
 
 int main() {
 	const char *libs[] = {
-		"./testlib1.so",
-		"./testlib2.so",
-		"./testlib3.so"
+		"./nibbler_ncurses.so",
+		"./nibbler_raylib.so",
+		"./nibbler_sdl.so"
 	};
 	int currentLib = 0;
 
