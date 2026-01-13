@@ -1,22 +1,28 @@
-# NIBLER - PREPRODUCTION
-
-# PART 1: Understanding the project
+# Nibbler - Devlog - 1
 
 ## Table of Contents
+1. [Understanding the Project](#11---understanding-the-project)
+    1. [Project Overview](#project-overview)
+    2. [Testlib example](#testlib-example)
+    3. [Core concepts](#core-concepts)
+    4. [Target architecture](#target-architecture)
+    5. [Day-one](#day-one)
+    6. [Common traps](#common-traps)
+2. [Unswering Some Questions](#12---answering-some-questions)
+    1. [What are C ABI (Application Binary Interface) boundaries?](#1--what-are-c-abi-application-binary-interface-boundaries)
+    2. [What does "sharing STL containers across boundaries" mean](#2--what-does-sharing-stl-containers-across-boundaries-mean)
+    3. [The meanings of `SDL`, `SFML`, `Ncurses`](#3--the-meanings-of-sdl-sfml-ncurses)
+    4. [Build System Understanding (Makefile & Dependencies)](#4--build-system-understanding-makefile--dependencies)
+3. [Day One Implemenations](#13---day-one-implementations)
 
-1. [What is really being asked](#project-overview)
+<br>
+<br>
+<br>
 
-2. [Testlib example](#testlib-example)
+# 1.1 - Understanding the Project
+Starting a new project always feels a little bit daunting, specially when the main aim is to learn new tools and make a reasonably quick implementation of them in order to put them inside your backpack with some confidence. That's why this time, right before embarking on a journey to the land of Dynamic Libraries and Runtime Switching, I'm going to thoroughly log each step along the way.
 
-3. [Core concepts](#core-concepts)
-
-4. [Target architecture](#target-architecture)
-
-5. [Day-one](#day-one)
-
-6. [Common traps](#common-traps)
-
----
+Think of this document as a *what-I-am-trying-to-do* log more than a *what-has-been-done* account, although I guess it will become the latter after the project is, well, done.
 
 ## Project overview
 At its core, Nibble is **not** a graphics project and **not** a Snake project (although we will make it be those too, *evil laugh). **This is a pugin architecture project**. It aims to prove that the team can:
@@ -338,11 +344,11 @@ Trying to prevent every possible pitfall in an evaluation would be insane, but h
 - Forgetting cannonical form
 - One library having "extra features" main knows about.
 
----
----
+<br>
+<br>
+<br>
 
-
-# PART 2: Answering some questions
+# 1.2 - Answering some questions
 Before building more concrete stuff (i.e., tackling that Day One list), here are some questions that I personally feel the need to answer. 
 
 ## 1- What are C ABI (Application Binary Interface) boundaries?
@@ -498,8 +504,11 @@ libncurses.so:
 > **The main executable must `NOT` link against graphic libs**
 If `ldd nibbler` shows SDL, SFMl, Raylib, etc → **`TURBOFAIL`**. Only the `.so` files should link them.
 
+<br>
+<br>
+<br>
 
-# PART 3: Day One Implementations
+# 1.3 - Day One Implementations
 With the foundational understanding of what Nibbler asks and some of the main questions risen by the subject answered, Day One implementations will start with:
 1. Building the skelleton of the repository
 2. Defining the starting points of the initial interfaces
