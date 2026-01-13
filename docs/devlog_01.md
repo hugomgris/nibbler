@@ -59,7 +59,7 @@ The code snippets below cover these considerations by establishing this core equ
 
 
 ### main.cpp
-```C++
+```cpp
 #include "plugin.h"
 #include <dlfcn.h>
 #include <iostream>
@@ -117,7 +117,7 @@ int main() {
 ```
 
 ### plugin.cpp
-```C++
+```cpp
 #include "plugin.h"
 #include <string>
 
@@ -151,7 +151,7 @@ extern "C" void destroy_plugin(IPlugin* p) {
 ```
 
 ### plugin.h
-```C++
+```cpp
 #pragma once
 #include <cstddef>
 
@@ -223,7 +223,7 @@ The main program must not know:
 - Which library is Ncurses
 
 They  must all **implement the same interface**. This means that if there's a need for something like the snippet below, the prooject is already an embarassing failure:
-```C++
+```cpp
 if (lib == SDL) do_x();
 ```
 
@@ -257,7 +257,7 @@ A clean model should be based on **Two main logic sides with `pure virtual C++ i
 ```
 
 Inside this structure, some **suggested minimal interfaces are**:
-```C++
+```cpp
 enum class Input {
     None,
     Left,
@@ -277,7 +277,7 @@ public:
 };
 ```
 And **exported functions**:
-```C++
+```cpp
 extern "C" {
     IGraphic* create_graphic();
     void destroy_graphic(IGraphic*);
@@ -353,7 +353,7 @@ Before building more concrete stuff (i.e., tackling that Day One list), here are
 
 ## 1- What are C ABI (Application Binary Interface) boundaries?
 A **C ABI boundary** is the point where **binary compatibility matters**, *not source compatibility*. When one uses the following snippet, one is no longer "linking C++ code", but **calling raw symbols** by name at runtime:
-```C++
+```cpp
 dlopen + dlsym
 ```
 The **C ABI** only ABI that can be reliably depended on across:
@@ -370,7 +370,7 @@ C++ breaks here because it has all these features that are **not standarized at 
 - STL implementations
 
 An example:
-```C++
+```cpp
 IPlugin *create_plugin();
 ```
 The *actual* symbol name might be:
@@ -381,7 +381,7 @@ or something else, depending on compiler, platform and flags. So `dlsym("create_
 
 #### What `extern "C"` does
 An extern "C" call such as:
-```C++
+```cpp
 extern "C" IPlugin* create_plugin();
 ```
 means:
@@ -406,7 +406,7 @@ This is why, as told by the project's subject, **entry points must be C, interna
 ## 2- What does "sharing STL containers across boundaries" mean
 Firstly, **what is the meaning of "sharing"** (beyond caring, that is)?
 If **either** of these happens, STL sharing is happening across boundaries:
-```C++
+```cpp
 // BAD
 virtual void render(std::vector<Point> const &snake) = 0;
 
@@ -431,11 +431,11 @@ Even if *it works in a given machine*, it can:
 
 #### Safe alternative
 Instead of writing something like:
-```C++
+```cpp
 std::vector<Segment>
 ```
 Write:
-```C++
+```cpp
 struct Segment {
 	int x;
 	int y;
@@ -550,7 +550,7 @@ Three main interfaces are built with the initial testing in mind: `GameState`, `
 - `Input` just homes the Input `enum` that will be the intermediary between each library's hooks/events/methods.
 
 `GameState.hpp`
-```C++
+```cpp
 #pragma once
 #include <cstddef>
 
@@ -578,7 +578,7 @@ struct GameState {
 ```
 
 `IGraphic.hpp`
-```C++
+```cpp
 #pragma once
 #include "GameState.hpp"
 #include "Input.hpp"
@@ -599,7 +599,7 @@ extern "C" {
 ```
 
 `Input.hpp`
-```C++
+```cpp
 enum class Input {
 	None,
 	Left,
@@ -633,7 +633,7 @@ And, functionally speaking, should:
 
 In part 1 of this document, an example `testlib` was proposed as a theoretical/educational starting point, but pragmatism calls for a way more simplified approach that **inherits from `IGraphic`**, loses unneeded features (`IHostCallbacks`, bidirectional communicatin, STL usage and arithmetic examples).
 
-```C++
+```cpp
 #include "../../incs/IGraphic.hpp"
 #include <iostream>
 
@@ -667,7 +667,7 @@ extern "C" void destroyGraphic(IGraphic *g) {
 
 ### Building the `dlopen` pipeline (i.e., Building a Test Main)
 With the basic dummy `TestLib` in place, a basic `Main` can be written to test both the management of the `.so` file as well as the implementation itself of the dummy library. The basic initial main is:
-```C++
+```cpp
 #include "incs/IGraphic.hpp"
 #include "GameState.hpp"
 #include <dlfcn.h> // for dynamic linking
@@ -746,7 +746,7 @@ int main() {
         - Also, `using` is used instead of `typedef` because its clearer, better with templates and more **modern C++**
 
 - Summing up::
-```C++
+```cpp
 using CreateFn = IGraphic *(*)();
 CreateFn create = (CreateFn)dlsym(handle, "createGraphic");
 ```

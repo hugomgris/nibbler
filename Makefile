@@ -10,7 +10,9 @@ RED         = \033[0;91m
 # -=-=-=-=-    NAME -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
 
 NAME			:= nibbler
-LIB_NAME		:= testlib.so
+LIB1_NAME		:= testlib1.so
+LIB2_NAME		:= testlib2.so
+LIB3_NAME		:= testlib3.so
 
 # -=-=-=-=-    FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
@@ -21,14 +23,21 @@ LIB_SRC			=	testlib.cpp
 SRCDIR			=	srcs
 SRCS			=	$(addprefix $(SRCDIR)/, $(SRC))
 
-LIBDIR			=	libs/testlib
-LIB_SRCS		=	$(addprefix $(LIBDIR)/, $(LIB_SRC))
+LIB1_DIR		:= libs/testlib
+LIB2_DIR		:= libs/testlib
+LIB3_DIR		:= libs/testlib
+
+LIB1_SRC		:= testlib1.cpp
+LIB2_SRC		:= testlib2.cpp
+LIB3_SRC		:= testlib3.cpp
 
 OBJDIR			=	.obj
 OBJS			=	$(addprefix $(OBJDIR)/, $(SRC:.cpp=.o))
 
 LIB_OBJDIR		=	.obj/libs
-LIB_OBJS		=	$(addprefix $(LIB_OBJDIR)/, $(LIB_SRC:.cpp=.o))
+LIB1_OBJS		:= $(addprefix $(LIB_OBJDIR)/, $(LIB1_SRC:.cpp=.o))
+LIB2_OBJS		:= $(addprefix $(LIB_OBJDIR)/, $(LIB2_SRC:.cpp=.o))
+LIB3_OBJS		:= $(addprefix $(LIB_OBJDIR)/, $(LIB3_SRC:.cpp=.o))
 
 DEPDIR			=	.dep
 DEPS			=	$(addprefix $(DEPDIR)/, $(SRC:.cpp=.d))
@@ -49,7 +58,7 @@ LDFLAGS			=	-ldl
 
 # -=-=-=-=-    TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-all: directories $(LIB_NAME) $(NAME)
+all: directories $(LIB1_NAME) $(LIB2_NAME) $(LIB3_NAME) $(NAME)
 
 directories:
 	@mkdir -p $(OBJDIR)
@@ -59,7 +68,13 @@ directories:
 
 -include $(DEPS) $(LIB_DEPS)
 
-$(LIB_NAME): $(LIB_OBJS)
+$(LIB1_NAME): $(LIB1_OBJS)
+	$(CC) -shared -o $@ $^
+
+$(LIB2_NAME): $(LIB2_OBJS)
+	$(CC) -shared -o $@ $^
+
+$(LIB3_NAME): $(LIB3_OBJS)
 	$(CC) -shared -o $@ $^
 
 $(NAME): $(OBJS) $(LIB_NAME)
@@ -71,17 +86,24 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp Makefile
 	@mkdir -p $(DEPDIR)/$(*D)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@ -MF $(DEPDIR)/$*.d
 
-$(LIB_OBJDIR)/%.o: $(LIBDIR)/%.cpp Makefile
+$(LIB_OBJDIR)/$(LIB1_SRC:.cpp=.o): $(LIB1_DIR)/$(LIB1_SRC) Makefile
 	@mkdir -p $(@D)
-	@mkdir -p $(DEPDIR)/libs/$(*D)
-	$(CC) $(LIB_CFLAGS) $(DEPFLAGS) -c $< -o $@ -MF $(DEPDIR)/libs/$*.d
+	$(CC) $(LIB_CFLAGS) $(DEPFLAGS) -c $< -o $@
+
+$(LIB_OBJDIR)/$(LIB2_SRC:.cpp=.o): $(LIB2_DIR)/$(LIB2_SRC) Makefile
+	@mkdir -p $(@D)
+	$(CC) $(LIB_CFLAGS) $(DEPFLAGS) -c $< -o $@
+
+$(LIB_OBJDIR)/$(LIB3_SRC:.cpp=.o): $(LIB3_DIR)/$(LIB3_SRC) Makefile
+	@mkdir -p $(@D)
+	$(CC) $(LIB_CFLAGS) $(DEPFLAGS) -c $< -o $@
 
 clean:
 	@/bin/rm -fr $(OBJDIR) $(DEPDIR)
 	@echo "$(RED)Objects removed$(DEF_COLOR)"
 
 fclean: clean
-	@/bin/rm -f $(NAME) $(LIB_NAME)
+	@/bin/rm -f $(NAME) $(LIB1_NAME) $(LIB2_NAME) $(LIB3_NAME)
 	@echo "$(RED)Cleaned all binaries$(DEF_COLOR)"
 
 re: fclean all
