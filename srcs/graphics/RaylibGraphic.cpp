@@ -1,4 +1,5 @@
 #include "../../incs/IGraphic.hpp"
+#include "../../incs/colors.h"
 #include <raylib.h>
 #include <iostream>
 
@@ -18,7 +19,7 @@ public:
         InitWindow(screenWidth, screenHeight, "Nibbler - Raylib");
         SetTargetFPS(60);
         
-        std::cout << "[Raylib 🟡] Initialized: " << width << "x" << height << std::endl;
+        std::cout << BYEL << "[Raylib] Initialized: " << width << "x" << height << RESET << std::endl;
     }
     
     void render(const GameState& state) override {
@@ -66,7 +67,7 @@ public:
     
     ~RaylibGraphic() {
         CloseWindow();
-        std::cout << "[Raylib 🟡] Destroyed" << std::endl;
+        std::cout << BYEL << "[Raylib] Destroyed" << RESET << std::endl;
     }
 };
 

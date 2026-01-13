@@ -38,6 +38,9 @@ class GraphicLibrary {
 	public:
 		GraphicLibrary() : handle(nullptr), graphic(nullptr) {}
 
+		GraphicLibrary(const GraphicLibrary&) = delete;
+		GraphicLibrary& operator=(const GraphicLibrary&) = delete;
+
 		bool load(const char* libPath) {
 			handle = dlopen(libPath, RTLD_NOW);
 			if (!handle) {
@@ -80,7 +83,16 @@ class GraphicLibrary {
 		~GraphicLibrary () { unload(); }
 };
 
-int main() {
+int main(int argc, char **argv) {
+	if (argc != 3)
+	{
+		std::cout << BYEL << "Usage: ./nibler <width> <height>" << RESET << std::endl;
+		return 1;
+	}
+
+	int width = std::stoi(argv[1]);
+	int height = std::stoi(argv[2]);
+
 	const char *libs[] = {
 		"./nibbler_ncurses.so",
 		"./nibbler_raylib.so",
@@ -92,12 +104,12 @@ int main() {
 	if (!gfxLib.load(libs[currentLib]))
 		return 1;
 
-	gfxLib.get()->init(20, 20);
+	gfxLib.get()->init(width, height);
 
 	Vec2 segments[4] = {{10,10}, {9,10}, {8,10}, {7,10}};
     SnakeView snake { segments, 4 };
     FoodView food{ {5,5} };
-    GameState state { 20, 20, snake, food, false };
+    GameState state { width, height, snake, food, false };
 
 	std::cout << BCYN << "\nPress 1/2/3 to switch libraries, 'q' to quit\n" << RESET << std::endl;
 
@@ -124,7 +136,7 @@ int main() {
 					return 1;
 				}
 
-				gfxLib.get()->init(20, 20);
+				gfxLib.get()->init(width, height);
 				currentLib = newLib;
 			}
 		}
