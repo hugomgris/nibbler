@@ -4,6 +4,8 @@
 #include <dlfcn.h> // for dynamic linking
 #include <unistd.h> // for usleep - TESTING
 #include <termios.h> // for non-blocking input
+#include <chrono>  // for timing/FPS setup
+#include <thread>
 #include <fcntl.h>
 #include <iostream>
 
@@ -27,7 +29,6 @@ char	getNonBlockingChar() {
 	return ch;
 }
 
-// TODO: if this class survives beyond the initial testing phase, it should be in CANONICAL FORM
 class GraphicLibrary {
 	private:
 		void *handle;
@@ -37,6 +38,9 @@ class GraphicLibrary {
 	
 	public:
 		GraphicLibrary() : handle(nullptr), graphic(nullptr) {}
+
+		GraphicLibrary(const GraphicLibrary&) = delete;
+		GraphicLibrary& operator=(const GraphicLibrary&) = delete;
 
 		bool load(const char* libPath) {
 			handle = dlopen(libPath, RTLD_NOW);
@@ -80,11 +84,22 @@ class GraphicLibrary {
 		~GraphicLibrary () { unload(); }
 };
 
-int main() {
+int main(int argc, char **argv) {
+	if (argc != 3)
+	{
+		std::cout << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;
+		return 1;
+	}
+
+	int width = std::stoi(argv[1]);
+	int height = std::stoi(argv[2]);
+
+	std::cout << BCYN << "Press 1/2/3 to switch libraries, 'q' to quit" << RESET << std::endl;
+
 	const char *libs[] = {
-		"./testlib1.so",
-		"./testlib2.so",
-		"./testlib3.so"
+		"./nibbler_ncurses.so",
+		"./nibbler_raylib.so",
+		"./nibbler_sdl.so"
 	};
 	int currentLib = 0;
 
@@ -92,28 +107,45 @@ int main() {
 	if (!gfxLib.load(libs[currentLib]))
 		return 1;
 
-	gfxLib.get()->init(20, 20);
+	gfxLib.get()->init(width, height);
 
 	Vec2 segments[4] = {{10,10}, {9,10}, {8,10}, {7,10}};
-    SnakeView snake { segments, 4 };
-    FoodView food{ {5,5} };
-    GameState state { 20, 20, snake, food, false };
+	SnakeView snake { segments, 4 };
+	FoodView food{ {5,5} };
+	GameState state { width, height, snake, food, false };
 
-	std::cout << BCYN << "\nPress 1/2/3 to switch libraries, 'q' to quit\n" << RESET << std::endl;
+	// TIMING SETUP
+	const double TARGET_FPS = 10.0;					// Snake moves 10 times per second
+	const double FRAME_TIME = 1.0 / TARGET_FPS; 	// 0.1 seconds per update
+	
+	auto lastTime = std::chrono::high_resolution_clock::now();
+	double accumulator = 0.0;
+	bool running = true;
+	int frameCount = 0;
 
-	// TESTING GAME LOOP
-	for (int frame = 0; frame < 1000; ++frame) {
+	// MAIN GAME LOOP
+	while (running && frameCount < 1000) {
+		// Calculate delta time
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		double deltaTime = std::chrono::duration<double>(currentTime - lastTime).count();
+		lastTime = currentTime;
+		
+		accumulator += deltaTime;
+
+		// Handle input (always responsive, not tied to game updates)
 		char key = getNonBlockingChar();
 
 		if (key == 'q') {
 			std::cout << BYEL << "\nBYEBYEBYEBYE" << RESET << std::endl;
+			running = false;
 			break;
 		}
 
 		if (key >= '1' && key <= '3') {
 			int newLib = key - '1';
 			if (newLib != currentLib) {
-				std::cout << BMAG << "\nSwitching from lib " << (currentLib + 1) << " to lib " << (newLib + 1) << std::endl << std::endl;
+				std::cout << BMAG << "\nSwitching from lib " << (currentLib + 1) 
+						<< " to lib " << (newLib + 1) << std::endl << std::endl;
 
 				// 1- Destroy the current graphic
 				gfxLib.unload();
@@ -124,22 +156,28 @@ int main() {
 					return 1;
 				}
 
-				gfxLib.get()->init(20, 20);
+				gfxLib.get()->init(width, height);
 				currentLib = newLib;
 			}
 		}
 
-		// Re-render
+		// Fixed timestep game logic updates
+		while (accumulator >= FRAME_TIME) {
+			// Game logic simulation (runs at fixed rate)
+			if (snake.length < 10) {
+				snake.length++;
+				state.snake = snake;
+			}
+			
+			frameCount++;
+			accumulator -= FRAME_TIME;
+		}
+
+		// Render (can happen more frequently than updates)
 		gfxLib.get()->render(state);
 
-		// Game logic simulation
-		if (frame % 10 == 0 && snake.length < 10) {
-			snake.length++;
-			state.snake = snake;
-		}
-		
-		// 0.5 s delay
-		usleep(500000);
+		// Small sleep to prevent busy-waiting and reduce CPU usage
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
 	return 0;

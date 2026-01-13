@@ -9,6 +9,8 @@ Each library will map to this enum:
 
 enum class Input {
 	None,
+	Up,
+	Down,
 	Left,
 	Right,
 	Quit,

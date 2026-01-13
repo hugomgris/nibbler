@@ -6,7 +6,7 @@
 
 //Regular text
 #define BLK "\033[0;30m"
-#define RED "\033[0;31m"
+#define REDD "\033[0;31m"
 #define GRN "\033[0;32m"
 #define YEL "\033[0;33m"
 #define BLU "\033[0;34m"
