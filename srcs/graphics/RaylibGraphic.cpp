@@ -17,7 +17,7 @@ public:
         screenHeight = height * cellSize;
         
         InitWindow(screenWidth, screenHeight, "Nibbler - Raylib");
-        SetTargetFPS(60);
+        SetTargetFPS(0);
         
         std::cout << BYEL << "[Raylib] Initialized: " << width << "x" << height << RESET << std::endl;
     }
