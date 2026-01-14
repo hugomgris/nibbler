@@ -453,4 +453,85 @@ Awesome, but this sad, messy state of `Main` is making baby Jesus cry, so let's 
 <br>
 
 # 3.4 - A Main Is Refactored
-First of all, let's cl
+Let's break down the different steps inside the current loop into dedicated functions inside the `GameManager` class. First, let's create a `delta time` calculation function:
+```cpp
+using time = std::chrono::time_point<std::chrono::high_resolution_clock>;
+```
+```cpp
+void GameManager::calculateDeltaTime(time *lastTime, double* accumulator) {
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	double deltaTime = std::chrono::duration<double>(currentTime - *lastTime).count();
+	
+	*lastTime = currentTime;
+	*accumulator += deltaTime;
+}
+```
+Now, input related stuff is tricky to delegate, as things regarding lbrary switching need to be managed by `Main` (there's a handful of objects and data contained in main that are used for library switching, so delegation would be very difficult and, because of that, a mistake, I guess), but things regarding the handling of game-related input can be sent to `GameManager`. That's what we'll do:
+```cpp
+while (running) {
+		gameManager.calculateDeltaTime(&lastTime, &accumulator);
+		
+		Input input = gfxLib.get()->pollInput();
+		
+		if (input == Input::Quit) {
+			std::cout << BYEL << "\nBYEBYEBYEBYE" << RESET << std::endl;
+			running = false;
+			break;
+		}
+		
+		if (input >= Input::SwitchLib1 && input <= Input::SwitchLib3) {
+			int newLib = (int)input - 1;
+			
+			if (newLib != currentLib) {
+				std::cout << BMAG << "\nSwitching from lib " << (currentLib + 1) 
+						<< " to lib " << (newLib + 1) << RESET << std::endl;
+				
+				gfxLib.unload();
+				
+				if (!gfxLib.load(libs[newLib])) {
+					std::cerr << BRED << "Failed to load new library!" << RESET << std::endl;
+					return 1;
+				}
+				
+				gfxLib.get()->init(width, height);
+				currentLib = newLib;
+			}
+		}
+		
+		gameManager.handleGameInput(input);
+		
+		while (accumulator >= FRAME_TIME) {
+			gameManager.update();
+			frameCount++;
+			accumulator -= FRAME_TIME;
+		}
+		
+		gfxLib.get()->render(state);
+		
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+```
+```cpp
+bool GameManager::handleGameInput(Input input) {
+    switch (input) {
+        case Input::Up:
+            _snake->changeDirection(UP);
+            return true;
+        case Input::Down:
+            _snake->changeDirection(DOWN);
+            return true;
+        case Input::Left:
+            _snake->changeDirection(LEFT);
+            return true;
+        case Input::Right:
+            _snake->changeDirection(RIGHT);
+            return true;
+        default:
+            return false;
+    }
+}
+```
+
+And for now, I think that there's not that much room for refactoring (or there might be, but I don't see it). I realize that this hasn't precisely been the Great Refactoring of Our Ages, but the heart asks for clarity and order first, and any tiny amount of it is always welcomed.
+
+>And I think that will be all for today. I'm tired, been sleeping poorly and would rather go home and play some *Death Stranding 2* than implementing the food management. We'll leave it for tomorrow :3
