@@ -1,4 +1,6 @@
 #pragma once
+#include "Snake.hpp"
+#include "DataStructs.hpp"
 #include <cstddef>
 
 /*
@@ -9,11 +11,6 @@ It will evolve, but for now it respects these rules:
 	-Main owns memory
 	-Libraries only read
 */
-
-struct Vec2 {
-	int	x;
-	int	y;
-};
 
 struct SnakeView {
 	const Vec2	*segments;
@@ -27,7 +24,7 @@ struct FoodView {
 struct GameState {
 	int			width;
 	int			height;
-	SnakeView	snake;
+	Snake*		snake;
 	FoodView	food;
 	bool		gameOver;
 };

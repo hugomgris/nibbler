@@ -32,7 +32,6 @@ public:
 		init_pair(2, COLOR_RED, COLOR_BLACK);
 		init_pair(3, COLOR_BLACK, COLOR_BLACK);
 		
-		// Create a subwindow with specific dimensions
 		// +2 for borders (1 left, 1 right, 1 top, 1 bottom)
 		gameWindow = newwin(
 			height + 2,  // Height + borders
@@ -41,23 +40,19 @@ public:
 			1            // X position (col 1)
 		);
 		
-		keypad(gameWindow, TRUE);  // Enable arrow keys for subwindow
-		nodelay(gameWindow, TRUE); // Non-blocking for subwindow
+		keypad(gameWindow, TRUE);
+		nodelay(gameWindow, TRUE);
 
-		// Clear stdscr and make it invisible
 		bkgd(COLOR_PAIR(0));
 		clear();
 		refresh();
 	}
 	
 	void render(const GameState& state) override {
-		// Clear without changing background
 		werase(gameWindow);
 		
-		// Draw border first (uses default colors)
 		box(gameWindow, 0, 0);
 		
-		// Fill interior with black background spaces
 		wattron(gameWindow, COLOR_PAIR(3));
 		for (int y = 1; y <= height; ++y) {
 			for (int x = 1; x <= width; ++x) {
@@ -68,11 +63,11 @@ public:
 		
 		// Draw snake
 		wattron(gameWindow, COLOR_PAIR(1));
-		for (size_t i = 0; i < state.snake.length; ++i) {
+		for (int i = 0; i < state.snake->getLength(); ++i) {
 			mvwaddch(
 				gameWindow,
-				state.snake.segments[i].y + 1,
-				state.snake.segments[i].x + 1,
+				state.snake->getSegments()[i].y + 1,
+				state.snake->getSegments()[i].x + 1,
 				'O'
 			);
 		}
@@ -87,7 +82,9 @@ public:
 		wnoutrefresh(stdscr);
 		wnoutrefresh(gameWindow);
 		doupdate();
-	}	Input pollInput() override {
+	}
+	
+	Input pollInput() override {
 		int ch = getch();
 		switch (ch) {
 			case KEY_UP:    return Input::Up;
@@ -95,6 +92,7 @@ public:
 			case KEY_LEFT:  return Input::Left;
 			case KEY_RIGHT: return Input::Right;
 			case 'q':       return Input::Quit;
+			case 27 :		return Input::Quit; // ESC key
 			case '1':       return Input::SwitchLib1;
 			case '2':       return Input::SwitchLib2;
 			case '3':       return Input::SwitchLib3;
