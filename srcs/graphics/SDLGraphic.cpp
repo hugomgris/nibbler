@@ -41,10 +41,10 @@ public:
 		
 		// Draw snake (green)
 		SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-		for (size_t i = 0; i < state.snake.length; ++i) {
+		for (int i = 0; i < state.snake->getLength(); ++i) {
 			SDL_Rect rect = {
-				state.snake.segments[i].x * cellSize,
-				state.snake.segments[i].y * cellSize,
+				state.snake->getSegments()[i].x * cellSize,
+				state.snake->getSegments()[i].y * cellSize,
 				cellSize,
 				cellSize
 			};
@@ -72,14 +72,15 @@ public:
 			
 			if (event.type == SDL_KEYDOWN) {
 				switch (event.key.keysym.sym) {
-					case SDLK_UP:    return Input::Up;
-					case SDLK_DOWN:  return Input::Down;
-					case SDLK_LEFT:  return Input::Left;
-					case SDLK_RIGHT: return Input::Right;
-					case SDLK_q:     return Input::Quit;
-					case SDLK_1:     return Input::SwitchLib1;
-					case SDLK_2:     return Input::SwitchLib2;
-					case SDLK_3:     return Input::SwitchLib3;
+					case SDLK_UP:		return Input::Up;
+					case SDLK_DOWN:		return Input::Down;
+					case SDLK_LEFT:		return Input::Left;
+					case SDLK_RIGHT:	return Input::Right;
+					case SDLK_q:		return Input::Quit;
+					case SDLK_ESCAPE:	return Input::Quit;
+					case SDLK_1:		return Input::SwitchLib1;
+					case SDLK_2:		return Input::SwitchLib2;
+					case SDLK_3:		return Input::SwitchLib3;
 				}
 			}
 		}

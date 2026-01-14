@@ -24,7 +24,7 @@ INCDIR          := incs
 
 # -=-=-=-=-    MAIN PROGRAM FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-SRC             := main.cpp
+SRC             := main.cpp LibraryManager.cpp GameManager.cpp Snake.cpp
 SRCS            := $(addprefix $(SRCDIR)/, $(SRC))
 OBJS            := $(addprefix $(OBJDIR)/, $(SRC:.cpp=.o))
 DEPS            := $(addprefix $(DEPDIR)/, $(SRC:.cpp=.d))
@@ -65,6 +65,8 @@ SDL_OBJS         := .obj/libs/SDLGraphic.o
 RAYLIB_OBJS      := .obj/libs/RaylibGraphic.o
 NCURSES_OBJS     := .obj/libs/NCursesGraphic.o
 
+GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/GameManager.o
+
 # -=-=-=-=-    FLAGS FOR EACH LIBRARY -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 SDL_CFLAGS       := $(LIB_CFLAGS) -I$(SDL_DIR)/include
@@ -96,15 +98,15 @@ ifndef RAYLIB_EXISTS
 endif
 	@echo "$(GREEN)All libraries ready$(DEF_COLOR)"
 
-$(SDL_LIB_NAME): $(SDL_OBJS)
+$(SDL_LIB_NAME): $(SDL_OBJS) $(GAME_OBJS)
 	$(CC) -shared -o $@ $^ $(SDL_LDFLAGS)
 	@echo "$(GREEN)Built $(SDL_LIB_NAME)$(DEF_COLOR)"
 
-$(RAYLIB_LIB_NAME): $(RAYLIB_OBJS)
+$(RAYLIB_LIB_NAME): $(RAYLIB_OBJS) $(GAME_OBJS)
 	$(CC) -shared -o $@ $^ $(RAYLIB_LDFLAGS)
 	@echo "$(GREEN)Built $(RAYLIB_LIB_NAME)$(DEF_COLOR)"
 
-$(NCURSES_LIB_NAME): $(NCURSES_OBJS)
+$(NCURSES_LIB_NAME): $(NCURSES_OBJS) $(GAME_OBJS)
 	$(CC) -shared -o $@ $^ $(NCURSES_LDFLAGS)
 	@echo "$(GREEN)Built $(NCURSES_LIB_NAME)$(DEF_COLOR)"
 
@@ -129,7 +131,7 @@ $(NCURSES_LIB_NAME): $(NCURSES_OBJS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp Makefile
 	@mkdir -p $(@D)
 	@mkdir -p $(DEPDIR)/$(*D)
-	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@ -MF $(DEPDIR)/$*.d
+	$(CC) $(LIB_CFLAGS) $(DEPFLAGS) -c $< -o $@ -MF $(DEPDIR)/$*.d
 
 $(NAME): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(LDFLAGS)

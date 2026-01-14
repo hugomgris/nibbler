@@ -1,9 +1,0 @@
-Makefile:117: warning: overriding recipe for target '.obj/libs'
-Makefile:113: warning: ignoring old recipe for target '.obj/libs'
-Makefile:121: warning: overriding recipe for target '.obj/libs'
-Makefile:117: warning: ignoring old recipe for target '.obj/libs'
-[0;92mAll libraries ready[0;39m
-c++ -Wall -Wextra -Werror -std=c++20 -g -fPIC -Iincs -Ilibs/SDL2/include -MMD -MP -c srcs/graphics/SDLGraphic.cpp -o /SDLGraphic.o -MF .dep/libs/SDLGraphic.d
-error: unable to open output file '/SDLGraphic.o': 'Permission denied'
-1 error generated.
-make: *** [Makefile:113: /SDLGraphic.o] Error 1
