@@ -35,9 +35,9 @@ int main(int argc, char **argv) {
 
 	Snake snake(width, height);
 	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
-	GameState state { width, height, &snake, &food, false };  // TODO: Good Food management pending
+	GameState state { width, height, &snake, &food, false };
 
-	GameManager gameManager(&snake);
+	GameManager gameManager(&state);
 
 	const double TARGET_FPS = 10.0;					// Snake moves 10 times per second
 	const double FRAME_TIME = 1.0 / TARGET_FPS; 	// 0.1 seconds per update

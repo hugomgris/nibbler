@@ -83,4 +83,10 @@ void Snake::changeDirection(direction dir) {
 
 	_direction = dir;
 };
+
+void Snake::grow() {
+	// TODO: take into consideration the limit, or make the limit itself the endgame condition
+	_segments[_length] = Vec2{ _segments[_length - 1].x, _segments[_length - 1].y };
+	_length++;
+}
 	

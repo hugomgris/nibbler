@@ -16,5 +16,5 @@ class Food {
 
 		bool replace(Vec2 newPos);
 
-		Vec2 &getPosition();
+		Vec2 getPosition();
 };

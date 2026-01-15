@@ -30,4 +30,5 @@ class Snake {
 
 		void move();
 		void changeDirection(direction dir);
+		void grow();
 };

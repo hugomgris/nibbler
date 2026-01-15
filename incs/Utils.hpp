@@ -1,3 +1,4 @@
+#pragma once
 #include "../incs/DataStructs.hpp"
 #include <random>
 

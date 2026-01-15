@@ -34,7 +34,101 @@ Let's get into food stuff, plain old dots that make the snake grow. Before tackl
 - Colission detection and handling between head and food
 - Food spawning.
 
-For the basic build, we can just follow what I recall was the Nokia 3310 *snake* flow: `every time the snake eats, a new food dot appears`. 
+For the basic build, we can just follow what I recall was the Nokia 3310 *snake* flow: `every time the snake eats, a new food dot appears`.
+
+### New Food Class
+I'm moving from the struct based `FoodView` I had up until this moment into a new `Food` class. It's not like a basic, 3310-like *snake* needs it's food to do a lot of things, just to know the position of the food bit and a method to reposition it, but it's a good idea to take everything into a class for a couple of reasons: 
+1. I can now just make an instance of food and have the `GameState` point to it, which means the basic game will work with a single food object that will be repositioned every time it gets eaten
+2. Plain scalability: if down the line I come up with things that the Food element needs (or some mechanics that can be attached to it), the class approach makes it easier.
+
+```cpp
+#pragma once
+#include "DataStructs.hpp"
+
+class Food {
+	private:
+		Vec2	_position;
+		int		_hLimit;
+		int		_vLimit;
+
+	public:
+		Food() = delete;
+		Food(Vec2 position, int width, int height);
+		
+		Food(const Food &other);
+		Food &operator=(const Food &other);
+
+		bool replace(Vec2 newPos);
+
+		Vec2 &getPosition();
+};
+```
+```cpp
+#include "../incs/Food.hpp"
+#include <iostream>
+
+Food::Food(Vec2 position, int width, int height) : _position(position), _hLimit(width), _vLimit(height) {}
+
+Food::Food(const Food &other)
+{
+	*this = other;
+}
+
+Food &Food::operator=(const Food & other)
+{
+	if (this != &other)
+	{
+		this->_position = other._position;
+	}
+
+	return *this;
+}
+
+bool Food::replace(Vec2 newPos)
+{
+	if ((newPos.x < 0 || newPos.x > _hLimit - 1) ||
+		(newPos.y < 0 || newPos.y > _vLimit - 1))
+	{
+		std::cerr << "Invalid coordinates for food reposition - (" << newPos.x << "," << newPos.y << ")" << std::endl;
+		return false;
+	}
+
+	_position = newPos;
+	return true;
+}
+
+Vec2 &Food::getPosition() { return _position; }
+```
+```cpp
+struct GameState {
+	int			width;
+	int			height;
+	Snake		*snake;
+	Food		*food;
+	bool		gameOver;
+};
+```
+Time for **head-food* collision detection. Easy enough: I'll just change the main object pointerd by `GameManager`, from `Snake` to the whole `GameState`, and use that pointer to access the coordinates of both the head and the food on each manager update. If they are the same, collission detected:
+```cpp
+void GameManager::checkHeadFoodCollision() {
+	Vec2	head = _state->snake->getSegments()[0];
+	Vec2	foodPos = _state->food->getPosition();
+
+	if (head.x == foodPos.x && head.y == foodPos.y)
+	{
+		_state->food->replace(Utils::getRandomVec2(_state->width, _state->height));
+	}
+		
+}
+```
+Now, let's make the snake grow. Pretty turbo-simple, really. Just add a grow function to `Snake` that adds 1 to it's `_length` attribute and attach a new node to the back with the same coords as the current last one:
+```cpp
+void Snake::grow() {
+	// TODO: take into consideration the limit, or make the limit itself the endgame condition
+	_segments[_length] = Vec2{ _segments[_length - 1].x, _segments[_length - 1].y };
+	_length++;
+}
+```
 
 <br>
 <br>

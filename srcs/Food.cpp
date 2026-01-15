@@ -31,4 +31,4 @@ bool Food::replace(Vec2 newPos)
 	return true;
 }
 
-Vec2 &Food::getPosition() { return _position; }
+Vec2 Food::getPosition() { return _position; }

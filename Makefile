@@ -65,7 +65,7 @@ SDL_OBJS         := .obj/libs/SDLGraphic.o
 RAYLIB_OBJS      := .obj/libs/RaylibGraphic.o
 NCURSES_OBJS     := .obj/libs/NCursesGraphic.o
 
-GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/Food.o $(OBJDIR)/GameManager.o
+GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/Food.o $(OBJDIR)/GameManager.o $(OBJDIR)/Utils.o 
 
 # -=-=-=-=-    FLAGS FOR EACH LIBRARY -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
