@@ -29,7 +29,12 @@ More than enough time in today's session to do all this (will I come back here a
 <br>
 
 # 4.2 - The 3310 Standard
-Holiwi cucufu
+Let's get into food stuff, plain old dots that make the snake grow. Before tackling it, I think I'll need:
+- Some way to store and track food positions
+- Colission detection and handling between head and food
+- Food spawning.
+
+For the basic build, we can just follow what I recall was the Nokia 3310 *snake* flow: `every time the snake eats, a new food dot appears`. 
 
 <br>
 <br>

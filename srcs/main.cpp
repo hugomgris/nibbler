@@ -1,7 +1,10 @@
 #include "../incs/IGraphic.hpp"
-#include "../incs/GameState.hpp"
+#include "../incs/Snake.hpp"
+#include "../incs/Food.hpp"
+#include "../incs/DataStructs.hpp"
 #include "../incs/GameManager.hpp"
 #include "../incs/LibraryManager.hpp"
+#include "../incs/Utils.hpp"
 #include "../incs/colors.h"
 #include <thread>
 #include <fcntl.h>
@@ -31,8 +34,8 @@ int main(int argc, char **argv) {
 	gfxLib.get()->init(width, height);
 
 	Snake snake(width, height);
-	FoodView food{ {5,5} };
-	GameState state { width, height, &snake, food, false };  // TODO: Good Food management pending
+	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
+	GameState state { width, height, &snake, &food, false };  // TODO: Good Food management pending
 
 	GameManager gameManager(&snake);
 

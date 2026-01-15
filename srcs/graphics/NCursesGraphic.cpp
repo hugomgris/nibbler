@@ -1,4 +1,6 @@
 #include "../../incs/IGraphic.hpp"
+#include "../../incs/Snake.hpp"
+#include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
 #include <ncurses.h>
 #include <iostream>
@@ -75,7 +77,7 @@ public:
 		
 		// Draw food
 		wattron(gameWindow, COLOR_PAIR(2));
-		mvwaddch(gameWindow, state.food.position.y + 1, state.food.position.x + 1, '*');
+		mvwaddch(gameWindow, state.food->getPosition().y + 1, state.food->getPosition().x + 1, '*');
 		wattroff(gameWindow, COLOR_PAIR(2));
 		
 		// Double buffer: stage stdscr first, then gameWindow

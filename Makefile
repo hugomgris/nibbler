@@ -24,7 +24,7 @@ INCDIR          := incs
 
 # -=-=-=-=-    MAIN PROGRAM FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-SRC             := main.cpp LibraryManager.cpp GameManager.cpp Snake.cpp
+SRC             := main.cpp LibraryManager.cpp GameManager.cpp Snake.cpp Food.cpp Utils.cpp
 SRCS            := $(addprefix $(SRCDIR)/, $(SRC))
 OBJS            := $(addprefix $(OBJDIR)/, $(SRC:.cpp=.o))
 DEPS            := $(addprefix $(DEPDIR)/, $(SRC:.cpp=.d))
@@ -65,7 +65,7 @@ SDL_OBJS         := .obj/libs/SDLGraphic.o
 RAYLIB_OBJS      := .obj/libs/RaylibGraphic.o
 NCURSES_OBJS     := .obj/libs/NCursesGraphic.o
 
-GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/GameManager.o
+GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/Food.o $(OBJDIR)/GameManager.o
 
 # -=-=-=-=-    FLAGS FOR EACH LIBRARY -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 

@@ -1,4 +1,6 @@
 #include "../../incs/IGraphic.hpp"
+#include "../../incs/Snake.hpp"
+#include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -54,8 +56,8 @@ public:
 		// Draw food (red)
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 		SDL_Rect foodRect = {
-			state.food.position.x * cellSize,
-			state.food.position.y * cellSize,
+			state.food->getPosition().x * cellSize,
+			state.food->getPosition().y * cellSize,
 			cellSize,
 			cellSize
 		};

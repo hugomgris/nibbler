@@ -1,4 +1,6 @@
 #include "../../incs/IGraphic.hpp"
+#include "../../incs/Snake.hpp"
+#include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
 #include <raylib.h>
 #include <iostream>
@@ -26,24 +28,24 @@ public:
 		BeginDrawing();
 		ClearBackground(BLACK);
 		
-		// Draw snake (green)
+		// Draw snake (yellow)
 		for (int i = 0; i < state.snake->getLength(); ++i) {
 			DrawRectangle(
 				state.snake->getSegments()[i].x * cellSize,
 				state.snake->getSegments()[i].y * cellSize,
 				cellSize,
 				cellSize,
-				GREEN
+				YELLOW
 			);
 		}
 		
-		// Draw food (red)
+		// Draw food (blue)
 		DrawRectangle(
-			state.food.position.x * cellSize,
-			state.food.position.y * cellSize,
+			state.food->getPosition().x * cellSize,
+			state.food->getPosition().y * cellSize,
 			cellSize,
 			cellSize,
-			RED
+			BLUE
 		);
 		
 		EndDrawing();
