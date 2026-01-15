@@ -13,12 +13,10 @@ class Snake {
 		int			_length;
 		Vec2		_segments[100];
 		direction	_direction;
-		int			_hLimit;
-		int			_vLimit;
+
 
 	public:
-		Snake() = delete;
-		Snake(int width, int height);
+		Snake();
 
 		Snake(const Snake &other);
 		Snake &operator=(const Snake &other);
@@ -30,4 +28,5 @@ class Snake {
 
 		void move();
 		void changeDirection(direction dir);
+		void grow();
 };

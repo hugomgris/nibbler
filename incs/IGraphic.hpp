@@ -1,5 +1,5 @@
 #pragma once
-#include "GameState.hpp"
+#include "DataStructs.hpp"
 #include "Input.hpp"
 
 class IGraphic {

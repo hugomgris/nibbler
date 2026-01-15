@@ -1,6 +1,10 @@
 #include "../../incs/IGraphic.hpp"
+#include "../../incs/Snake.hpp"
+#include "../../incs/Food.hpp"
+#include "../../incs/Utils.hpp"
 #include "../../incs/colors.h"
 #include <ncurses.h>
+#include <locale.h>
 #include <iostream>
 
 class NCursesGraphic : public IGraphic {
@@ -15,6 +19,7 @@ public:
 	NCursesGraphic &operator=(const NCursesGraphic&) = delete;
 	
 	void init(int w, int h) override {
+		setlocale(LC_ALL, "");
 		width = w;
 		height = h;
 		
@@ -33,11 +38,12 @@ public:
 		init_pair(3, COLOR_BLACK, COLOR_BLACK);
 		
 		// +2 for borders (1 left, 1 right, 1 top, 1 bottom)
+		// Width doubled for square-ish cells
 		gameWindow = newwin(
-			height + 2,  // Height + borders
-			width + 2,   // Width + borders
-			1,           // Y position (row 1)
-			1            // X position (col 1)
+			height + 2,      // Height + borders
+			(width * 2) + 3, // Width * 2 + left border + right border + 1
+			1,               // Y position (row 1)
+			1                // X position (col 1)
 		);
 		
 		keypad(gameWindow, TRUE);
@@ -51,12 +57,14 @@ public:
 	void render(const GameState& state) override {
 		werase(gameWindow);
 		
-		box(gameWindow, 0, 0);
+		// Draw border using wborder
+		wborder(gameWindow, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE,
+		        ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
 		
 		wattron(gameWindow, COLOR_PAIR(3));
 		for (int y = 1; y <= height; ++y) {
 			for (int x = 1; x <= width; ++x) {
-				mvwaddch(gameWindow, y, x, ' ');
+				mvwaddstr(gameWindow, y, x * 2, "  ");
 			}
 		}
 		wattroff(gameWindow, COLOR_PAIR(3));
@@ -64,18 +72,24 @@ public:
 		// Draw snake
 		wattron(gameWindow, COLOR_PAIR(1));
 		for (int i = 0; i < state.snake->getLength(); ++i) {
-			mvwaddch(
-				gameWindow,
-				state.snake->getSegments()[i].y + 1,
-				state.snake->getSegments()[i].x + 1,
-				'O'
-			);
+			int y = state.snake->getSegments()[i].y + 1;
+			int x = (state.snake->getSegments()[i].x * 2) + 1;
+			
+			if (i == 0) {
+				mvwaddstr(gameWindow, y, x, "⬢ ");
+			} else {
+				mvwaddstr(gameWindow, y, x,
+					(i == state.snake->getLength() - 1) ? "○ " :
+					(i % 2 == 0) ? "✛ " : "✲ "
+				);
+			}
 		}
 		wattroff(gameWindow, COLOR_PAIR(1));
 		
 		// Draw food
 		wattron(gameWindow, COLOR_PAIR(2));
-		mvwaddch(gameWindow, state.food.position.y + 1, state.food.position.x + 1, '*');
+		int foodX = (state.food->getPosition().x * 2) + 1;
+		mvwaddstr(gameWindow, state.food->getPosition().y + 1, foodX, state.food->getFoodChar());
 		wattroff(gameWindow, COLOR_PAIR(2));
 		
 		// Double buffer: stage stdscr first, then gameWindow

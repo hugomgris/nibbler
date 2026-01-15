@@ -1,17 +1,19 @@
 #pragma once
-#include "GameState.hpp"
+#include "DataStructs.hpp"
 #include "Input.hpp"
 #include "Snake.hpp"
+#include "Food.hpp"
+#include "Utils.hpp"
 #include <iostream>
 #include <chrono>
 
 class GameManager {
 	private:
-		Snake *_snake;
+		GameState	*_state;
 		using time = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
 	public:
-		GameManager(Snake *snake);
+		GameManager(GameState *state);
 
 		GameManager(const GameManager &other) = delete;
 		GameManager &operator=(const GameManager &other) = delete;
@@ -21,4 +23,6 @@ class GameManager {
 		void update();
 		void calculateDeltaTime(time *lastTime, double* accumulator);
 		bool handleGameInput(Input input);
+		void checkHeadFoodCollision();
+		bool checkGameOverCollision();
 };

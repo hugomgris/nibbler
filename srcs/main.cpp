@@ -1,7 +1,10 @@
 #include "../incs/IGraphic.hpp"
-#include "../incs/GameState.hpp"
+#include "../incs/Snake.hpp"
+#include "../incs/Food.hpp"
+#include "../incs/DataStructs.hpp"
 #include "../incs/GameManager.hpp"
 #include "../incs/LibraryManager.hpp"
+#include "../incs/Utils.hpp"
 #include "../incs/colors.h"
 #include <thread>
 #include <fcntl.h>
@@ -30,29 +33,28 @@ int main(int argc, char **argv) {
 
 	gfxLib.get()->init(width, height);
 
-	Snake snake(width, height);
-	FoodView food{ {5,5} };
-	GameState state { width, height, &snake, food, false };  // TODO: Good Food management pending
+	Snake snake;
+	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
+	GameState state { width, height, &snake, &food, NULL, false, true };
 
-	GameManager gameManager(&snake);
+	GameManager gameManager(&state);
 
 	const double TARGET_FPS = 10.0;					// Snake moves 10 times per second
 	const double FRAME_TIME = 1.0 / TARGET_FPS; 	// 0.1 seconds per update
 	
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	double accumulator = 0.0;
-	bool running = true;
 	int frameCount = 0;
 
 	// MAIN GAME LOOP
-	while (running) {
+	while (state.isRunning) {
 		gameManager.calculateDeltaTime(&lastTime, &accumulator);
 		
 		Input input = gfxLib.get()->pollInput();
 		
 		if (input == Input::Quit) {
 			std::cout << BYEL << "\nBYEBYEBYEBYE" << RESET << std::endl;
-			running = false;
+			state.isRunning = false;
 			break;
 		}
 		
