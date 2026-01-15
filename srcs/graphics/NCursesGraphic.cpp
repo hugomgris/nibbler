@@ -70,7 +70,9 @@ public:
 				gameWindow,
 				state.snake->getSegments()[i].y + 1,
 				state.snake->getSegments()[i].x + 1,
-				'O'
+				(i == 0) ? '☠' :
+				(i == state.snake->getLength() - 1) ? 'x' :
+				(i % 2 == 0) ? '+' : 'o' 
 			);
 		}
 		wattroff(gameWindow, COLOR_PAIR(1));
