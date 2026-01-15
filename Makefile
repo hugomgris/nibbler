@@ -75,7 +75,7 @@ NCURSES_CFLAGS   := $(LIB_CFLAGS)
 
 SDL_LDFLAGS      := -L$(SDL_DIR)/build -lSDL2-2.0 -Wl,-rpath,$(SDL_DIR)/build
 RAYLIB_LDFLAGS   := -L$(RAYLIB_DIR)/src -lraylib -lm -lpthread -ldl -lrt -lX11
-NCURSES_LDFLAGS  := -lncurses
+NCURSES_LDFLAGS  := -lncursesw
 
 # -=-=-=-=-    TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 

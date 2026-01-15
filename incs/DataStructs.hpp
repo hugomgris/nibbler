@@ -14,5 +14,7 @@ struct GameState {
 	int			height;
 	Snake		*snake;
 	Food		*food;
+	const char	*foodChar;
 	bool		gameOver;
+	bool		isRunning;
 };

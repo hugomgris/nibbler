@@ -24,4 +24,5 @@ class GameManager {
 		void calculateDeltaTime(time *lastTime, double* accumulator);
 		bool handleGameInput(Input input);
 		void checkHeadFoodCollision();
+		bool checkGameOverCollision();
 };

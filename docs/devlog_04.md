@@ -129,6 +129,60 @@ void Snake::grow() {
 	_length++;
 }
 ```
+### Intermission: Squared Ncurses and Unicode Support
+I've been ignoring something that was irking me from the very beginning: **Ncurses default cell shape is vertically rectangular**. This means that what would be a square window isn `SDL` and `Raylib` looked like a retangular one in `Ncurses`, so I wanted to see if I could fix that. In the process, I found out also a way to make Ncurses support Unicode characters, opening a new level of drawing possibilities for the ASCII realm.
+
+For the square look, my best chance is to just double every cell, so that each character takes two horizontal spaces. It's not a perfect square result, but it's good enough, at least for now. For the Unicode support, some research brought `ncursesw` to my knowledge. By compiling the `.so` with the flag `-lncursesw` and calling `setlocale(LC_ALL, "")` at the top of `init()`, the deal is sealed.
+
+Look at her go:
+
+<img src="./CuteSnake.png" alt="Runtime Switching Test Logs" width="300"/>
+
+> I'm starting to think that this initial version of the project, based on multiple libraries, is going to end up being a prototype, if at all. I will trouble myself enough to make the ASCII, `Ncurses` based realm of this version look good and interesting, but an ideal multi-realm/multi-visuals *Nido* would surely be more sanely done in a single, all-capable library or engine that built (or simulated) the different aesthetics.
+
+> Also, **known issue**: Because the singular characters (snake parts, food) are now "doubled" by adding a space to them, when the snake moves immediately to the side of a food piece, it's not drawn. We'll see if I care in regards to this prototype/task turn-in.
+
+<br>
+
+### Endgame Conditions
+Let's now make the snake die when it hits a wall or itself. We'll change some things later on, most likely, but for the base standard this will be the way to go. More simple stuff in it's initial implementation, just checking if the head of the snake moves into a wall or into itself, right in the middle of the manager's update, and have a confirmed conlission set the `isRunning` boolean inside `GameState` set to false. Previously, that flag was declared in `Main` itself, but I decided to move into the state struct to have access to it from the manager:
+```cpp
+void GameManager::update()  {
+	_state->snake->move();
+	_state->isRunning = checkGameOverCollision();
+	checkHeadFoodCollision();
+}
+```
+```cpp
+bool GameManager::checkGameOverCollision()
+{
+	Vec2	head = _state->snake->getSegments()[0];
+	if (head.x < 0 || head.x > _state->width - 1)
+		return false;
+
+	if (head.y < 0 || head.y > _state->height - 1)
+		return false;
+
+	for (int i = 1; i < _state->snake->getLength(); i++)
+	{
+		if (_state->snake->getSegments()[i].x == head.x && _state->snake->getSegments()[i].y == head.y)
+			return false;
+	}
+
+	return true;
+}
+```
+
+And now that we have a snake that can roam the window, eats randomly spawned food and is susceptible to death by collision, the basic snake game is done. I could actually turn this in tomorrow and I'm quite sure (not fully, I must admit) that I could be done with it. But obviously, that is not the mindset. So let's just continue tomorrow. Some things that can kickstart next session:
+- `Buffering inputs`
+	- Right now quickly pressing direction keys can end up moving the snake back into itself, which should not happen. I think that buffering the inputs should fix this.
+- `Refine the food spawning`:
+	- Sometimes food is spawned in a snake-occupied cell. The positioning of the spawn should check if the cell is already occupied, and re-reposition as needed.
+		- I have to think about what the best way to handle this is. 
+			- Is checking for random cells until a free one is found good enough?
+			- Should I track occupied/free spaces of the game arena?
+			- Might there be some consolidated ways of handling this?
+- Start experimenting with the `3D version` (cube-based) in Raylib
 
 <br>
 <br>
@@ -168,3 +222,5 @@ Knowing myself, and knowing too that I should try to focus my thought processess
 
 - Enemies? Maybe.
 - Knowledge based progression? Maybe. (Think here of *Void Stranger* or *Tunic*, won't say *Outer Wilds* because that would definately be one notch too delulu).
+- Random ideas:
+	- `PUZZLE`: Now that the ASCII realm can handle Unicode characters, I could embed a message in the snake by using some type of encoding (morse, etc). If a player achieves a specific growth, the whole body would spell something, a key to unlock the next realm or whatever.

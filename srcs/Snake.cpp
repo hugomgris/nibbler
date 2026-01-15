@@ -1,11 +1,11 @@
 #include "../incs/Snake.hpp"
 #include <iostream>
 
-Snake::Snake(int width, int height): _length(4), _direction(LEFT), _hLimit(width), _vLimit(height) {
-	_segments[0] = {10, 10};
-	_segments[1] = {9, 10};
-	_segments[2] = {8, 10};
-	_segments[3] = {7, 10};
+Snake::Snake(): _length(4), _direction(LEFT) {
+	_segments[0] = {7, 10};
+	_segments[1] = {8, 10};
+	_segments[2] = {9, 10};
+	_segments[3] = {10, 10};
 }
 
 Snake::Snake(const Snake &other)
@@ -37,27 +37,19 @@ void Snake::move(){
 	switch (_direction)
 	{
 		case LEFT:
-			if (head.x > 0) {
-				head.x--;
-			}
+			head.x--;
 			break;
 
 		case RIGHT:
-			if (head.x < _hLimit - 1) {
-				head.x++;
-			}
+			head.x++;
 			break;
 
 		case UP:
-			if (head.y > 0) {
-				head.y--;
-			}
+			head.y--;
 			break;
 
 		case DOWN:
-			if (head.y < _vLimit - 1) {
-				head.y++;
-			}
+			head.y++;
 			break;
 	}
 

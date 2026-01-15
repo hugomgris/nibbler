@@ -33,9 +33,9 @@ int main(int argc, char **argv) {
 
 	gfxLib.get()->init(width, height);
 
-	Snake snake(width, height);
+	Snake snake;
 	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
-	GameState state { width, height, &snake, &food, false };
+	GameState state { width, height, &snake, &food, NULL, false, true };
 
 	GameManager gameManager(&state);
 
@@ -44,18 +44,17 @@ int main(int argc, char **argv) {
 	
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	double accumulator = 0.0;
-	bool running = true;
 	int frameCount = 0;
 
 	// MAIN GAME LOOP
-	while (running) {
+	while (state.isRunning) {
 		gameManager.calculateDeltaTime(&lastTime, &accumulator);
 		
 		Input input = gfxLib.get()->pollInput();
 		
 		if (input == Input::Quit) {
 			std::cout << BYEL << "\nBYEBYEBYEBYE" << RESET << std::endl;
-			running = false;
+			state.isRunning = false;
 			break;
 		}
 		

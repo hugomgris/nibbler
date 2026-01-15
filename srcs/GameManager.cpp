@@ -4,6 +4,7 @@ GameManager::GameManager(GameState *state) : _state(state) {}
 
 void GameManager::update()  {
 	_state->snake->move();
+	_state->isRunning = checkGameOverCollision();
 	checkHeadFoodCollision();
 }
 
@@ -44,4 +45,22 @@ void GameManager::checkHeadFoodCollision() {
 		_state->food->replace(Utils::getRandomVec2(_state->width, _state->height));
 	}
 		
+}
+
+bool GameManager::checkGameOverCollision()
+{
+	Vec2	head = _state->snake->getSegments()[0];
+	if (head.x < 0 || head.x > _state->width - 1)
+		return false;
+
+	if (head.y < 0 || head.y > _state->height - 1)
+		return false;
+
+	for (int i = 1; i < _state->snake->getLength(); i++)
+	{
+		if (_state->snake->getSegments()[i].x == head.x && _state->snake->getSegments()[i].y == head.y)
+			return false;
+	}
+
+	return true;
 }

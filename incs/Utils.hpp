@@ -5,5 +5,7 @@
 class Utils
 {
 	public:
+		static int getRandomInt(int max);
 		static Vec2 getRandomVec2(int xMax, int yMax);
+		static const char* getFoodChar(int idx);
 };

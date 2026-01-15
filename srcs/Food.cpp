@@ -1,7 +1,9 @@
 #include "../incs/Food.hpp"
 #include <iostream>
 
-Food::Food(Vec2 position, int width, int height) : _position(position), _hLimit(width), _vLimit(height) {}
+Food::Food(Vec2 position, int width, int height) : _position(position), _hLimit(width), _vLimit(height) {
+	_foodChar = Utils::getFoodChar(Utils::getRandomInt(5));
+}
 
 Food::Food(const Food &other)
 {
@@ -28,7 +30,10 @@ bool Food::replace(Vec2 newPos)
 	}
 
 	_position = newPos;
+	_foodChar = Utils::getFoodChar(Utils::getRandomInt(5));
 	return true;
 }
 
-Vec2 Food::getPosition() { return _position; }
+Vec2 Food::getPosition() const { return _position; }
+
+const char *Food::getFoodChar() const { return _foodChar; };
