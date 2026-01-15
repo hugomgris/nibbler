@@ -182,6 +182,13 @@ And now that we have a snake that can roam the window, eats randomly spawned foo
 			- Is checking for random cells until a free one is found good enough?
 			- Should I track occupied/free spaces of the game arena?
 			- Might there be some consolidated ways of handling this?
+- `Start menu`
+	- Prety self-explanatory, but because of the three libraries thing I'll have to learn how to build the menu on all of them (or not, decisions can be made, but yeah...)
+- `Refine the ending processsing`
+	- Right now, collisions close the application. It would be best if something happened visually.
+		- Some expression of the death
+		- A message box with score, time, etc
+		- A replay button and/or replay key
 - Start experimenting with the `3D version` (cube-based) in Raylib
 
 <br>
