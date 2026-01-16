@@ -89,10 +89,6 @@ public:
 		return Input::None;
 	}
 	
-	void cleanup() override {
-		// SDL cleanup happens in destructor
-	}
-	
 	~SDLGraphic() {
 		if (renderer) SDL_DestroyRenderer(renderer);
 		if (window) SDL_DestroyWindow(window);
