@@ -158,6 +158,6 @@ The solution? **Fully reinitialize Ncurses when switching back to it**? Nope, th
 
 So, at this point, I think there's an evident conclussion lingering over all this process: **it seems like `Ncurses` is not the best library for this dynamic switching project**.
 
-Which means that I'm going to need to find another library as a substitute. 
+Which means that I'm going to need to find another library as a substitute.
 
-
+Which, itself, means that it's time to end the week. I'll back on monday and transition into a new library.
