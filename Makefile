@@ -34,7 +34,7 @@ INCLUDES        := -I$(INCDIR)
 # -=-=-=-=-    FLAGS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 CC              := c++
-CFLAGS          := -Wall -Wextra -Werror -std=c++20 -g $(INCLUDES)
+CFLAGS          := -Wall -Wextra -Werror -std=c++20 -g -fsanitize=address $(INCLUDES)
 LIB_CFLAGS      := -Wall -Wextra -Werror -std=c++20 -g -fPIC $(INCLUDES)
 DEPFLAGS        := -MMD -MP
 LDFLAGS         := -ldl
