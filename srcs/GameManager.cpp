@@ -3,6 +3,7 @@
 GameManager::GameManager(GameState *state) : _state(state) {}
 
 void GameManager::update()  {
+	processNextInput();
 	_state->snake->move();
 	_state->isRunning = checkGameOverCollision();
 	checkHeadFoodCollision();
@@ -16,22 +17,35 @@ void GameManager::calculateDeltaTime(time *lastTime, double* accumulator) {
 	*accumulator += deltaTime;
 }
 
-bool GameManager::handleGameInput(Input input) {
-	switch (input) {
-		case Input::Up:
-			_state->snake->changeDirection(UP);
-			return true;
-		case Input::Down:
-			_state->snake->changeDirection(DOWN);
-			return true;
-		case Input::Left:
-			_state->snake->changeDirection(LEFT);
-			return true;
-		case Input::Right:
-			_state->snake->changeDirection(RIGHT);
-			return true;
-		default:
-			return false;
+void GameManager::bufferInput(Input input) {
+	if (input >= Input::Up && input <= Input::Right) {
+		if (inputBuffer.size() < MAX_BUFFER_SIZE) {
+			inputBuffer.push(input);
+		}
+	}
+}
+
+void GameManager::processNextInput() {
+	if (!inputBuffer.empty()) {
+		Input input = inputBuffer.front();
+		inputBuffer.pop();
+		
+		switch (input) {
+			case Input::Up:
+				_state->snake->changeDirection(UP);
+				break;
+			case Input::Down:
+				_state->snake->changeDirection(DOWN);
+				break;
+			case Input::Left:
+				_state->snake->changeDirection(LEFT);
+				break;
+			case Input::Right:
+				_state->snake->changeDirection(RIGHT);
+				break;
+			default:
+				break;
+		}
 	}
 }
 

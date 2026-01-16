@@ -6,11 +6,17 @@
 #include "Utils.hpp"
 #include <iostream>
 #include <chrono>
+#include <queue>
 
 class GameManager {
 	private:
 		GameState	*_state;
+		std::queue<Input> inputBuffer;
+		static const size_t MAX_BUFFER_SIZE = 3;
+
 		using time = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
+		void processNextInput();
 
 	public:
 		GameManager(GameState *state);
@@ -21,8 +27,10 @@ class GameManager {
 		~GameManager() = default;
 
 		void update();
+
 		void calculateDeltaTime(time *lastTime, double* accumulator);
-		bool handleGameInput(Input input);
+		void bufferInput(Input input);
+
 		void checkHeadFoodCollision();
 		bool checkGameOverCollision();
 };

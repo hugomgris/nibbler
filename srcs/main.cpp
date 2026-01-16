@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		
-		gameManager.handleGameInput(input);
+		gameManager.bufferInput(input);
 		
 		while (accumulator >= FRAME_TIME) {
 			gameManager.update();

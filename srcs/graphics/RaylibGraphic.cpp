@@ -67,6 +67,10 @@ public:
 		return Input::None;
 	}
 	
+	void cleanup() override {
+		// Raylib cleanup happens in destructor
+	}
+	
 	~RaylibGraphic() {
 		CloseWindow();
 		std::cout << BYEL << "[Raylib] Destroyed" << RESET << std::endl;

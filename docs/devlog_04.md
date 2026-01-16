@@ -1,4 +1,4 @@
-# Nibbler - Devlog - 3
+# Nibbler - Devlog - 4
 
 ## Table of Contents
 1. [Day Four Plan](#41---day-four-plan)
