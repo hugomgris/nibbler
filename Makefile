@@ -67,7 +67,7 @@ GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/Food.o $(OBJDIR)/GameManager.o $
 # -=-=-=-=-    FLAGS FOR EACH LIBRARY -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 SDL_CFLAGS       := $(LIB_CFLAGS) -I$(SDL_DIR)/include
-RAYLIB_CFLAGS    := $(LIB_CFLAGS) -I$(RAYLIB_DIR)/src
+RAYLIB_CFLAGS    := $(LIB_CFLAGS) -I$(RAYLIB_DIR)/src -Wno-missing-field-initializers
 NCURSES_CFLAGS   := $(LIB_CFLAGS) -I$(NCURSES_DIR)/include -I$(NCURSES_DIR)/include/ncursesw
 
 SDL_LDFLAGS      := -L$(SDL_DIR)/build -lSDL2-2.0 -Wl,-rpath,$(SDL_DIR)/build

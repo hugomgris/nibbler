@@ -1,38 +1,45 @@
-#include "../../incs/IGraphic.hpp"
-#include "../../incs/Snake.hpp"
-#include "../../incs/Food.hpp"
-#include "../../incs/Utils.hpp"
-#include "../../incs/colors.h"
-#include <ncurses.h>
-#include <locale.h>
-#include <iostream>
+#include "../../incs/NCursesGraphic.hpp"
 
-class NCursesGraphic : public IGraphic {
-private:
-	int		width, height;
-	WINDOW	*gameWindow;
-	bool	isInitialized;
-	
-public:
-	NCursesGraphic() : width(0), height(0), gameWindow(nullptr), isInitialized(false) {}
+NCursesGraphic::NCursesGraphic() : width(0), height(0), gameWindow(nullptr), isInitialized(false) {}
 
-	NCursesGraphic(const NCursesGraphic&) = delete;
-	NCursesGraphic &operator=(const NCursesGraphic&) = delete;
+NCursesGraphic::~NCursesGraphic() {
+	if (!isInitialized) {
+		return;
+	}
 	
-	void init(int w, int h) override {
+	std::cout << BBLU << "[NCurses] Cleaning up..." << RESET << std::endl;
+	
+	// Delete subwindow first
+	if (gameWindow) {
+		werase(gameWindow);
+		wnoutrefresh(gameWindow);
+		doupdate();
+		delwin(gameWindow);
+		gameWindow = nullptr;
+	}
+	
+	// Clear window without destroying/resetting it
+	if (stdscr) {
+		wclear(stdscr);
+		wrefresh(stdscr);
+	}
+	
+	// Reset terminal state
+	fflush(stdout);
+	
+	isInitialized = false;
+}
+
+void NCursesGraphic::init(int w, int h) {
 		setlocale(LC_ALL, "");
 		width = w;
 		height = h;
 		
-		std::cout << BBLU << "[NCurses] Initializing: " << width << "x" << height << RESET << std::endl;
-		
 		bool wasEnded = (isendwin() == TRUE);
 		
 		if (wasEnded || stdscr == nullptr) {
-			std::cout << BBLU << "[NCurses] Starting fresh ncurses session" << RESET << std::endl;
 			initscr();
 		} else {
-			std::cout << BBLU << "[NCurses] Reusing existing ncurses session" << RESET << std::endl;
 			refresh();
 		}
 		
@@ -68,10 +75,9 @@ public:
 		refresh();
 		
 		isInitialized = true;
-		//std::cout << BBLU << "[NCurses] Initialized successfully" << RESET << std::endl;
 	}
 	
-	void render(const GameState& state) override {
+	void NCursesGraphic::render(const GameState& state) {
 		werase(gameWindow);
 		
 		wborder(gameWindow, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE,
@@ -114,7 +120,7 @@ public:
 		doupdate();
 	}
 	
-	Input pollInput() override {
+	Input NCursesGraphic::pollInput() {
 		int ch = getch();
 		switch (ch) {
 			case KEY_UP:    return Input::Up;
@@ -129,41 +135,3 @@ public:
 			default:        return Input::None;
 		}
 	}
-	
-	~NCursesGraphic() {
-		if (!isInitialized) {
-			return;
-		}
-		
-		std::cout << BBLU << "[NCurses] Cleaning up..." << RESET << std::endl;
-		
-		// Delete subwindow first
-		if (gameWindow) {
-			werase(gameWindow);
-			wnoutrefresh(gameWindow);
-			doupdate();
-			delwin(gameWindow);
-			gameWindow = nullptr;
-		}
-		
-		// Clear window without destroying/resetting it
-		if (stdscr) {
-			wclear(stdscr);
-			wrefresh(stdscr);
-		}
-		
-		// Reset terminal state
-		fflush(stdout);
-		
-		isInitialized = false;
-		std::cout << BBLU << "[NCurses] Destroyed (keeping ncurses session alive)" << RESET << std::endl;
-	}
-};
-
-extern "C" IGraphic* createGraphic() {
-	return new NCursesGraphic();
-}
-
-extern "C" void destroyGraphic(IGraphic* g) {
-	delete g;
-}

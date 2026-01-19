@@ -9,6 +9,11 @@
 	- [Exit handler](#624-exit-handler-maincpp)
 	- [Overall Sum Up](#625-overall-sum-up)
 3. [Food Restocking](#63-food-restocking)
+4. [Randomizing the Starting Snake](#64-randomizing-the-starting-snake)
+4. [Dimensional Ambitions](#65-dimensional-ambitions)
+	- [Isometric Worldview 101](#isometric-worldview-101)
+	- [Snake Cubism](#snake-cubism)
+
 
 <br>
 <br>
@@ -26,7 +31,7 @@ Monday again, the sadness persists, and so does the work. I'll pick it up just w
 <br>
 
 ## 6.2 Retroceder Nunca, Rendirse Jamás
-Or, as the original title of the Van Damme classic, the infamous Bruce Lee Ghost movie, *No Retreat, No Surrender*. After the seg fault disaster which ended last Friday's work session, I came up with an idea: **What if instead of transitioning into a new library, I just switch into an external build of Ncurses and avoid the system one?**. And lo and behold: it worked.
+Or, as the original title of the Van Damme classic, the infamous Bruce Lee Ghost movie, *No Retreat, No Surrender*, but the spanish title is arguably way cooler. After the seg fault disaster which ended last Friday's work session, I came up with an idea: **What if instead of transitioning into a new library, I just switch into an external build of Ncurses and avoid the system one?**. And lo and behold: it worked.
 
 ### Understanding the Problem
 The root cause of the segfault was becoming clearer with each test: **system NCurses maintains global state that gets corrupted during runtime library switching**. The flow looked like this:
@@ -334,3 +339,204 @@ Snake::Snake(int width, int height): _length(4) {
 	}
 }
 ```
+
+<br>
+<br>
+<br>
+
+## 6.5 Dimensional Ambitions
+Transitioning into a 3D render is a straightforward process given that we're drawing a *snake* game. The 2D versions (ASCII based and colored-cell based) are drawn following a square pattern that just needs a height value to achieve tridimensionality. In other words, we just need to think in cubes, instead of cells. With that in mind, two main things need to be done to reach our 3D ambitions:
+- An isometric camera setup
+- A cube-based build and rendering
+
+Raylib was chosen precisely because achieven these two things should be quite simple, so let's try it.
+
+### Isometric Worldview 101
+First, we need a `Camera3D` with a position calculation `x` and `z` based on the game session's grid witdth and height, all while taking into consideration the cube size. Then, the camera's direction needs to be tilted, set to `orthographic` and... Good to go. Basically, your run-of-the-mill standard isometric view setup, so let's take the opportunity to break down how to build this POV regardless of the tool used to do so:
+
+#### I. Define the World Space
+The bounds of the scene need to be calculated to correctly set up the relations between the rendered construction and the camera. What we need first is **the center point towards which the camera will be positioned**:
+- Center point → `(sceneWidth/2, 0, sceneHeight_2)`
+
+#### II. Position the Camera
+A standard isometric view needs **specific values** for both the camera's `elevation` and `rotation`:
+- `Elevation angle` → Typically `30º` to `45º` above the ground
+- `Rotation angle` → `45º` around the Y-axis (this is what gives that *diamond look* that we're looking for)
+
+This is all then processed through some simple trigonometry:
+
+```
+distance = max(sceneWidth, sceneHeight) * unit_size * scale_factor
+camera_x = center_x + distance * cos(rotation) * cos(elevation)
+camera_y = center_y + distance * sin(elevation)
+camera_z = center_z + distance * sin(rotation) * cos(elevation)
+```
+> In the specific case of this *snake*, i.e. the `Raylib` implementation, I use the cube size as `unit_size`.
+
+#### III. Set Camera Properties
+After the base calculations, the camera's properties that need to be defined (how they're defined depends on the tool/library) are:
+- `Position`: where the camera sits in 3D space
+- `Target`: What point the camera looks at (usually, the scene center)
+- `Up vector`: Which direction is "up" (usually, it's [0, 1, 0])
+- `Projection`: The type of visualization wanted (usually, tools include both `ORTHOGRAPHIC` and `PERSPECTIVE`)
+
+#### IV. Adjust Field of View / Ortho Size
+The last step is to finely tune the *optics*, which will depend on the `Projection`:
+- `Orthographic`: Control the "zoom" via `ortho width/height`
+- `Perspective`: Control the "FOV" via angle value (the usual is `45º`)
+
+#### V. The Implementation Itself:
+All if this translates in this small camera setup function inside the `RaylibGraphic` class:
+```cpp
+void setupCamera() {
+		float centerX = (gridWidth * cubeSize) / 2.0f;
+		float centerZ = (gridHeight * cubeSize) / 2.0f;
+		
+		// Calculate diagonal distance to ensure entire grid fits
+		float diagonal = sqrtf(gridWidth * gridWidth + gridHeight * gridHeight) * cubeSize;
+		float distance = diagonal * 1.2f;  // 20% padding
+		
+		// Standard isometric angles: 35.264° elevation, 45° rotation
+		float elevation = 35.264f * DEG2RAD;  // Classic isometric angle
+		float rotation = 45.0f * DEG2RAD;
+		
+		camera.position = (Vector3){ 
+			centerX + distance * cosf(rotation) * cosf(elevation),
+			distance * sinf(elevation),
+			centerZ + distance * sinf(rotation) * cosf(elevation)
+		};
+		
+		camera.target = (Vector3){ centerX, cubeSize * 3, centerZ }; // "* 3" is there to adjust the centering of the scene
+		camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+		camera.fovy = 60.0f;
+		camera.projection = CAMERA_ORTHOGRAPHIC;
+	}
+```
+
+<br>
+
+### Snake Cubism
+The rest of our 3D ascension is just a redefinition of the drawing and managing functions to work with cubes instead of 2D cells. Pretty self-explanatory, to be honest, so let's just make a compilation of the new stuff. 
+
+For now, I'll make functions for drawing **floor, walls, snake and food**:
+```cpp
+void RaylibGraphic::drawGroundPlane() {
+	for (int z = 0; z < gridHeight; z++) {
+		for (int x = 0; x < gridWidth; x++) {
+			Color squareColor = ((x + z) % 2 == 0) ? lightSquare : darkSquare;
+			
+			Vector3 position = {
+				x * cubeSize,
+				0.0f,
+				z * cubeSize
+			};
+			
+			DrawCube(position, cubeSize, cubeSize, cubeSize, squareColor);
+		}
+	}
+}
+```
+```cpp
+void RaylibGraphic::drawWalls() {
+	// Stack of 3 cubes for walls (temporarily)
+	for (int level = 0; level < 3; level++) {
+		float yPos = (level) * cubeSize;
+		
+		for (int x = -1; x <= gridWidth; x++) {
+			// Top wall
+			Vector3 topPos = { x * cubeSize, yPos, -cubeSize };
+			DrawCube(topPos, cubeSize, cubeSize, cubeSize * 2, wallColor);
+			
+			// Bottom wall
+			Vector3 bottomPos = { x * cubeSize, yPos, gridHeight * cubeSize };
+			DrawCube(bottomPos, cubeSize, cubeSize, cubeSize, wallColorFade);
+		}
+		
+		for (int z = 0; z < gridHeight; z++) {
+			// Left wall
+			Vector3 leftPos = { -cubeSize, yPos, z * cubeSize };
+			DrawCube(leftPos, cubeSize, cubeSize, cubeSize, wallColor);
+			
+			// Right wall
+			Vector3 rightPos = { gridWidth * cubeSize, yPos, z * cubeSize };
+			DrawCube(rightPos, cubeSize, cubeSize, cubeSize, wallColor);
+		}
+	}
+}
+```
+```cpp
+void RaylibGraphic::drawSnake(const Snake* snake) {
+	// Draw snake at level 1 (one cube above ground)
+	float yPos = cubeSize;  // Center of level 1
+	
+	for (int i = 0; i < snake->getLength(); i++) {
+		const Vec2& segment = snake->getSegments()[i];
+		
+		Vector3 position = {
+			segment.x * cubeSize,
+			yPos,
+			segment.y * cubeSize
+		};
+		
+		if (i == 0) {
+			DrawCube(position, cubeSize, cubeSize, cubeSize, headColor);
+		} else {
+			// Body pieces set up to 80% of cube size
+			position.y = position.y * .8f;
+			(i % 2 == 0) ?
+				DrawCube(position, cubeSize *.8f, cubeSize *.8f, cubeSize *.8f, BodyColor_1) :
+				DrawCube(position, cubeSize *.8f, cubeSize *.8f, cubeSize *.8f, BodyColor_2) ;
+		}
+	}
+}
+```
+```cpp
+void RaylibGraphic::drawFood(const Food* food) {
+	float yPos = cubeSize;
+	
+	Vec2 foodPos = food->getPosition();
+	Vector3 position = {
+		foodPos.x * cubeSize,
+		yPos,
+		foodPos.y * cubeSize
+	};
+	
+	// Pulsing effect for food
+	float pulse = 1.0f + sinf(GetTime() * 3.0f) * 0.1f;
+	
+	DrawCube(position, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, foodColor);
+}
+```
+> *The food cube has a pulsating effect (time based) to make it look fancy*
+
+The rest is just going through Raylib's `3DMode` pipeline, via `BeginMode3D()` and `EndMode3D()` inside `render()`, and watch how our little ascii snake reaches the relm of tridimensionality:
+```cpp
+void RaylibGraphic::render(const GameState& state){
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+	
+	BeginMode3D(camera);
+	
+	// Draw in order: ground -> walls -> snake -> food
+	drawGroundPlane();
+	//drawWalls();
+	drawSnake(state.snake);
+	drawFood(state.food);
+	
+	// Optional: Draw grid lines for debugging
+	// DrawGrid(gridWidth, cubeSize);
+	
+	EndMode3D();
+	
+	// 2D HUD overlay
+	DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, DARKGRAY);
+	DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, DARKGRAY);
+	DrawFPS(screenWidth - 95, 10);
+	
+	EndDrawing();
+}
+```
+<br>
+
+---
+> I think this is enough for today. Tomorrow I'll try to work on the entry and exit points (with some menuing and whatnot).
