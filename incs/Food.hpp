@@ -16,7 +16,7 @@ class Food {
 		Food(const Food &other);
 		Food &operator=(const Food &other);
 
-		bool replace(Vec2 newPos);
+		bool replaceInFreeSpace(GameState *gameState);
 
 		Vec2 getPosition() const;
 		const char* getFoodChar() const;

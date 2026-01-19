@@ -8,6 +8,7 @@
 	- [Smart Initialization](#623-smart-initialization)
 	- [Exit handler](#624-exit-handler-maincpp)
 	- [Overall Sum Up](#625-overall-sum-up)
+3. [Food Restocking]
 
 <br>
 <br>
@@ -221,6 +222,57 @@ By keeping the NCurses session alive and using a locally compiled version, the e
 - Enable seamless switching between all three libraries
 
 <br>
+<br>
+<br>
 
+## 6.3 Food Restocking
+With no more segfaults, let's tackle other pending subjects, like enhancing the repositioning of the food dot when nibbled. The main issue with the current implementation is that because it's just a brute, random index-based repositioning, there are cases in which the dot gets repositioned in an occupied cell (right now, a snake-occupied cell; in the future there might be other space-occuping stuff). To refine the repositioning process, two main ways come to mind:
+- A retry based approach → Just check if the repositioning is targetting an occupied space, if so re-replace (funcional but not optimal, and once again baby Jesus would cry)
+- Map the available space in the game arena so that the repositioning never targets an occupied space (refined, elegant, baby Jesus smile worthy).
 
+So let's map. The only thing that's needed is to reserve the exact space in memory that will be needed, then go through all the cells in the game arena and check if there's a snake chunk in it. If there's not, it's available. After that, get the position from the available list, not the overall arena list. And we're golden:
 
+```cpp
+bool Food::replaceInFreeSpace(GameState *gameState)
+{
+	std::vector<Vec2> snakeSegments;
+	for (int i = 0; i < gameState->snake->getLength(); i++) {
+		snakeSegments.push_back(gameState->snake->getSegments()[i]);
+	}
+
+	std::vector<Vec2> availableCells;
+	availableCells.reserve(_hLimit * _vLimit - snakeSegments.size());
+
+	for (int y = 0; y < _vLimit; y++) {
+		for (int x = 0; x < _hLimit; x++)
+		{
+			Vec2 candidate = {x, y};
+
+			bool occupied = false;
+			for (const auto &segment : snakeSegments) {
+				if (segment.x == candidate.x && segment.y == candidate.y)
+				{
+					occupied = true;
+					break;
+				}
+			}
+
+			if (!occupied) {
+				availableCells.push_back(candidate);
+			}
+		}
+	}
+
+	if (availableCells.empty())
+	{
+		std::cout << "No available cells! aka you Won, bb" << std::endl;
+		return false;
+	}
+
+	int randomIndex = Utils::getRandomInt(availableCells.size());
+	_position = availableCells[randomIndex];
+	_foodChar = Utils::getFoodChar(Utils::getRandomInt(5));
+
+	return true;
+}
+```

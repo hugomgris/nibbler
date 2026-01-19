@@ -56,7 +56,11 @@ void GameManager::checkHeadFoodCollision() {
 	if (head.x == foodPos.x && head.y == foodPos.y)
 	{
 		_state->snake->grow();
-		_state->food->replace(Utils::getRandomVec2(_state->width, _state->height));
+		
+		if (!_state->food->replaceInFreeSpace(_state)) {
+			_state->isRunning = false;
+			std::cout << "YOU WIN" << std::endl;
+		}
 	}
 		
 }

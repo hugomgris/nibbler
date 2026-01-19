@@ -26,16 +26,13 @@ public:
 		
 		std::cout << BBLU << "[NCurses] Initializing: " << width << "x" << height << RESET << std::endl;
 		
-		// Check if ncurses was previously ended (isendwin returns TRUE if endwin was called)
 		bool wasEnded = (isendwin() == TRUE);
 		
 		if (wasEnded || stdscr == nullptr) {
-			// Initialize ncurses if it was ended or never started
 			std::cout << BBLU << "[NCurses] Starting fresh ncurses session" << RESET << std::endl;
 			initscr();
 		} else {
 			std::cout << BBLU << "[NCurses] Reusing existing ncurses session" << RESET << std::endl;
-			// Refresh to ensure clean state
 			refresh();
 		}
 		
@@ -45,7 +42,6 @@ public:
 		nodelay(stdscr, TRUE);
 		curs_set(0);
 		
-		// Initialize colors
 		if (has_colors()) {
 			start_color();
 			init_pair(1, COLOR_GREEN, COLOR_BLACK);
@@ -72,13 +68,12 @@ public:
 		refresh();
 		
 		isInitialized = true;
-		std::cout << BBLU << "[NCurses] Initialized successfully" << RESET << std::endl;
+		//std::cout << BBLU << "[NCurses] Initialized successfully" << RESET << std::endl;
 	}
 	
 	void render(const GameState& state) override {
 		werase(gameWindow);
 		
-		// Draw border using wborder
 		wborder(gameWindow, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE,
 		        ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER);
 		
@@ -144,7 +139,6 @@ public:
 		
 		// Delete subwindow first
 		if (gameWindow) {
-			// Clear the window before deleting
 			werase(gameWindow);
 			wnoutrefresh(gameWindow);
 			doupdate();
@@ -152,8 +146,7 @@ public:
 			gameWindow = nullptr;
 		}
 		
-		// Clear main screen but DON'T call endwin()
-		// This keeps ncurses alive between library switches
+		// Clear window without destroying/resetting it
 		if (stdscr) {
 			wclear(stdscr);
 			wrefresh(stdscr);

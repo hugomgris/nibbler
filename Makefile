@@ -163,6 +163,9 @@ directories:
 	@mkdir -p $(DEPDIR)
 	@mkdir -p $(DEPDIR)/libs
 
+game: re
+	./nibbler 30 30
+
 clean:
 	@/bin/rm -fr $(OBJDIR) $(DEPDIR)
 	@echo "$(RED)Objects removed$(DEF_COLOR)"
