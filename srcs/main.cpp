@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
 	gfxLib.get()->init(width, height);
 
-	Snake snake;
+	Snake snake(width, height);
 	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
 	GameState state { width, height, &snake, &food, NULL, false, true };
 

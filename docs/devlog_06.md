@@ -8,7 +8,7 @@
 	- [Smart Initialization](#623-smart-initialization)
 	- [Exit handler](#624-exit-handler-maincpp)
 	- [Overall Sum Up](#625-overall-sum-up)
-3. [Food Restocking]
+3. [Food Restocking](#63-food-restocking)
 
 <br>
 <br>
@@ -274,5 +274,63 @@ bool Food::replaceInFreeSpace(GameState *gameState)
 	_foodChar = Utils::getFoodChar(Utils::getRandomInt(5));
 
 	return true;
+}
+```
+
+<br>
+<br>
+<br>
+
+## 6.4 Randomizing the Starting Snake
+Easy enough, but needs to be done. We'll just change the snake's constructor to pick a random int based direction and head position, clamp the latter so that it is fairly centered in the game space (so that it doesn't, for example, spawn a left bound snake too close to the right wall and give time for player reaction), and be happy:
+```cpp
+Snake::Snake(int width, int height): _length(4) {
+	switch (Utils::getRandomInt(3))
+	{
+		case 0:
+			_direction = UP;
+			break;
+		case 1:
+			_direction = DOWN;
+			break;
+		case 2:
+			_direction = LEFT;
+			break;
+		case 3:
+			_direction = RIGHT;
+			break;
+	}
+
+	Vec2 headPosition = { Utils::getRandomRangeInt(8, width - 8), Utils::getRandomRangeInt(8, height - 8) };
+
+	switch (_direction) {
+		case UP:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x, headPosition.y + 1 };
+			_segments[2] = { headPosition.x, headPosition.y + 2 };
+			_segments[3] = { headPosition.x, headPosition.y + 3 };
+			break;
+
+		case DOWN:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x, headPosition.y - 1 };
+			_segments[2] = { headPosition.x, headPosition.y - 2 };
+			_segments[3] = { headPosition.x, headPosition.y - 3 };
+			break;
+
+		case LEFT:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x + 1, headPosition.y };
+			_segments[2] = { headPosition.x + 2, headPosition.y };
+			_segments[3] = { headPosition.x + 3, headPosition.y };
+			break;
+
+		case RIGHT:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x - 1, headPosition.y };
+			_segments[2] = { headPosition.x - 2, headPosition.y };
+			_segments[3] = { headPosition.x - 3, headPosition.y };
+			break;
+	}
 }
 ```

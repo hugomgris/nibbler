@@ -1,11 +1,54 @@
 #include "../incs/Snake.hpp"
 #include <iostream>
 
-Snake::Snake(): _length(4), _direction(LEFT) {
-	_segments[0] = {7, 10};
-	_segments[1] = {8, 10};
-	_segments[2] = {9, 10};
-	_segments[3] = {10, 10};
+Snake::Snake(int width, int height): _length(4) {
+	switch (Utils::getRandomInt(3))
+	{
+		case 0:
+			_direction = UP;
+			break;
+		case 1:
+			_direction = DOWN;
+			break;
+		case 2:
+			_direction = LEFT;
+			break;
+		case 3:
+			_direction = RIGHT;
+			break;
+	}
+
+	Vec2 headPosition = { Utils::getRandomRangeInt(8, width - 8), Utils::getRandomRangeInt(8, height - 8) };
+
+	switch (_direction) {
+		case UP:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x, headPosition.y + 1 };
+			_segments[2] = { headPosition.x, headPosition.y + 2 };
+			_segments[3] = { headPosition.x, headPosition.y + 3 };
+			break;
+
+		case DOWN:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x, headPosition.y - 1 };
+			_segments[2] = { headPosition.x, headPosition.y - 2 };
+			_segments[3] = { headPosition.x, headPosition.y - 3 };
+			break;
+
+		case LEFT:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x + 1, headPosition.y };
+			_segments[2] = { headPosition.x + 2, headPosition.y };
+			_segments[3] = { headPosition.x + 3, headPosition.y };
+			break;
+
+		case RIGHT:
+			_segments[0] = headPosition;
+			_segments[1] = { headPosition.x - 1, headPosition.y };
+			_segments[2] = { headPosition.x - 2, headPosition.y };
+			_segments[3] = { headPosition.x - 3, headPosition.y };
+			break;
+	}
 }
 
 Snake::Snake(const Snake &other)

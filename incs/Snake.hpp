@@ -1,5 +1,6 @@
 #pragma once
 #include "DataStructs.hpp"
+#include "Utils.hpp"
 
 enum direction {
 	LEFT,
@@ -16,7 +17,8 @@ class Snake {
 
 
 	public:
-		Snake();
+		Snake() = delete;
+		Snake(int width, int height);
 
 		Snake(const Snake &other);
 		Snake &operator=(const Snake &other);
