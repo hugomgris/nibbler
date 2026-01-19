@@ -15,16 +15,44 @@ private:
 	int screenWidth;
 	int screenHeight;
 	Camera3D camera;
+	Texture2D grainTexture;  // Pre-generated grain texture
 	
 	// Colors
-	Color lightSquare = { 180, 180, 200, 255 };
-	Color darkSquare = { 120, 120, 140, 255 };
-	Color wallColor = { 80, 80, 100, 255 };
-	Color wallColorFade = { 80, 80, 100, 150 };
-	Color headColor = { 30, 180, 30, 255 };
-	Color BodyColor_1 = { 50, 205, 50, 255 };     // Lime green
-	Color BodyColor_2 = { 50, 255, 50, 255 };     
-	Color foodColor = { 220, 20, 60, 255 };       // Crimson red
+	Color customWhite = { 255, 248, 227, 255};      // Warm off-white (cream)
+	Color customBlack = { 0, 7, 28, 255};           // Deep navy black
+	
+	// Ground colors - Light squares
+	Color groundLightTop = customWhite;
+	Color groundLightFront = { 26, 64, 96, 255 };      // Blue
+	Color groundLightSide = { 254, 74, 81, 255 };      // Red
+	Color groundHidden = customBlack;
+	
+	// Ground colors - Dark squares
+	Color groundDarkTop = { 200, 195, 178, 255 };      // Darker cream/beige
+	Color groundDarkFront = { 18, 45, 68, 255 };       // Darker blue
+	Color groundDarkSide = { 180, 52, 58, 255 };       // Darker red
+	
+	// Wall colors
+	Color wallColor = { 147, 112, 219, 255 };       // Medium purple
+	Color wallColorFade = { 147, 112, 219, 120 };   // Faded purple (transparent)
+	
+	// Snake colors - Blue shades (matches ground blue)
+	// Light segments
+	Color snakeLightTop = { 135, 206, 250, 255 };      // Light sky blue (brightest)
+	Color snakeLightFront = { 26, 64, 96, 255 };       // Ground blue (darker)
+	Color snakeLightSide = { 70, 130, 180, 255 };      // Steel blue (lighter than front)
+	
+	// Dark segments
+	Color snakeDarkTop = { 70, 130, 180, 255 };        // Steel blue
+	Color snakeDarkFront = { 18, 45, 68, 255 };        // Ground dark blue (darker)
+	Color snakeDarkSide = { 26, 64, 96, 255 };         // Ground blue (lighter than front)
+	Color snakeHidden = customBlack;
+	
+	// Food colors - Red shades (based on ground red)
+	Color foodTop = { 255, 120, 120, 255 };            // Light coral red (brightest)
+	Color foodFront = { 180, 52, 58, 255 };            // Ground dark red (darker)
+	Color foodSide = { 254, 74, 81, 255 };             // Ground red (lighter than front)
+	Color foodHidden = customBlack; 
 	
 public:
 	RaylibGraphic();
@@ -37,6 +65,9 @@ public:
 	void drawWalls();
 	void drawSnake(const Snake* snake);
 	void drawFood(const Food* food);
+	void drawCubeCustomFaces(Vector3 position, float width, float height, float length,
+	                         Color front, Color back, Color top, Color bottom, Color right, Color left);
+	void drawNoiseGrain();  // Post-processing noise overlay
 
 	void init(int width, int height) override;
 	void render(const GameState& state) override;
