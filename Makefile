@@ -37,21 +37,18 @@ CC              := c++
 CFLAGS          := -Wall -Wextra -Werror -std=c++20 -g -fsanitize=address $(INCLUDES)
 LIB_CFLAGS      := -Wall -Wextra -Werror -std=c++20 -g -fPIC $(INCLUDES)
 DEPFLAGS        := -MMD -MP
-LDFLAGS         := -ldl
+LDFLAGS         := -ldl -L$(PWD)/libs/ncurses/lib -lncursesw -Wl,-rpath,$(PWD)/libs/ncurses/lib
 
 # -=-=-=-=-    EXTERNAL LIBRARIES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 LIB_DIR         := libs
 SDL_DIR         := $(LIB_DIR)/SDL2
 RAYLIB_DIR      := $(LIB_DIR)/raylib
-NCURSES_DIR     := $(LIB_DIR)/ncurses #dummy, ncurses is system installed
+NCURSES_DIR     := $(LIB_DIR)/ncurses
 
 SDL_REPO        := https://github.com/libsdl-org/SDL.git
 RAYLIB_REPO     := https://github.com/raysan5/raylib.git
-
-# Check if libraries exist
-SDL_EXISTS      := $(wildcard $(SDL_DIR)/CMakeLists.txt)
-RAYLIB_EXISTS    := $(wildcard $(RAYLIB_DIR)/src/raylib.h)
+NCURSES_URL     := https://invisible-mirror.net/archives/ncurses/ncurses-6.4.tar.gz
 
 # -=-=-=-=-    GRAPHIC LIBRARY SOURCE FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
@@ -71,31 +68,51 @@ GAME_OBJS        := $(OBJDIR)/Snake.o $(OBJDIR)/Food.o $(OBJDIR)/GameManager.o $
 
 SDL_CFLAGS       := $(LIB_CFLAGS) -I$(SDL_DIR)/include
 RAYLIB_CFLAGS    := $(LIB_CFLAGS) -I$(RAYLIB_DIR)/src
-NCURSES_CFLAGS   := $(LIB_CFLAGS)
+NCURSES_CFLAGS   := $(LIB_CFLAGS) -I$(NCURSES_DIR)/include -I$(NCURSES_DIR)/include/ncursesw
 
 SDL_LDFLAGS      := -L$(SDL_DIR)/build -lSDL2-2.0 -Wl,-rpath,$(SDL_DIR)/build
 RAYLIB_LDFLAGS   := -L$(RAYLIB_DIR)/src -lraylib -lm -lpthread -ldl -lrt -lX11
-NCURSES_LDFLAGS  := -lncursesw
+NCURSES_LDFLAGS  := -L$(NCURSES_DIR)/lib -lncursesw -Wl,-rpath,$(NCURSES_DIR)/lib
 
 # -=-=-=-=-    TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 all: check_libs directories $(SDL_LIB_NAME) $(RAYLIB_LIB_NAME) $(NCURSES_LIB_NAME) $(NAME)
 
 check_libs:
-ifndef SDL_EXISTS
-	@echo "$(YELLOW)SDL2 not found. Cloning...$(DEF_COLOR)"
-	@mkdir -p $(LIB_DIR)
-	@git clone --depth 1 --branch release-2.28.x $(SDL_REPO) $(SDL_DIR)
-	@cd $(SDL_DIR) && mkdir -p build && cd build && cmake .. && make -j4
-	@echo "$(GREEN)SDL2 built successfully$(DEF_COLOR)"
-endif
-ifndef RAYLIB_EXISTS
-	@echo "$(YELLOW)Raylib not found. Cloning...$(DEF_COLOR)"
-	@mkdir -p $(LIB_DIR)
-	@git clone --depth 1 $(RAYLIB_REPO) $(RAYLIB_DIR)
-	@cd $(RAYLIB_DIR)/src && make -j4
-	@echo "$(GREEN)Raylib built successfully$(DEF_COLOR)"
-endif
+	@if [ ! -f "$(SDL_DIR)/CMakeLists.txt" ]; then \
+		echo "$(YELLOW)SDL2 not found. Cloning...$(DEF_COLOR)"; \
+		mkdir -p $(LIB_DIR); \
+		git clone --depth 1 --branch release-2.28.x $(SDL_REPO) $(SDL_DIR); \
+		cd $(SDL_DIR) && mkdir -p build && cd build && cmake .. && make -j4; \
+		echo "$(GREEN)SDL2 built successfully$(DEF_COLOR)"; \
+	fi
+	@if [ ! -f "$(RAYLIB_DIR)/src/raylib.h" ]; then \
+		echo "$(YELLOW)Raylib not found. Cloning...$(DEF_COLOR)"; \
+		mkdir -p $(LIB_DIR); \
+		git clone --depth 1 $(RAYLIB_REPO) $(RAYLIB_DIR); \
+		cd $(RAYLIB_DIR)/src && make -j4; \
+		echo "$(GREEN)Raylib built successfully$(DEF_COLOR)"; \
+	fi
+	@if [ ! -f "$(NCURSES_DIR)/lib/libncursesw.so" ]; then \
+		echo "$(YELLOW)NCurses not found. Downloading and building...$(DEF_COLOR)"; \
+		mkdir -p $(LIB_DIR); \
+		cd $(LIB_DIR) && \
+		curl -L -o ncurses.tar.gz $(NCURSES_URL) && \
+		tar xzf ncurses.tar.gz && \
+		mv ncurses-6.4 ncurses-src && \
+		cd ncurses-src && \
+		./configure --prefix=$(PWD)/$(NCURSES_DIR) \
+			--enable-widec \
+			--with-shared \
+			--without-debug \
+			--enable-pc-files \
+			--with-pkg-config-libdir=$(PWD)/$(NCURSES_DIR)/lib/pkgconfig && \
+		make -j4 && \
+		make install && \
+		cd .. && \
+		rm -rf ncurses-src ncurses.tar.gz; \
+		echo "$(GREEN)NCurses built successfully$(DEF_COLOR)"; \
+	fi
 	@echo "$(GREEN)All libraries ready$(DEF_COLOR)"
 
 $(SDL_LIB_NAME): $(SDL_OBJS) $(GAME_OBJS)
@@ -139,10 +156,6 @@ $(NAME): $(OBJS)
 
 -include $(DEPS)
 -include $(DEPDIR)/libs/*.d
-
-%/.dummy:
-	@mkdir -p $(@D)
-	@touch $@
 
 directories:
 	@mkdir -p $(OBJDIR)

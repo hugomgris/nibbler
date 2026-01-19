@@ -9,8 +9,19 @@
 #include <thread>
 #include <fcntl.h>
 #include <iostream>
+#include <ncurses.h>
+
+// Cleanup handler for ncurses when program exits
+void cleanupNCurses() {
+	if (isendwin() == FALSE) {
+		endwin();
+		std::cout << BYEL << "[Main] Called endwin() on exit" << RESET << std::endl;
+	}
+}
 
 int main(int argc, char **argv) {
+	std::atexit(cleanupNCurses);
+	
 	if (argc != 3)
 	{
 		std::cout << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;

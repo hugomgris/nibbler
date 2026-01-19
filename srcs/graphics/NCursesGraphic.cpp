@@ -11,9 +11,10 @@ class NCursesGraphic : public IGraphic {
 private:
 	int		width, height;
 	WINDOW	*gameWindow;
+	bool	isInitialized;
 	
 public:
-	NCursesGraphic() : width(0), height(0), gameWindow(nullptr) {}
+	NCursesGraphic() : width(0), height(0), gameWindow(nullptr), isInitialized(false) {}
 
 	NCursesGraphic(const NCursesGraphic&) = delete;
 	NCursesGraphic &operator=(const NCursesGraphic&) = delete;
@@ -23,19 +24,34 @@ public:
 		width = w;
 		height = h;
 		
-		std::cout << BBLU << "[NCurses] Initialized: " << width << "x" << height << RESET << std::endl;
+		std::cout << BBLU << "[NCurses] Initializing: " << width << "x" << height << RESET << std::endl;
 		
-		initscr();
+		// Check if ncurses was previously ended (isendwin returns TRUE if endwin was called)
+		bool wasEnded = (isendwin() == TRUE);
+		
+		if (wasEnded || stdscr == nullptr) {
+			// Initialize ncurses if it was ended or never started
+			std::cout << BBLU << "[NCurses] Starting fresh ncurses session" << RESET << std::endl;
+			initscr();
+		} else {
+			std::cout << BBLU << "[NCurses] Reusing existing ncurses session" << RESET << std::endl;
+			// Refresh to ensure clean state
+			refresh();
+		}
+		
 		cbreak();
 		noecho();
 		keypad(stdscr, TRUE);
 		nodelay(stdscr, TRUE);
 		curs_set(0);
 		
-		start_color();
-		init_pair(1, COLOR_GREEN, COLOR_BLACK);
-		init_pair(2, COLOR_RED, COLOR_BLACK);
-		init_pair(3, COLOR_BLACK, COLOR_BLACK);
+		// Initialize colors
+		if (has_colors()) {
+			start_color();
+			init_pair(1, COLOR_GREEN, COLOR_BLACK);
+			init_pair(2, COLOR_RED, COLOR_BLACK);
+			init_pair(3, COLOR_BLACK, COLOR_BLACK);
+		}
 		
 		// +2 for borders (1 left, 1 right, 1 top, 1 bottom)
 		// Width doubled for square-ish cells
@@ -46,12 +62,17 @@ public:
 			1                // X position (col 1)
 		);
 		
-		keypad(gameWindow, TRUE);
-		nodelay(gameWindow, TRUE);
+		if (gameWindow) {
+			keypad(gameWindow, TRUE);
+			nodelay(gameWindow, TRUE);
+		}
 
 		bkgd(COLOR_PAIR(0));
 		clear();
 		refresh();
+		
+		isInitialized = true;
+		std::cout << BBLU << "[NCurses] Initialized successfully" << RESET << std::endl;
 	}
 	
 	void render(const GameState& state) override {
@@ -115,9 +136,34 @@ public:
 	}
 	
 	~NCursesGraphic() {
-		if (gameWindow) delwin(gameWindow);  // Delete subwindow first
-		endwin();
-		std::cout << BBLU << "[NCurses] Destroyed" << RESET << std::endl;
+		if (!isInitialized) {
+			return;
+		}
+		
+		std::cout << BBLU << "[NCurses] Cleaning up..." << RESET << std::endl;
+		
+		// Delete subwindow first
+		if (gameWindow) {
+			// Clear the window before deleting
+			werase(gameWindow);
+			wnoutrefresh(gameWindow);
+			doupdate();
+			delwin(gameWindow);
+			gameWindow = nullptr;
+		}
+		
+		// Clear main screen but DON'T call endwin()
+		// This keeps ncurses alive between library switches
+		if (stdscr) {
+			wclear(stdscr);
+			wrefresh(stdscr);
+		}
+		
+		// Reset terminal state
+		fflush(stdout);
+		
+		isInitialized = false;
+		std::cout << BBLU << "[NCurses] Destroyed (keeping ncurses session alive)" << RESET << std::endl;
 	}
 };
 
