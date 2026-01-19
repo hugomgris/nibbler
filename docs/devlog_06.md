@@ -13,6 +13,7 @@
 4. [Dimensional Ambitions](#65-dimensional-ambitions)
 	- [Isometric Worldview 101](#isometric-worldview-101)
 	- [Snake Cubism](#snake-cubism)
+	- [Making Some (Post Processing) Noise](#making-some-post-processing-noise)
 
 
 <br>
@@ -538,5 +539,151 @@ void RaylibGraphic::render(const GameState& state){
 ```
 <br>
 
+### Making Some (Post Processing) Noise
+After achieving the basic 3D render, I wanted to add some visual polish to give the game a more retro aesthetic (once again I find myself pursuing analog graphics, color me surprised). Noise Grain is a classic post-processing effect that adds texture and character to the visuals, but let's first break down how post-processing works in general, then dive into the specific Raylib implementation.
+
+#### General Post-Processing Pipeline
+Post-processing effects are visual modifications applied **after** the main scene has been rendered. The typical flow is:
+
+1. **Render the Scene**: Draw all 3D geometry (ground, walls, snake, food)
+2. **Capture the Frame**: Optionally render to a texture/framebuffer instead of directly to screen
+3. **Apply Effects**: Process the rendered image (grain, blur, color grading, etc.)
+4. **Display Final Result**: Draw the processed image to the screen
+
+The key concept is **layering**: you build up your final image by compositing multiple passes, each adding a specific visual effect. If you ever worked in a layer-based software (image/video editing, CAD drawing, motion graphics, ...) you know what the deal is.
+
+#### The Texture-Based Approach
+For effects like grain, I've found out that the most efficient approach is to:
+- **Pre-generate** a noise texture once during initialization
+- **Overlay** it on top of the rendered frame each frame
+- Use **alpha blending** to control intensity
+
+This is much faster than generating noise procedurally every frame, especially at high resolutions like 1920×1080.
+
+#### Raylib Implementation
+Here's how the film grain effect is implemented in the Nibbler Raylib renderer:
+
+##### 1. Texture Generation (init())
+During initialization, we create a noise texture slightly larger than the screen to allow for movement without edge gaps:
+
+```cpp
+void init(int width, int height) {
+    // ... other initialization ...
+    
+    // Generate grain texture slightly larger than screen
+    int paddedWidth = screenWidth + 40;   // +40 pixels for oscillation room
+    int paddedHeight = screenHeight + 40;
+    Image grainImage = GenImageWhiteNoise(paddedWidth, paddedHeight, 0.75f);
+    grainTexture = LoadTextureFromImage(grainImage);
+    UnloadImage(grainImage);  // Free CPU memory, keep GPU texture
+}
+```
+
+**Key parameters**:
+- `0.75f` is the noise factor (0.0 = no noise, 1.0 = full noise)
+- The padding ensures smooth oscillation without black edges (if the noise texture is exactly the same size as the window, moving it results in those bars)
+
+##### 2. Animated Overlay (drawNoiseGrain())
+Each frame, the grain texture is drawn with subtle animation for variety:
+
+```cpp
+void drawNoiseGrain() {
+    float time = GetTime();
+    
+    // Oscillate within safe range (±10 pixels from -20 offset)
+    float offsetX = sinf(time * 0.5f) * 10.0f - 20.0f;
+    float offsetY = cosf(time * 0.3f) * 10.0f - 20.0f;
+    
+    // Draw with low opacity for subtle effect
+    DrawTextureEx(grainTexture, (Vector2){ offsetX, offsetY }, 0.0f, 1.0f, 
+                  (Color){ 255, 255, 255, 20 });  // Alpha = 20
+}
+```
+
+**Animation math**:
+- `sin()` and `cos()` create smooth oscillation (natural back-and-forth)
+- The `-20.0f` offset centers the padded texture
+- `* 10.0f` controls oscillation range (±10 pixels)
+- Different frequencies (`0.5f` vs `0.3f`) create organic movement
+
+**Blending**:
+- White color (`255, 255, 255`) preserves grain pattern
+- Alpha `20` controls visibility (higher = more visible grain)
+- Raylib automatically blends using alpha channel
+
+##### 3. Render Pipeline Integration
+The grain effect is applied **last** in the render pipeline, after all 3D geometry and 2D UI:
+
+```cpp
+void render(const GameState& state) {
+    BeginDrawing();
+    ClearBackground(customBlack);
+    
+    // 3D rendering
+    BeginMode3D(camera);
+    drawGroundPlane();
+    drawSnake(state.snake);
+    drawFood(state.food);
+    EndMode3D();
+    
+    // 2D HUD overlay
+    DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
+    DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
+    DrawFPS(screenWidth - 95, 10);
+    
+    // Post-processing: Film grain (drawn last!)
+    drawNoiseGrain();
+    
+    EndDrawing();
+}
+```
+
+##### 4. Cleanup
+It is imperative to unload the texture when the renderer is destroyed, for obvious reasons:
+
+```cpp
+~RaylibGraphic() {
+    UnloadTexture(grainTexture);
+    CloseWindow();
+}
+```
+
+#### Tuning the Effect
+The grain effect is highly customizable through a few key parameters:
+
+**Intensity** (in `drawNoiseGrain()`):
+```cpp
+DrawTextureEx(grainTexture, offset, 0.0f, 1.0f, (Color){ 255, 255, 255, 20 });
+//                                                                          ^^
+// 10-15 = Very subtle
+// 20-30 = Noticeable (current setting)
+// 40-60 = Heavy grain
+```
+
+**Density** (in `init()`):
+```cpp
+Image grainImage = GenImageWhiteNoise(paddedWidth, paddedHeight, 0.75f);
+//                                                               ^^^^
+// 0.5 = Sparse grain
+// 0.75 = Medium density (current setting)
+// 0.9 = Dense grain
+```
+
+**Animation Speed** (in `drawNoiseGrain()`):
+```cpp
+float offsetX = sinf(time * 0.5f) * 10.0f - 20.0f;
+//                         ^^^
+// 0.3 = Slow drift
+// 0.5 = Medium speed (current setting)
+// 1.0 = Fast movement
+```
+
+<br>
+
+<img src="./ItsLikeIfTheSnakeReachedItsMegaLevelDigievolution.png" alt="Snake3D, D as in DigiEvolution"/>
+
+<br>
+
 ---
+
 > I think this is enough for today. Tomorrow I'll try to work on the entry and exit points (with some menuing and whatnot).

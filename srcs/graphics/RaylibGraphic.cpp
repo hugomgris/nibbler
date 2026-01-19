@@ -3,6 +3,7 @@
 #include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
 #include "../../incs/RaylibGraphic.hpp"
+#include <rlgl.h>  // For low-level drawing functions (rlPushMatrix, rlBegin, etc.)
 
 RaylibGraphic::RaylibGraphic() :
 	cubeSize(2.0f),
@@ -12,9 +13,69 @@ RaylibGraphic::RaylibGraphic() :
 	screenHeight(1080) {}
 
 RaylibGraphic::~RaylibGraphic() {
+		UnloadTexture(grainTexture);
 		CloseWindow();
 		std::cout << BYEL << "[Raylib 3D] Destroyed" << RESET << std::endl;
 	}
+
+void RaylibGraphic::drawCubeCustomFaces(Vector3 position, float width, float height, float length,
+                                         Color front, Color back, Color top, Color bottom, Color right, Color left) {
+	float x = position.x;
+	float y = position.y;
+	float z = position.z;
+	
+	// In isometric view, typically visible faces are: front (+Z), top (+Y), right (+X)
+	
+	rlPushMatrix();
+	rlTranslatef(x, y, z);
+	
+	rlBegin(RL_QUADS);
+	
+	// Front face (+Z) - typically visible in isometric
+	rlColor4ub(front.r, front.g, front.b, front.a);
+	rlVertex3f(-width/2, -height/2, length/2);
+	rlVertex3f(width/2, -height/2, length/2);
+	rlVertex3f(width/2, height/2, length/2);
+	rlVertex3f(-width/2, height/2, length/2);
+	
+	// Back face (-Z)
+	rlColor4ub(back.r, back.g, back.b, back.a);
+	rlVertex3f(-width/2, -height/2, -length/2);
+	rlVertex3f(-width/2, height/2, -length/2);
+	rlVertex3f(width/2, height/2, -length/2);
+	rlVertex3f(width/2, -height/2, -length/2);
+	
+	// Top face (+Y) - typically visible in isometric
+	rlColor4ub(top.r, top.g, top.b, top.a);
+	rlVertex3f(-width/2, height/2, -length/2);
+	rlVertex3f(-width/2, height/2, length/2);
+	rlVertex3f(width/2, height/2, length/2);
+	rlVertex3f(width/2, height/2, -length/2);
+	
+	// Bottom face (-Y)
+	rlColor4ub(bottom.r, bottom.g, bottom.b, bottom.a);
+	rlVertex3f(-width/2, -height/2, -length/2);
+	rlVertex3f(width/2, -height/2, -length/2);
+	rlVertex3f(width/2, -height/2, length/2);
+	rlVertex3f(-width/2, -height/2, length/2);
+	
+	// Right face (+X) - typically visible in isometric
+	rlColor4ub(right.r, right.g, right.b, right.a);
+	rlVertex3f(width/2, -height/2, -length/2);
+	rlVertex3f(width/2, height/2, -length/2);
+	rlVertex3f(width/2, height/2, length/2);
+	rlVertex3f(width/2, -height/2, length/2);
+	
+	// Left face (-X)
+	rlColor4ub(left.r, left.g, left.b, left.a);
+	rlVertex3f(-width/2, -height/2, -length/2);
+	rlVertex3f(-width/2, -height/2, length/2);
+	rlVertex3f(-width/2, height/2, length/2);
+	rlVertex3f(-width/2, height/2, -length/2);
+	
+	rlEnd();
+	rlPopMatrix();
+}
 
 void RaylibGraphic::setupCamera() {
 	float centerX = (gridWidth * cubeSize) / 2.0f;
@@ -42,22 +103,26 @@ void RaylibGraphic::setupCamera() {
 
 void RaylibGraphic::drawGroundPlane() {
 	for (int z = 0; z < gridHeight; z++) {
-		for (int x = 0; x < gridWidth; x++) {
-			Color squareColor = ((x + z) % 2 == 0) ? lightSquare : darkSquare;
-			
+		for (int x = 0; x < gridWidth; x++) {		
 			Vector3 position = {
 				x * cubeSize,
 				0.0f,
 				z * cubeSize
 			};
 			
-			DrawCube(position, cubeSize, cubeSize, cubeSize, squareColor);
+			if ((x + z) % 2 == 0) {
+				drawCubeCustomFaces(position, cubeSize, cubeSize, cubeSize,
+			                    groundLightFront, groundHidden, groundLightTop, groundHidden, groundLightSide, groundHidden);
+			}
+			else {
+				drawCubeCustomFaces(position, cubeSize, cubeSize, cubeSize,
+			                    groundDarkFront, groundHidden, groundDarkTop, groundHidden, groundDarkSide, groundHidden);
+			}
 		}
 	}
 }
 
 void RaylibGraphic::drawWalls() {
-	// Stack of 3 cubes for walls (temporarily)
 	for (int level = 0; level < 3; level++) {
 		float yPos = (level) * cubeSize;
 		
@@ -84,8 +149,7 @@ void RaylibGraphic::drawWalls() {
 }
 
 void RaylibGraphic::drawSnake(const Snake* snake) {
-	// Draw snake at level 1 (one cube above ground)
-	float yPos = cubeSize;  // Center of level 1
+	float yPos = cubeSize;
 	
 	for (int i = 0; i < snake->getLength(); i++) {
 		const Vec2& segment = snake->getSegments()[i];
@@ -96,14 +160,17 @@ void RaylibGraphic::drawSnake(const Snake* snake) {
 			segment.y * cubeSize
 		};
 		
-		if (i == 0) {
-			DrawCube(position, cubeSize, cubeSize, cubeSize, headColor);
+		// Head is full size, body is 80% size
+		float size = (i == 0) ? cubeSize : cubeSize * 0.8f;
+		if (i > 0) position.y *= 0.8f;  // Adjust Y position for body
+		
+		// Checkerboard pattern for all segments
+		if (i % 2 == 0) {
+			drawCubeCustomFaces(position, size, size, size,
+			                    snakeLightFront, snakeHidden, snakeLightTop, snakeHidden, snakeLightSide, snakeHidden);
 		} else {
-			// Body pieces set up to 80% of cube size
-			position.y = position.y * .8f;
-			(i % 2 == 0) ?
-				DrawCube(position, cubeSize *.8f, cubeSize *.8f, cubeSize *.8f, BodyColor_1) :
-				DrawCube(position, cubeSize *.8f, cubeSize *.8f, cubeSize *.8f, BodyColor_2) ;
+			drawCubeCustomFaces(position, size, size, size,
+			                    snakeDarkFront, snakeHidden, snakeDarkTop, snakeHidden, snakeDarkSide, snakeHidden);
 		}
 	}
 }
@@ -120,8 +187,21 @@ void RaylibGraphic::drawFood(const Food* food) {
 	
 	// Pulsing effect for food
 	float pulse = 1.0f + sinf(GetTime() * 3.0f) * 0.1f;
+
+	drawCubeCustomFaces(position, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse,
+			                    foodFront, foodHidden, foodTop, foodHidden, foodSide, foodHidden);
+}
+
+void RaylibGraphic::drawNoiseGrain() {
+	// Use time to create subtle variation without continuous displacement
+	float time = GetTime();
 	
-	DrawCube(position, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, foodColor);
+	// Oscillation (might remove this, I'm not sure)
+	float offsetX = sinf(time * 0.5f) * 10.0f - 20.0f;  // Oscillate around -20 (centers the padded texture)
+	float offsetY = cosf(time * 0.3f) * 10.0f - 20.0f;  // Oscillate around -20
+	
+	// Draw with transparency
+	DrawTextureEx(grainTexture, (Vector2){ offsetX, offsetY }, 0.0f, 1.0f, (Color){ 255, 255, 255, 20 });
 }
 
 void RaylibGraphic::init(int width, int height) {
@@ -133,12 +213,19 @@ void RaylibGraphic::init(int width, int height) {
 	
 	setupCamera();
 	
+	// Grain Texture
+	int paddedWidth = screenWidth + 40;   // +40 pixels (±20 for oscillation)
+	int paddedHeight = screenHeight + 40;
+	Image grainImage = GenImageWhiteNoise(paddedWidth, paddedHeight, 0.75f);
+	grainTexture = LoadTextureFromImage(grainImage);
+	UnloadImage(grainImage);
+	
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
 
 void RaylibGraphic::render(const GameState& state){
 	BeginDrawing();
-	ClearBackground(RAYWHITE);
+	ClearBackground(customBlack);
 	
 	BeginMode3D(camera);
 	
@@ -154,9 +241,12 @@ void RaylibGraphic::render(const GameState& state){
 	EndMode3D();
 	
 	// 2D HUD overlay
-	DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, DARKGRAY);
-	DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, DARKGRAY);
+	DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
+	DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
 	DrawFPS(screenWidth - 95, 10);
+	
+	// Post Processing
+	drawNoiseGrain();
 	
 	EndDrawing();
 }
