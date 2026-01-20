@@ -9,10 +9,9 @@
 #include <chrono>
 #include <algorithm>
 
-// Struct to represent an animated border line
 struct BorderLine {
-	float progress;        // 0.0 to 1.0 (0 = at arena, 1 = at window edge)
-	float age;            // Time since spawn in seconds
+	float progress;        // 0 = at arena, 1 = at window edge
+	float age;
 	
 	BorderLine() : progress(0.0f), age(0.0f) {}
 };
@@ -21,17 +20,17 @@ class SDLGraphic : public IGraphic {
 private:
 	SDL_Window		*window;
 	SDL_Renderer	*renderer;
-	int				gridWidth;		// Game arena width in cells
-	int				gridHeight;		// Game arena height in cells
+	int				gridWidth;
+	int				gridHeight;
 	int				cellSize;
-	int				borderOffset;	// Offset from window edge to game arena (2 * cellSize)
+	int				borderOffset;
 
 	// Tunnel effect animation
 	std::vector<BorderLine> borderLines;
 	std::chrono::high_resolution_clock::time_point lastSpawnTime;
-	float spawnInterval;     // Seconds between spawns (tweakable)
-	float animationSpeed;    // Speed multiplier for the effect
-	bool enableTunnelEffect; // Toggle the effect on/off
+	float spawnInterval;
+	float animationSpeed;
+	bool enableTunnelEffect;
 
 	// Colors
 	SDL_Color customWhite = { 255, 248, 227, 255};	// Off-white
@@ -40,7 +39,7 @@ private:
 	SDL_Color lightRed = { 254, 74, 81, 255 };
 	//SDL_Color darkRed = { 180, 52, 58, 255 };
 
-	SDL_Color lightBlue = { 26, 64, 96, 255 };
+	SDL_Color lightBlue = { 70, 130, 180, 255 };
 	//SDL_Color darkBlue = { 18, 45, 68, 255 };
 	
 	// Helper function to set render color from SDL_Color
@@ -49,7 +48,7 @@ private:
 	// Tunnel effect helper functions
 	void updateTunnelEffect(float deltaTime);
 	void renderTunnelEffect();
-	float easeInQuad(float t);  // Easing function for acceleration
+	float easeInQuad(float t);
 	
 public:
 	SDLGraphic();

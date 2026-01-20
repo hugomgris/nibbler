@@ -24,12 +24,18 @@ int main(int argc, char **argv) {
 	
 	if (argc != 3)
 	{
-		std::cout << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;
+		std::cerr << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;
 		return 1;
 	}
 
 	int width = std::stoi(argv[1]);
 	int height = std::stoi(argv[2]);
+
+	if (width < 16 || height < 16)
+	{
+		std::cerr << "Minimal arena width and height values are 16 units! Try running again with those or higher values!" << std::endl;
+		return 1;
+	}
 
 	const char *libs[] = {
 		"./nibbler_ncurses.so",

@@ -22,8 +22,8 @@ void SDLGraphic::init(int width, int height) {
 	gridWidth = width;
 	gridHeight = height;
 	
-	// Border offset is 2 * cellSize on each side
-	borderOffset = 2 * cellSize;
+	// Border offset is 1 * cellSize on each side
+	borderOffset = 1 * cellSize;
 	
 	// Window size = game arena + 2*borderOffset (on each side)
 	int windowWidth = (width * cellSize) + (2 * borderOffset);
@@ -52,25 +52,19 @@ void SDLGraphic::setRenderColor(SDL_Color color, bool customAlpha, Uint8 alphaVa
 }
 	
 void SDLGraphic::render(const GameState& state) {
-	// Calculate delta time for animation
 	static auto lastFrameTime = std::chrono::high_resolution_clock::now();
 	auto now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float> deltaTime = now - lastFrameTime;
 	lastFrameTime = now;
 
-	// Update tunnel effect animation
 	updateTunnelEffect(deltaTime.count());
 
-	// Black background
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
-
-	//drawBorder(5);
 	
-	// Draw tunnel effect
 	renderTunnelEffect();
 	
-	// Draw snake
+	// Draw snake -> refactor into its own function?
 	setRenderColor(lightBlue);
 	for (int i = 0; i < state.snake->getLength(); ++i) {
 		SDL_Rect rect = {
@@ -82,7 +76,7 @@ void SDLGraphic::render(const GameState& state) {
 		SDL_RenderFillRect(renderer, &rect);
 	}
 	
-	// Draw food
+	// Draw food -> refactor into its own function?
 	setRenderColor(lightRed);
 	SDL_Rect foodRect = {
 		borderOffset + (state.food->getPosition().x * cellSize),
@@ -91,14 +85,14 @@ void SDLGraphic::render(const GameState& state) {
 		cellSize
 	};
 	SDL_RenderFillRect(renderer, &foodRect);
+
+	drawBorder(cellSize);
 	
 	SDL_RenderPresent(renderer);
 }
 
 void SDLGraphic::drawBorder(int thickness) {
-	// Enable blend mode for filled rectangles
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-	setRenderColor(customWhite, true, 100);  // The best/easiest way to manage the rectangle's alpha is by splitting it
+	setRenderColor(customWhite);
 	
 	int innerX = borderOffset;
 	int innerY = borderOffset;
@@ -115,9 +109,6 @@ void SDLGraphic::drawBorder(int thickness) {
 	SDL_RenderFillRect(renderer, &bottom);
 	SDL_RenderFillRect(renderer, &left);
 	SDL_RenderFillRect(renderer, &right);
-	
-	// Reset blend mode for other drawing
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 	
 Input SDLGraphic::pollInput() {
@@ -143,7 +134,6 @@ Input SDLGraphic::pollInput() {
 	return Input::None;
 }
 
-// Easing function for smooth acceleration (quadratic ease-in)
 float SDLGraphic::easeInQuad(float t) {
 	return t * t;
 }
@@ -151,20 +141,17 @@ float SDLGraphic::easeInQuad(float t) {
 void SDLGraphic::updateTunnelEffect(float deltaTime) {
 	if (!enableTunnelEffect) return;
 
-	// Update existing border lines
 	for (auto& line : borderLines) {
 		line.age += deltaTime * animationSpeed;
-		line.progress = easeInQuad(line.age);  // Apply easing for acceleration
+		line.progress = easeInQuad(line.age);
 	}
 
-	// Remove lines that have completed their animation (progress >= 1.0)
 	borderLines.erase(
 		std::remove_if(borderLines.begin(), borderLines.end(),
 			[](const BorderLine& line) { return line.progress >= 1.0f; }),
 		borderLines.end()
 	);
 
-	// Spawn new lines based on spawn interval
 	auto now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float> elapsed = now - lastSpawnTime;
 	
@@ -179,27 +166,22 @@ void SDLGraphic::renderTunnelEffect() {
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-	// Calculate the maximum offset (from arena edge to window edge)
-	int maxOffset = borderOffset;
+	int startOffset = -2 * cellSize;
+	int endOffset = 0;
+	int travelDistance = endOffset - startOffset;
 
 	for (const auto& line : borderLines) {
-		// Calculate current offset from arena edge
-		int currentOffset = static_cast<int>(line.progress * maxOffset);
+		int currentOffset = startOffset + static_cast<int>(line.progress * travelDistance);
 		
-		// Calculate alpha (0 -> 255)
-		Uint8 alpha = static_cast<Uint8>(line.progress * 255);
-		
-		// Calculate line width (1 -> 10)
+		Uint8 alpha = static_cast<Uint8>(line.progress * 150);
+
 		int lineWidth = 1;
 
-		// Calculate the rectangle positions
-		// Arena starts at borderOffset, has dimensions gridWidth*cellSize x gridHeight*cellSize
 		int arenaX = borderOffset;
 		int arenaY = borderOffset;
 		int arenaW = gridWidth * cellSize;
 		int arenaH = gridHeight * cellSize;
 
-		// Draw the four border rectangles expanding outward
 		setRenderColor(customWhite, true, alpha);
 
 		// Top border
