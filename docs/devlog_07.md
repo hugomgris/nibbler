@@ -237,3 +237,202 @@ void SDLGraphic::renderTunnelEffect() {
 <br>
 
 ### Particle Effects
+The tunnel effect is great, but alone it makes the whole window look a little bit empty. Let's add some atmospheric particles to populate the void. The particle system will be based on spawning little rotating squares that fade out and shrink over their lifetime, creating a subtle dust effect.
+
+The `DustParticle` struct will track each particle's state:
+```cpp
+struct DustParticle {
+	float x, y;              // Center position
+	float rotation;          // Current rotation angle (degrees)
+	float rotationSpeed;     // Degrees per second
+	float initialSize;       // Starting size
+	float currentSize;       // Current size (shrinks over time)
+	float lifetime;          // Total lifetime (seconds)
+	float age;               // Current age (seconds)
+	
+	DustParticle(float px, float py, float minSize, float maxSize, float minLifetime, float maxLifetime) 
+		: x(px), y(py), age(0.0f) {
+		initialSize = minSize + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxSize - minSize);
+		currentSize = initialSize;
+		lifetime = minLifetime + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxLifetime - minLifetime);
+		rotation = static_cast<float>(rand() % 360);
+		rotationSpeed = -30.0f + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 60.0f;  // -30 to +30 deg/s
+	}
+};
+```
+- Each particle spawns with randomized attributes within specified ranges
+- `initialSize` and `lifetime` are calculated using linear interpolation between min/max values
+- `rotation` starts at a random angle (0-360°)
+- `rotationSpeed` varies from -30°/s to +30°/s for natural variation
+
+The `SDLGraphic` class gets extended with particle system attributes:
+```cpp
+// Dust particle system
+std::vector<DustParticle> dustParticles;
+int maxDustDensity;          // Maximum concurrent particles
+float dustSpawnInterval;     // Time between spawn attempts
+float dustSpawnTimer;        // Accumulator for spawn timing
+float dustMinSize;           // Minimum particle size
+float dustMaxSize;           // Maximum particle size
+float dustMinLifetime;       // Minimum lifetime
+float dustMaxLifetime;       // Maximum lifetime
+
+// Dust particle system helper functions
+void updateDustParticles(float deltaTime);
+void renderDustParticles();
+void spawnDustParticle();
+void drawRotatedSquare(float cx, float cy, float size, float rotation, Uint8 alpha);
+```
+
+The constructor initializes the particle system with tweakable parameters:
+```cpp
+SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
+	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
+	maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
+	dustMinSize(2.0f), dustMaxSize(6.0f), dustMinLifetime(3.0f), dustMaxLifetime(8.0f) {
+	lastSpawnTime = std::chrono::high_resolution_clock::now();
+}
+```
+- `maxDustDensity(50)` - Caps concurrent particles to prevent performance issues
+- `dustSpawnInterval(0.1f)` - Attempts to spawn a new particle every 0.1 seconds
+- Size range: 2-6 pixels
+- Lifetime range: 3-8 seconds
+
+<br>
+
+**Update Logic:**
+```cpp
+void SDLGraphic::updateDustParticles(float deltaTime) {
+	// Update spawn timer
+	dustSpawnTimer += deltaTime;
+	if (dustSpawnTimer >= dustSpawnInterval) {
+		spawnDustParticle();
+		dustSpawnTimer = 0.0f;
+	}
+	
+	// Update existing particles
+	for (auto& particle : dustParticles) {
+		particle.age += deltaTime;
+		particle.rotation += particle.rotationSpeed * deltaTime;
+		
+		// Calculate progress (0.0 to 1.0)
+		float progress = particle.age / particle.lifetime;
+		
+		// Shrink over time (from initialSize to 1px)
+		particle.currentSize = particle.initialSize * (1.0f - progress) + 1.0f * progress;
+	}
+	
+	// Remove dead particles
+	dustParticles.erase(
+		std::remove_if(dustParticles.begin(), dustParticles.end(),
+			[](const DustParticle& p) { return p.age >= p.lifetime; }),
+		dustParticles.end()
+	);
+}
+```
+- Timer-based spawning ensures consistent particle generation
+- Each particle ages and rotates continuously
+- `progress` (0.0 to 1.0) drives the shrinking animation via linear interpolation
+- Dead particles (age >= lifetime) are removed using the same **erase-remove** pattern as the tunnel effect
+
+<br>
+
+**Spawning Logic:**
+```cpp
+void SDLGraphic::spawnDustParticle() {
+	// Only spawn if we haven't reached max density
+	if (static_cast<int>(dustParticles.size()) >= maxDustDensity) return;
+	
+	// Spawn within the game arena (inside the borders)
+	int arenaX = borderOffset;
+	int arenaY = borderOffset;
+	int arenaW = gridWidth * cellSize;
+	int arenaH = gridHeight * cellSize;
+	
+	float x = arenaX + static_cast<float>(rand() % arenaW);
+	float y = arenaY + static_cast<float>(rand() % arenaH);
+	
+	dustParticles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
+}
+```
+- Respects the `maxDustDensity` cap
+- Particles spawn only within the game arena bounds (not in the border area)
+- Position is randomized across the entire playable space
+
+<br>
+
+**Rendering Logic:**
+```cpp
+void SDLGraphic::renderDustParticles() {
+	for (const auto& particle : dustParticles) {
+		// Calculate fade-out alpha (255 to 0)
+		float progress = particle.age / particle.lifetime;
+		Uint8 alpha = static_cast<Uint8>((1.0f - progress) * 120);  // Max 120 alpha for subtle effect
+		
+		drawRotatedSquare(particle.x, particle.y, particle.currentSize, particle.rotation, alpha);
+	}
+}
+```
+- Alpha fades from 120 to 0 (capped at 120 for subtlety)
+- Uses the same progress calculation for synchronized fade/shrink
+
+<br>
+
+**Drawing Rotated Squares:**
+```cpp
+void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotation, Uint8 alpha) {
+	// Convert rotation to radians
+	float rad = rotation * 3.14159f / 180.0f;
+	float halfSize = size / 2.0f;
+	
+	// Define 4 corners of the square (centered at origin)
+	float corners[4][2] = {
+		{-halfSize, -halfSize},  // Top-left
+		{ halfSize, -halfSize},  // Top-right
+		{ halfSize,  halfSize},  // Bottom-right
+		{-halfSize,  halfSize}   // Bottom-left
+	};
+	
+	// Rotate and translate each corner
+	Sint16 vx[4], vy[4];
+	for (int i = 0; i < 4; i++) {
+		float x = corners[i][0];
+		float y = corners[i][1];
+		
+		// Apply rotation matrix
+		float rotatedX = x * cosf(rad) - y * sinf(rad);
+		float rotatedY = x * sinf(rad) + y * cosf(rad);
+		
+		// Translate to center position
+		vx[i] = static_cast<Sint16>(cx + rotatedX);
+		vy[i] = static_cast<Sint16>(cy + rotatedY);
+	}
+	
+	// Draw filled polygon using SDL_RenderGeometry
+	SDL_Vertex vertices[4];
+	for (int i = 0; i < 4; i++) {
+		vertices[i].position.x = static_cast<float>(vx[i]);
+		vertices[i].position.y = static_cast<float>(vy[i]);
+		vertices[i].color = {customWhite.r, customWhite.g, customWhite.b, alpha};
+		vertices[i].tex_coord = {0, 0};
+	}
+	
+	// Two triangles to make a quad
+	int indices[6] = {0, 1, 2, 0, 2, 3};
+	
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
+}
+```
+- Uses `SDL_RenderGeometry()` (SDL 2.0.18+) for hardware-accelerated rendering
+- Applies standard 2D rotation matrix: 
+  - `x' = x*cos(θ) - y*sin(θ)`
+  - `y' = x*sin(θ) + y*cos(θ)`
+- Renders a quad as two triangles via index buffer
+- Alpha blending enabled for transparency
+
+<br>
+
+---
+
+> That's it for today. Tomorrow I'll finish the 2D realm and think about what the hell to do with the ASCII one

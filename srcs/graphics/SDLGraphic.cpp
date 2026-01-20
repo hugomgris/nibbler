@@ -1,7 +1,10 @@
 #include "../../incs/SDLGraphic.hpp"
+#include <cmath>
 
 SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
-	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true) {
+	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
+	maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
+	dustMinSize(2.0f), dustMaxSize(15.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f) {
 	lastSpawnTime = std::chrono::high_resolution_clock::now();
 }
 
@@ -58,11 +61,13 @@ void SDLGraphic::render(const GameState& state) {
 	lastFrameTime = now;
 
 	updateTunnelEffect(deltaTime.count());
+	updateDustParticles(deltaTime.count());
 
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
 	
 	renderTunnelEffect();
+	renderDustParticles();
 	
 	// Draw snake -> refactor into its own function?
 	setRenderColor(lightBlue);
@@ -173,7 +178,7 @@ void SDLGraphic::renderTunnelEffect() {
 	for (const auto& line : borderLines) {
 		int currentOffset = startOffset + static_cast<int>(line.progress * travelDistance);
 		
-		Uint8 alpha = static_cast<Uint8>(line.progress * 150);
+		Uint8 alpha = static_cast<Uint8>(line.progress * 255);
 
 		int lineWidth = 1;
 
@@ -182,7 +187,7 @@ void SDLGraphic::renderTunnelEffect() {
 		int arenaW = gridWidth * cellSize;
 		int arenaH = gridHeight * cellSize;
 
-		setRenderColor(customWhite, true, alpha);
+		setRenderColor(lightBlue, true, alpha);
 
 		// Top border
 		SDL_Rect top = {
@@ -223,4 +228,90 @@ void SDLGraphic::renderTunnelEffect() {
 	}
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+}
+
+void SDLGraphic::spawnDustParticle() {
+	if (static_cast<int>(dustParticles.size()) >= maxDustDensity) return;
+	
+	int arenaX = borderOffset;
+	int arenaY = borderOffset;
+	int arenaW = gridWidth * cellSize;
+	int arenaH = gridHeight * cellSize;
+	
+	float x = arenaX + static_cast<float>(rand() % arenaW);
+	float y = arenaY + static_cast<float>(rand() % arenaH);
+	
+	dustParticles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
+}
+
+void SDLGraphic::updateDustParticles(float deltaTime) {
+	dustSpawnTimer += deltaTime;
+	if (dustSpawnTimer >= dustSpawnInterval) {
+		spawnDustParticle();
+		dustSpawnTimer = 0.0f;
+	}
+	
+	for (auto& particle : dustParticles) {
+		particle.age += deltaTime;
+		particle.rotation += particle.rotationSpeed * deltaTime;
+		
+		float progress = particle.age / particle.lifetime;
+		
+		particle.currentSize = particle.initialSize * (1.0f - progress) + 1.0f * progress;
+	}
+	
+	dustParticles.erase(
+		std::remove_if(dustParticles.begin(), dustParticles.end(),
+			[](const DustParticle& p) { return p.age >= p.lifetime; }),
+		dustParticles.end()
+	);
+}
+
+void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotation, Uint8 alpha) {
+	// Rotation -> Radians
+	float rad = rotation * 3.14159f / 180.0f;
+	float halfSize = size / 2.0f;
+	
+	// 4 corners of the square (centered at origin)
+	float corners[4][2] = {
+		{-halfSize, -halfSize},  // Top-left
+		{ halfSize, -halfSize},  // Top-right
+		{ halfSize,  halfSize},  // Bottom-right
+		{-halfSize,  halfSize}   // Bottom-left
+	};
+	
+	Sint16 vx[4], vy[4];
+	for (int i = 0; i < 4; i++) {
+		float x = corners[i][0];
+		float y = corners[i][1];
+		
+		float rotatedX = x * cosf(rad) - y * sinf(rad);
+		float rotatedY = x * sinf(rad) + y * cosf(rad);
+		
+		vx[i] = static_cast<Sint16>(cx + rotatedX);
+		vy[i] = static_cast<Sint16>(cy + rotatedY);
+	}
+	
+	SDL_Vertex vertices[4];
+	for (int i = 0; i < 4; i++) {
+		vertices[i].position.x = static_cast<float>(vx[i]);
+		vertices[i].position.y = static_cast<float>(vy[i]);
+		vertices[i].color = {customWhite.r, customWhite.g, customWhite.b, alpha};
+		vertices[i].tex_coord = {0, 0};
+	}
+	
+	int indices[6] = {0, 1, 2, 0, 2, 3};
+	
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
+}
+
+void SDLGraphic::renderDustParticles() {
+	for (const auto& particle : dustParticles) {
+		// Fade out
+		float progress = particle.age / particle.lifetime;
+		Uint8 alpha = static_cast<Uint8>((1.0f - progress) * 120);
+		
+		drawRotatedSquare(particle.x, particle.y, particle.currentSize, particle.rotation, alpha);
+	}
 }
