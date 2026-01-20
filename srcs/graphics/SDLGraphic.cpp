@@ -14,27 +14,36 @@ void SDLGraphic::init(int width, int height) {
 		std::cerr << "SDL init error: " << SDL_GetError() << std::endl;
 		return;
 	}
+
+	_width = width * cellSize;
+	_height = height * cellSize;
 	
 	window = SDL_CreateWindow(
 		"Nibbler - SDL2",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		width * cellSize,
-		height * cellSize,
+		_width + cellSize,
+		_height + cellSize,
 		SDL_WINDOW_SHOWN
 	);
 	
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	std::cout << BRED << "[SDL2] Initialized: " << width << "x" << height << RESET << std::endl;
 }
+
+void SDLGraphic::setRenderColor(SDL_Color color) {
+	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+}
 	
 void SDLGraphic::render(const GameState& state) {
 	// Black background
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
+
+	drawBorder();
 	
 	// Draw snake
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+	setRenderColor(lightBlue);
 	for (int i = 0; i < state.snake->getLength(); ++i) {
 		SDL_Rect rect = {
 			state.snake->getSegments()[i].x * cellSize,
@@ -46,7 +55,7 @@ void SDLGraphic::render(const GameState& state) {
 	}
 	
 	// Draw food
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	setRenderColor(lightRed);
 	SDL_Rect foodRect = {
 		state.food->getPosition().x * cellSize,
 		state.food->getPosition().y * cellSize,
@@ -56,6 +65,17 @@ void SDLGraphic::render(const GameState& state) {
 	SDL_RenderFillRect(renderer, &foodRect);
 	
 	SDL_RenderPresent(renderer);
+}
+
+void SDLGraphic::drawBorder() {
+	setRenderColor(customWhite);
+	SDL_Rect border = {
+		cellSize,
+		cellSize,
+		_width - cellSize,
+		_height - cellSize
+	};
+	SDL_RenderDrawRect(renderer, &border);
 }
 	
 Input SDLGraphic::pollInput() {

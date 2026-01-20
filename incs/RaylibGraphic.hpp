@@ -19,7 +19,7 @@ private:
 	
 	// Colors
 	Color customWhite = { 255, 248, 227, 255};      // Warm off-white (cream)
-	Color customBlack = { 0, 7, 28, 255};           // Deep navy black
+	Color customBlack = { 23, 23, 23, 255};           // Deep navy black
 	
 	// Ground colors - Light squares
 	Color groundLightTop = customWhite;
