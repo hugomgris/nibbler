@@ -23,6 +23,9 @@ public:
 	void init(int w, int h) override;
 	void render(const GameState& state, float deltaTime) override;
 	Input pollInput() override;
+
+	// Drawing functions
+	void drawBorder();
 };
 
 extern "C" IGraphic* createGraphic() {
