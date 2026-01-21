@@ -21,7 +21,7 @@ public:
 	~NCursesGraphic();
 	
 	void init(int w, int h) override;
-	void render(const GameState& state) override;
+	void render(const GameState& state, float deltaTime) override;
 	Input pollInput() override;
 };
 

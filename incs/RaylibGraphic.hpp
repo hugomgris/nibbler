@@ -9,13 +9,16 @@
 
 class RaylibGraphic : public IGraphic {
 private:
-	float cubeSize;
-	int gridWidth;
-	int gridHeight;
-	int screenWidth;
-	int screenHeight;
-	Camera3D camera;
-	Texture2D grainTexture;  // Pre-generated grain texture
+	float	cubeSize;
+	int		gridWidth;
+	int		gridHeight;
+	int		screenWidth;
+	int		screenHeight;
+
+	float	accumulatedTime;
+
+	Camera3D	camera;
+	Texture2D	grainTexture;  // Pre-generated grain texture
 	
 	// Colors
 	Color customWhite = { 255, 248, 227, 255};      // Warm off-white (cream)
@@ -67,10 +70,12 @@ public:
 	void drawFood(const Food* food);
 	void drawCubeCustomFaces(Vector3 position, float width, float height, float length,
 	                         Color front, Color back, Color top, Color bottom, Color right, Color left);
-	void drawNoiseGrain();  // Post-processing noise overlay
+	void drawNoiseGrain();  // Post Processing
+
+	void DrawOutlinedText(const char *text, int posX, int posY, int fontSize, Color color, int outlineSize, Color outlineColor);
 
 	void init(int width, int height) override;
-	void render(const GameState& state) override;
+	void render(const GameState& state, float deltaTime) override;
 	Input pollInput() override;
 };
 

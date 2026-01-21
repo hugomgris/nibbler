@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 
 	Snake snake(width, height);
 	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
-	GameState state { width, height, &snake, &food, NULL, false, true };
+	GameState state { width, height, &snake, &food, NULL, false, true, false };
 
 	GameManager gameManager(&state);
 
@@ -61,20 +61,39 @@ int main(int argc, char **argv) {
 	
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	double accumulator = 0.0;
+	double pausedTime = 0.0;
 	int frameCount = 0;
 
 	// MAIN GAME LOOP
 	while (state.isRunning) {
-		gameManager.calculateDeltaTime(&lastTime, &accumulator);
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float> frameTime = currentTime - lastTime;
+		float deltaTime = frameTime.count();
+		lastTime = currentTime;
+		if (!state.isPaused)
+			accumulator += deltaTime;
 		
 		Input input = gfxLib.get()->pollInput();
-		
+
 		if (input == Input::Quit) {
-			std::cout << BYEL << "\nBYEBYEBYEBYE" << RESET << std::endl;
 			state.isRunning = false;
 			break;
 		}
 		
+		if (input == Input::Pause)
+		{
+			state.isPaused = !state.isPaused;
+			if (!state.isPaused) pausedTime = 0.0;
+		}
+		
+		if (state.isPaused) {
+			pausedTime += deltaTime;
+			// Don't update game logic, but still render with 0 deltaTime
+			gfxLib.get()->render(state, 0.0f);
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
+		}		
+	
 		if (input >= Input::SwitchLib1 && input <= Input::SwitchLib3) {
 			int newLib = (int)input - 1;
 			
@@ -102,7 +121,7 @@ int main(int argc, char **argv) {
 			accumulator -= FRAME_TIME;
 		}
 		
-		gfxLib.get()->render(state);
+		gfxLib.get()->render(state, deltaTime);
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}

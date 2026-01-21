@@ -10,7 +10,8 @@ RaylibGraphic::RaylibGraphic() :
 	gridWidth(0),
 	gridHeight(0),
 	screenWidth(1920),
-	screenHeight(1080) {}
+	screenHeight(1080),
+	accumulatedTime(0.0f) {}
 
 RaylibGraphic::~RaylibGraphic() {
 		UnloadTexture(grainTexture);
@@ -185,22 +186,17 @@ void RaylibGraphic::drawFood(const Food* food) {
 		foodPos.y * cubeSize
 	};
 	
-	// Pulsing effect for food
-	float pulse = 1.0f + sinf(GetTime() * 3.0f) * 0.1f;
+	// Pulsing effect using controlled time (freezes when paused)
+	float pulse = 1.0f + sinf(accumulatedTime * 3.0f) * 0.1f;
 
 	drawCubeCustomFaces(position, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse,
-			                    foodFront, foodHidden, foodTop, foodHidden, foodSide, foodHidden);
+						foodFront, foodHidden, foodTop, foodHidden, foodSide, foodHidden);
 }
 
 void RaylibGraphic::drawNoiseGrain() {
-	// Use time to create subtle variation without continuous displacement
-	float time = GetTime();
+	float offsetX = sinf(accumulatedTime * 0.5f) * 10.0f - 20.0f;
+	float offsetY = cosf(accumulatedTime * 0.3f) * 10.0f - 20.0f;
 	
-	// Oscillation (might remove this, I'm not sure)
-	float offsetX = sinf(time * 0.5f) * 10.0f - 20.0f;  // Oscillate around -20 (centers the padded texture)
-	float offsetY = cosf(time * 0.3f) * 10.0f - 20.0f;  // Oscillate around -20
-	
-	// Draw with transparency
 	DrawTextureEx(grainTexture, (Vector2){ offsetX, offsetY }, 0.0f, 1.0f, (Color){ 255, 255, 255, 20 });
 }
 
@@ -223,7 +219,11 @@ void RaylibGraphic::init(int width, int height) {
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
 
-void RaylibGraphic::render(const GameState& state){
+void RaylibGraphic::render(const GameState& state, float deltaTime){
+	if (!state.isPaused) {
+        accumulatedTime += deltaTime;
+    }
+
 	BeginDrawing();
 	ClearBackground(customBlack);
 	
@@ -244,6 +244,11 @@ void RaylibGraphic::render(const GameState& state){
 	DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
 	DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
 	DrawFPS(screenWidth - 95, 10);
+
+	if (state.isPaused) {
+        //DrawOutlinedText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customWhite, 1, customBlack);
+		DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
+    }
 	
 	// Post Processing
 	drawNoiseGrain();
@@ -261,8 +266,17 @@ Input RaylibGraphic::pollInput() {
 	if (IsKeyPressed(KEY_ONE))		return Input::SwitchLib1;
 	if (IsKeyPressed(KEY_TWO))		return Input::SwitchLib2;
 	if (IsKeyPressed(KEY_THREE))	return Input::SwitchLib3;
+	if (IsKeyPressed(KEY_SPACE))	return Input::Pause;
 	
 	if (WindowShouldClose())		return Input::Quit;
 	
 	return Input::None;
+}
+
+void RaylibGraphic::DrawOutlinedText(const char *text, int posX, int posY, int fontSize, Color color, int outlineSize, Color outlineColor) {
+    DrawText(text, posX - outlineSize, posY - outlineSize, fontSize, outlineColor);
+    DrawText(text, posX + outlineSize, posY - outlineSize, fontSize, outlineColor);
+    DrawText(text, posX - outlineSize, posY + outlineSize, fontSize, outlineColor);
+    DrawText(text, posX + outlineSize, posY + outlineSize, fontSize, outlineColor);
+    DrawText(text, posX, posY, fontSize, color);
 }

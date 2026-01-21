@@ -54,14 +54,10 @@ void SDLGraphic::setRenderColor(SDL_Color color, bool customAlpha, Uint8 alphaVa
 	
 }
 	
-void SDLGraphic::render(const GameState& state) {
-	static auto lastFrameTime = std::chrono::high_resolution_clock::now();
-	auto now = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float> deltaTime = now - lastFrameTime;
-	lastFrameTime = now;
+void SDLGraphic::render(const GameState& state, float deltaTime) {
 
-	updateTunnelEffect(deltaTime.count());
-	updateParticles(deltaTime.count());
+	updateTunnelEffect(deltaTime);
+	updateParticles(deltaTime);
 
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
@@ -155,6 +151,7 @@ Input SDLGraphic::pollInput() {
 				case SDLK_1:		return Input::SwitchLib1;
 				case SDLK_2:		return Input::SwitchLib2;
 				case SDLK_3:		return Input::SwitchLib3;
+				case SDLK_SPACE:	return Input::Pause;
 			}
 		}
 	}

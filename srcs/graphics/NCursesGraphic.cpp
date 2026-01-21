@@ -77,7 +77,9 @@ void NCursesGraphic::init(int w, int h) {
 		isInitialized = true;
 	}
 	
-	void NCursesGraphic::render(const GameState& state) {
+	void NCursesGraphic::render(const GameState& state, float deltaTime) {
+		(void)deltaTime;
+
 		werase(gameWindow);
 		
 		wborder(gameWindow, ACS_VLINE, ACS_VLINE, ACS_HLINE, ACS_HLINE,
@@ -132,6 +134,7 @@ void NCursesGraphic::init(int w, int h) {
 			case '1':       return Input::SwitchLib1;
 			case '2':       return Input::SwitchLib2;
 			case '3':       return Input::SwitchLib3;
+			case ' ':		return Input::Pause;
 			default:        return Input::None;
 		}
 	}

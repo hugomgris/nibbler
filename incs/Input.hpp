@@ -17,4 +17,5 @@ enum class Input {
 	Left,
 	Right,
 	Quit,
+	Pause,
 };

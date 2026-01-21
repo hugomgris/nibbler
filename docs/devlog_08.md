@@ -4,6 +4,8 @@
 1. [Day Eight Plan](#81-day-eight-plan)
 2. [Some More Thinking on the Walk](#82-some-more-thinking-on-the-walk)
 3. [More, More, More!!! (particles)](#83-more-more-more-particles)
+4. [Delta Times Call For Delta Changes](#84-delta-times-call-for-delta-changes)
+5. [The Curse of ASCII Island](#85-the-curse-of-ascii-island)
 
 <br>
 <br>
@@ -210,4 +212,80 @@ void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotatio
 ```
 And thus the `SDL2`, 2D realm of the prototype is visually done in regards to the task. If I find myself with spare time, I might tweak things here and there, but for now I'll move to some other stuff.
 
+<br>
+<br>
+<br>
+
+## 8.4 Delta Times Call For Delta Changes
+Something that I expected to be a problem some days ago ended up bitting me in the ass. I had a `deltaTime` calculation in the `SDL2` rendering pipeline that was independent of the general calculated value in the main game loop. I predicted that I would need to make everything work with the calculations in `Main`, and so was painfully the case when I tried to implement a **spacebar pause interaction**. Nothing that some good old refactoring can't change, so I'll get rid of the external derivation of the `deltaTime` calculation (up until now, a function in `GameState`), returned it to the top of `Main`, and change the signature in the `IGraphic` interface's `render()` to take `deltaTime` as argument. Then, just track the pause status via a boolean in `GameState`, discard `deltaTime` accumulations while the flow is paused, and watch how the pausing came to life (or to anti-life, if you feel me):
+```cpp
+while (state.isRunning) {
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float> frameTime = currentTime - lastTime;
+		float deltaTime = frameTime.count();
+		lastTime = currentTime;
+		if (!state.isPaused)
+			accumulator += deltaTime;
+		
+		Input input = gfxLib.get()->pollInput();
+
+		if (input == Input::Quit) {
+			state.isRunning = false;
+			break;
+		}
+		
+		if (input == Input::Pause)
+		{
+			state.isPaused = !state.isPaused;
+			if (!state.isPaused) pausedTime = 0.0;
+		}
+		
+		if (state.isPaused) {
+			pausedTime += deltaTime;
+			// Don't update game logic, but still render with 0 deltaTime
+			gfxLib.get()->render(state, 0.0f);
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
+		}		
+	
+		if (input >= Input::SwitchLib1 && input <= Input::SwitchLib3) {
+			int newLib = (int)input - 1;
+			
+			if (newLib != currentLib) {
+				std::cout << BMAG << "\nSwitching from lib " << (currentLib + 1) 
+						<< " to lib " << (newLib + 1) << RESET << std::endl;
+				
+				gfxLib.unload();
+				
+				if (!gfxLib.load(libs[newLib])) {
+					std::cerr << BRED << "Failed to load new library!" << RESET << std::endl;
+					return 1;
+				}
+				
+				gfxLib.get()->init(width, height);
+				currentLib = newLib;
+			}
+		}
+		
+		gameManager.bufferInput(input);
+		
+		while (accumulator >= FRAME_TIME) {
+			gameManager.update();
+			frameCount++;
+			accumulator -= FRAME_TIME;
+		}
+		
+		gfxLib.get()->render(state, deltaTime);
+		
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+```
+> Because `deltaTime` is `0.0f` at `render()` call if `isPaused = true`, the visuals effectively pause. And because the `accumulator` time value only grows times `deltaTime` if `isPaused = false`, the logic itself also pauses. Beautiful.
+
+<br>
+<br>
+<br>
+
+ ## 8.5 The Curse of ASCII Island
+ How the hell am I going to make an interesting ASCII-based graphic rendering of `snake`? Stay tuned to find out...
 

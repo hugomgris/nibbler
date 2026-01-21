@@ -9,14 +9,6 @@ void GameManager::update()  {
 	checkHeadFoodCollision();
 }
 
-void GameManager::calculateDeltaTime(time *lastTime, double* accumulator) {
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	double deltaTime = std::chrono::duration<double>(currentTime - *lastTime).count();
-	
-	*lastTime = currentTime;
-	*accumulator += deltaTime;
-}
-
 void GameManager::bufferInput(Input input) {
 	if (input >= Input::Up && input <= Input::Right) {
 		if (inputBuffer.size() < MAX_BUFFER_SIZE) {

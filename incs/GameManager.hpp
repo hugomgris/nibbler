@@ -28,7 +28,6 @@ class GameManager {
 
 		void update();
 
-		void calculateDeltaTime(time *lastTime, double* accumulator);
 		void bufferInput(Input input);
 
 		void checkHeadFoodCollision();

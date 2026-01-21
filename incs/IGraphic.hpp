@@ -7,7 +7,7 @@ class IGraphic {
 		virtual ~IGraphic() = default;
 
 		virtual void init(int width, int height) = 0;
-		virtual void render(const GameState &state) = 0;
+		virtual void render(const GameState &state, float deltaTime) = 0;
 		virtual Input pollInput() = 0;
 };
 

@@ -17,4 +17,5 @@ struct GameState {
 	const char	*foodChar;
 	bool		gameOver;
 	bool		isRunning;
+	bool		isPaused;
 };
