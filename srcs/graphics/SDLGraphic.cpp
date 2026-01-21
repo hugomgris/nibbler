@@ -4,7 +4,9 @@
 SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
 	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
 	maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
-	dustMinSize(2.0f), dustMaxSize(15.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f) {
+	dustMinSize(2.0f), dustMaxSize(15.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f),
+	explosionMinSize(1.0f), explosionMaxSize(50.0f),
+	lastFoodX(-1), lastFoodY(-1) {
 	lastSpawnTime = std::chrono::high_resolution_clock::now();
 }
 
@@ -21,11 +23,9 @@ void SDLGraphic::init(int width, int height) {
 		return;
 	}
 
-	// Store grid dimensions
 	gridWidth = width;
 	gridHeight = height;
 	
-	// Border offset is 1 * cellSize on each side
 	borderOffset = 1 * cellSize;
 	
 	// Window size = game arena + 2*borderOffset (on each side)
@@ -61,15 +61,23 @@ void SDLGraphic::render(const GameState& state) {
 	lastFrameTime = now;
 
 	updateTunnelEffect(deltaTime.count());
-	updateDustParticles(deltaTime.count());
+	updateParticles(deltaTime.count());
 
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
 	
 	renderTunnelEffect();
-	renderDustParticles();
+	renderParticles();
 	
-	// Draw snake -> refactor into its own function?
+	drawSnake(state);
+	drawFood(state);
+
+	drawBorder(cellSize);
+	
+	SDL_RenderPresent(renderer);
+}
+
+void SDLGraphic::drawSnake(const GameState &state) {
 	setRenderColor(lightBlue);
 	for (int i = 0; i < state.snake->getLength(); ++i) {
 		SDL_Rect rect = {
@@ -80,21 +88,35 @@ void SDLGraphic::render(const GameState& state) {
 		};
 		SDL_RenderFillRect(renderer, &rect);
 	}
+}
+
+void SDLGraphic::drawFood(const GameState &state) {
+	int currentFoodX = state.food->getPosition().x;
+	int currentFoodY = state.food->getPosition().y;
 	
-	// Draw food -> refactor into its own function?
+	// Check if food position has changed (food was eaten)
+	if (lastFoodX != -1 && (lastFoodX != currentFoodX || lastFoodY != currentFoodY)) {
+		// Spawn explosion at old food position
+		float explosionX = borderOffset + (lastFoodX * cellSize) + (cellSize / 2.0f);
+		float explosionY = borderOffset + (lastFoodY * cellSize) + (cellSize / 2.0f);
+		spawnExplosion(explosionX, explosionY, 20);  // 20 particles per explosion
+	}
+	
+	// Update tracked position
+	lastFoodX = currentFoodX;
+	lastFoodY = currentFoodY;
+	
+	// Draw food
 	setRenderColor(lightRed);
 	SDL_Rect foodRect = {
-		borderOffset + (state.food->getPosition().x * cellSize),
-		borderOffset + (state.food->getPosition().y * cellSize),
+		borderOffset + (currentFoodX * cellSize),
+		borderOffset + (currentFoodY * cellSize),
 		cellSize,
 		cellSize
 	};
 	SDL_RenderFillRect(renderer, &foodRect);
-
-	drawBorder(cellSize);
-	
-	SDL_RenderPresent(renderer);
 }
+
 
 void SDLGraphic::drawBorder(int thickness) {
 	setRenderColor(customWhite);
@@ -230,8 +252,58 @@ void SDLGraphic::renderTunnelEffect() {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
+void SDLGraphic::updateParticles(float deltaTime) {
+	dustSpawnTimer += deltaTime;
+	if (dustSpawnTimer >= dustSpawnInterval) {
+		spawnDustParticle();
+		dustSpawnTimer = 0.0f;
+	}
+	
+	// Update all particles
+	for (auto& particle : particles) {
+		particle.age += deltaTime;
+		particle.rotation += particle.rotationSpeed * deltaTime;
+		
+		// This only applies to explosions, i.e. the only ones with values for vx/vy
+		particle.x += particle.vx * deltaTime;
+		particle.y += particle.vy * deltaTime;
+		
+		// Shrinking 
+		float progress = particle.age / particle.lifetime;
+		particle.currentSize = particle.initialSize * (1.0f - progress) + 1.0f * progress;
+	}
+	
+	// Dead particle removal
+	particles.erase(
+		std::remove_if(particles.begin(), particles.end(),
+			[](const Particle& p) { return p.age >= p.lifetime; }),
+		particles.end()
+	);
+}
+
+void SDLGraphic::renderParticles() {
+	for (const auto& particle : particles) {
+		// Fade out
+		float progress = particle.age / particle.lifetime;
+		Uint8 alpha;
+		
+		// Alpha handling based on type
+		if (particle.type == ParticleType::Dust) {
+			alpha = static_cast<Uint8>((1.0f - progress) * 120);
+		} else {  // Explosion
+			alpha = static_cast<Uint8>((1.0f - progress) * 200);
+		}
+		
+		drawRotatedSquare(particle.x, particle.y, particle.currentSize, particle.rotation, particle.color, alpha);
+	}
+}
+
 void SDLGraphic::spawnDustParticle() {
-	if (static_cast<int>(dustParticles.size()) >= maxDustDensity) return;
+	int dustCount = 0;
+	for (const auto& p : particles) {
+		if (p.type == ParticleType::Dust) dustCount++;
+	}
+	if (dustCount >= maxDustDensity) return;
 	
 	int arenaX = borderOffset;
 	int arenaY = borderOffset;
@@ -241,33 +313,24 @@ void SDLGraphic::spawnDustParticle() {
 	float x = arenaX + static_cast<float>(rand() % arenaW);
 	float y = arenaY + static_cast<float>(rand() % arenaH);
 	
-	dustParticles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
+	particles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
 }
 
-void SDLGraphic::updateDustParticles(float deltaTime) {
-	dustSpawnTimer += deltaTime;
-	if (dustSpawnTimer >= dustSpawnInterval) {
-		spawnDustParticle();
-		dustSpawnTimer = 0.0f;
-	}
-	
-	for (auto& particle : dustParticles) {
-		particle.age += deltaTime;
-		particle.rotation += particle.rotationSpeed * deltaTime;
+void SDLGraphic::spawnExplosion(float x, float y, int count) {
+	for (int i = 0; i < count; i++) {
+		// Random outward velocity
+		float angle = (rand() % 360) * 3.14159f / 180.0f;
+		float speed = 50.0f + (rand() % 150);  // 50-200 pixels/sec
+		float vx = cosf(angle) * speed;
+		float vy = sinf(angle) * speed;
 		
-		float progress = particle.age / particle.lifetime;
+		SDL_Color explosionColor = lightRed;
 		
-		particle.currentSize = particle.initialSize * (1.0f - progress) + 1.0f * progress;
+		particles.emplace_back(x, y, explosionMinSize, explosionMaxSize, 0.5f, 1.0f, vx, vy, explosionColor);
 	}
-	
-	dustParticles.erase(
-		std::remove_if(dustParticles.begin(), dustParticles.end(),
-			[](const DustParticle& p) { return p.age >= p.lifetime; }),
-		dustParticles.end()
-	);
 }
 
-void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotation, Uint8 alpha) {
+void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotation, SDL_Color color, Uint8 alpha) {
 	// Rotation -> Radians
 	float rad = rotation * 3.14159f / 180.0f;
 	float halfSize = size / 2.0f;
@@ -296,7 +359,7 @@ void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotatio
 	for (int i = 0; i < 4; i++) {
 		vertices[i].position.x = static_cast<float>(vx[i]);
 		vertices[i].position.y = static_cast<float>(vy[i]);
-		vertices[i].color = {customWhite.r, customWhite.g, customWhite.b, alpha};
+		vertices[i].color = {color.r, color.g, color.b, alpha};
 		vertices[i].tex_coord = {0, 0};
 	}
 	
@@ -304,14 +367,4 @@ void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotatio
 	
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
-}
-
-void SDLGraphic::renderDustParticles() {
-	for (const auto& particle : dustParticles) {
-		// Fade out
-		float progress = particle.age / particle.lifetime;
-		Uint8 alpha = static_cast<Uint8>((1.0f - progress) * 120);
-		
-		drawRotatedSquare(particle.x, particle.y, particle.currentSize, particle.rotation, alpha);
-	}
 }
