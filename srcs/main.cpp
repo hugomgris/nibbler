@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 		"./nibbler_sdl.so",
 		"./nibbler_raylib.so"
 	};
-	int currentLib = 1;
+	int currentLib = 0;
 
 	LibraryManager gfxLib;
 	if (!gfxLib.load(libs[currentLib]))
@@ -88,7 +88,6 @@ int main(int argc, char **argv) {
 		
 		if (state.isPaused) {
 			pausedTime += deltaTime;
-			// Don't update game logic, but still render with 0 deltaTime
 			gfxLib.get()->render(state, 0.0f);
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
