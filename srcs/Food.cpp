@@ -57,7 +57,7 @@ bool Food::replaceInFreeSpace(GameState *gameState)
 		return false;
 	}
 
-	int randomIndex = Utils::getRandomInt(availableCells.size());
+	int randomIndex = Utils::getRandomInt(availableCells.size() - 1);
 	_position = availableCells[randomIndex];
 	_foodChar = Utils::getFoodChar(Utils::getRandomInt(5));
 

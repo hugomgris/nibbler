@@ -289,3 +289,161 @@ while (state.isRunning) {
  ## 8.5 The Curse of ASCII Island
  How the hell am I going to make an interesting ASCII-based graphic rendering of `snake`? Stay tuned to find out...
 
+...And I'm back, with a concoction of floritures. If this was a purely ASCII-aiming rendering project, I would give more to it (leaving NCurses behind, to be honest), but sin it isn't what I bring is what there is, nothing less, nothing more. Listing the changes:
+- Tweaked the colors to follow the same pattern as the other renders (offwhite, offblack, blue and res)
+- Added a multilayered border to the game arena, that kinda goes into dithering (depending on the console)
+- Left the snake and food character choices, I like them
+- Added a background layer of ground-whishfully-lile patterns to break the visual black void
+
+All in all, code-wise this is quite simple (composition-wise, this took quite a chunk of today's time). I broke the drawing flow into specific, element-related functions (borders, background, snake, food, ...), automated the process as much as I could, and that's basically it:
+```cpp
+void NCursesGraphic::render(const GameState& state, float deltaTime) {
+	(void)deltaTime;
+
+	werase(gameWindow);
+	
+	int win_height, win_width;
+	getmaxyx(gameWindow, win_height, win_width);
+	
+	drawGround();
+
+	drawBorder();
+	
+	drawSnake(state);
+	
+	drawFood(state);
+	
+	// Double buffer: stage stdscr first, then gameWindow
+	wnoutrefresh(stdscr);
+	wnoutrefresh(gameWindow);
+	doupdate();
+}
+```
+```cpp
+void NCursesGraphic::drawGround() {
+	wattron(gameWindow, COLOR_PAIR(5) | A_DIM);
+	for (int y = 4; y <= height + 3; ++y) {
+		for (int x = 0; x <= width; ++x) {
+			int screenX = (x * 2) + 4;
+			char groundChar = groundPattern[y - 4][x];
+			if (groundChar != ' ') {
+				mvwaddch(gameWindow, y, screenX, groundChar);
+				mvwaddch(gameWindow, y, screenX + 1, ' ');
+			} else {
+				mvwaddstr(gameWindow, y, screenX, "  ");
+			}
+		}
+	}
+	wattroff(gameWindow, COLOR_PAIR(5) | A_DIM);
+}
+```cpp
+void NCursesGraphic::drawBorder() {
+	int win_height, win_width;
+	getmaxyx(gameWindow, win_height, win_width);
+
+	wattron(gameWindow, COLOR_PAIR(4));
+
+	// 4 layer border
+	const char *layers[] = {"░", "▒", "▓", "█"};
+	
+	for (int layer = 0; layer < 4; layer++) {
+		int offset = 3 - layer;
+		const char *pattern = layers[layer];
+		
+		for (int x = offset; x < win_width - offset; x++) {
+			mvwaddstr(gameWindow, offset, x, pattern);
+		}
+		
+		for (int x = offset; x < win_width - offset; x++) {
+			mvwaddstr(gameWindow, win_height - 1 - offset, x, pattern);
+		}
+		
+		for (int y = offset + 1; y < win_height - 1 - offset; y++) {
+			mvwaddstr(gameWindow, y, offset, pattern);
+		}
+		
+		for (int y = offset + 1; y < win_height - 1 - offset; y++) {
+			mvwaddstr(gameWindow, y, win_width - 1 - offset, pattern);
+		}
+	}
+
+	wattroff(gameWindow, COLOR_PAIR(4));
+}
+```
+```cpp
+void NCursesGraphic::drawSnake(const GameState &state) {
+	wattron(gameWindow, COLOR_PAIR(1));
+	for (int i = 0; i < state.snake->getLength(); ++i) {
+		int y = state.snake->getSegments()[i].y + 4;
+		int x = (state.snake->getSegments()[i].x * 2) + 4;
+		
+		if (i == 0) {
+			mvwaddstr(gameWindow, y, x, "⬢ ");
+		} else {
+			mvwaddstr(gameWindow, y, x,
+				(i == state.snake->getLength() - 1) ? "○ " :
+				(i % 2 == 0) ? "✛ " : "✲ "
+			);
+		}
+	}
+	wattroff(gameWindow, COLOR_PAIR(1));
+}
+```
+```cpp
+void NCursesGraphic::drawFood(const GameState &state) {
+	wattron(gameWindow, COLOR_PAIR(2));
+	int foodX = (state.food->getPosition().x * 2) + 4;
+	//mvwaddstr(gameWindow, state.food->getPosition().y + 4, foodX, "▝▘");
+	mvwaddstr(gameWindow, state.food->getPosition().y + 4, foodX, state.food->getFoodChar());
+	wattroff(gameWindow, COLOR_PAIR(2));
+}
+```
+```cpp
+void NCursesGraphic::generateGroundPattern() {
+	groundPattern.resize(height);
+	for (int y = 0; y < height; ++y) {
+		groundPattern[y].resize(width + 1);
+	}
+	
+	const char groundChars[] = {
+		'.', '.', '.', '.', '.',
+		',', ',',
+		'`', '`',
+		';',
+		':', ':',
+		'-',
+		' ', ' ', ' '
+	};
+	const int numChars = sizeof(groundChars) / sizeof(groundChars[0]);
+	
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> charDist(0, numChars - 1);
+	std::uniform_int_distribution<> densityDist(0, 100);
+	
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x <= width; ++x) {
+			if (densityDist(gen) < 75) {
+				groundPattern[y][x] = groundChars[charDist(gen)];
+			} else {
+				groundPattern[y][x] = ' ';
+			}
+		}
+	}
+}
+```
+ <br>
+ <br>
+ <br>
+
+ ## 8.6 A Tale of Three Realms
+ Here are the three realms, ready for the turn in (they might evolve before that day):
+
+ <img src="ASCII_REALM.png" alt="ASCII Realm render" width = 500>
+ <img src="2D_REALM.png" alt="ASCII Realm render" width = 500>
+ <img src="3D_REALM.png" alt="ASCII Realm render" width = 500>
+
+<br>
+
+---
+ > And that will be enough for today. Tomorrow I'll work on the entry and exit points and make a general revision of the current status of the project. Then we'll see what's up.
