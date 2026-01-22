@@ -113,6 +113,71 @@ void NCursesGraphic::render(const GameState& state, float deltaTime) {
 	doupdate();
 }
 
+void NCursesGraphic::renderMenu(const GameState &state) {
+	(void)state;
+	
+	werase(gameWindow);
+
+	int win_height, win_width;
+	getmaxyx(gameWindow, win_height, win_width);
+
+	drawBorder();
+
+	const char* simpleTitle = "N I B B L E R";
+	int simpleTitleY = (win_height / 2) - 2;
+	int simpleTitleX = (win_width - strlen(simpleTitle)) / 2;
+	
+	wattron(gameWindow, COLOR_PAIR(4) | A_BOLD);
+	mvwaddstr(gameWindow, simpleTitleY, simpleTitleX, simpleTitle);
+	wattroff(gameWindow, COLOR_PAIR(4) | A_BOLD);
+	
+	wattron(gameWindow, COLOR_PAIR(4));
+	const char* instructions = "Press ENTER to start";
+	int instrY = simpleTitleY + 3;
+	mvwaddstr(gameWindow, instrY, 
+			(win_width - strlen(instructions)) / 2, instructions);
+	
+	const char* controls = "Arrow keys to move | SPACE to pause | Q to quit";
+	int controlsY = instrY + 2;
+	mvwaddstr(gameWindow, controlsY,
+			(win_width - strlen(controls)) / 2, controls);
+	wattroff(gameWindow, COLOR_PAIR(4));
+	
+	wnoutrefresh(stdscr);
+	wnoutrefresh(gameWindow);
+	doupdate();
+}
+
+void NCursesGraphic::renderGameOver(const GameState& state) {
+	werase(gameWindow);
+	
+	int win_height, win_width;
+	getmaxyx(gameWindow, win_height, win_width);
+	
+	drawBorder();
+	
+	wattron(gameWindow, COLOR_PAIR(2) | A_BOLD);
+	const char* gameOverText = "GAME OVER";
+	mvwaddstr(gameWindow, win_height / 2 - 2, 
+			(win_width - strlen(gameOverText)) / 2, gameOverText);
+	wattroff(gameWindow, COLOR_PAIR(2) | A_BOLD);
+	
+	wattron(gameWindow, COLOR_PAIR(4));
+	char scoreText[50];
+	snprintf(scoreText, sizeof(scoreText), "Final Score: %d", state.score);
+	mvwaddstr(gameWindow, win_height / 2, 
+			(win_width - strlen(scoreText)) / 2, scoreText);
+	
+	const char* restartText = "Press ENTER to restart | Q to quit";
+	mvwaddstr(gameWindow, win_height / 2 + 2,
+			(win_width - strlen(restartText)) / 2, restartText);
+	wattroff(gameWindow, COLOR_PAIR(4));
+	
+	wnoutrefresh(stdscr);
+	wnoutrefresh(gameWindow);
+	doupdate();
+}
+
 Input NCursesGraphic::pollInput() {
 	int ch = getch();
 	switch (ch) {
@@ -126,6 +191,8 @@ Input NCursesGraphic::pollInput() {
 		case '2':       return Input::SwitchLib2;
 		case '3':       return Input::SwitchLib3;
 		case ' ':		return Input::Pause;
+		case '\n':      return Input::Enter; // Enter key (also covers value 10)
+		case KEY_ENTER: return Input::Enter; // Alternative Enter key
 		default:        return Input::None;
 	}
 }

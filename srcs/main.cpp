@@ -52,7 +52,14 @@ int main(int argc, char **argv) {
 
 	Snake snake(width, height);
 	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
-	GameState state { width, height, &snake, &food, NULL, false, true, false };
+	GameState state {
+		width, height, &snake, &food, NULL,
+		false,
+		true,
+		false,
+		GameStateType::Menu,
+		0
+	};
 
 	GameManager gameManager(&state);
 
@@ -61,8 +68,6 @@ int main(int argc, char **argv) {
 	
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	double accumulator = 0.0;
-	double pausedTime = 0.0;
-	int frameCount = 0;
 
 	// MAIN GAME LOOP
 	while (state.isRunning) {
@@ -70,60 +75,91 @@ int main(int argc, char **argv) {
 		std::chrono::duration<float> frameTime = currentTime - lastTime;
 		float deltaTime = frameTime.count();
 		lastTime = currentTime;
-		if (!state.isPaused)
-			accumulator += deltaTime;
 		
 		Input input = gfxLib.get()->pollInput();
-
+		
+		// Global quit handling
 		if (input == Input::Quit) {
 			state.isRunning = false;
 			break;
 		}
 		
-		if (input == Input::Pause)
-		{
-			state.isPaused = !state.isPaused;
-			if (!state.isPaused) pausedTime = 0.0;
-		}
-		
-		if (state.isPaused) {
-			pausedTime += deltaTime;
-			gfxLib.get()->render(state, 0.0f);
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-			continue;
-		}		
-	
+		// Library switching (works in any state)
 		if (input >= Input::SwitchLib1 && input <= Input::SwitchLib3) {
 			int newLib = (int)input - 1;
-			
 			if (newLib != currentLib) {
-				std::cout << BMAG << "\nSwitching from lib " << (currentLib + 1) 
-						<< " to lib " << (newLib + 1) << RESET << std::endl;
-				
 				gfxLib.unload();
-				
-				if (!gfxLib.load(libs[newLib])) {
-					std::cerr << BRED << "Failed to load new library!" << RESET << std::endl;
-					return 1;
-				}
-				
+				if (!gfxLib.load(libs[newLib])) return 1;
 				gfxLib.get()->init(width, height);
 				currentLib = newLib;
 			}
 		}
 		
-		gameManager.bufferInput(input);
-		
-		while (accumulator >= FRAME_TIME) {
-			gameManager.update();
-			frameCount++;
-			accumulator -= FRAME_TIME;
+		// STATE MACHINE
+		switch (state.currentState) {
+			case GameStateType::Menu:
+				if (input == Input::Enter) {
+					state.currentState = GameStateType::Playing;
+					accumulator = 0.0;  // Reset accumulator when starting game
+				}
+				gfxLib.get()->renderMenu(state);
+				break;
+				
+			case GameStateType::Playing:
+				if (input == Input::Pause) {
+					state.isPaused = !state.isPaused;
+					state.currentState = state.isPaused ? 
+						GameStateType::Paused : GameStateType::Playing;
+				}
+				
+				accumulator += deltaTime;
+				gameManager.bufferInput(input);
+				
+				while (accumulator >= FRAME_TIME) {
+					gameManager.update();
+					accumulator -= FRAME_TIME;
+					
+					// Check for game over (isRunning is set to false by GameManager)
+					if (!state.isRunning) {
+						state.currentState = GameStateType::GameOver;
+						state.isRunning = true; // Reset for potential restart
+						break;
+					}
+				}
+				
+				gfxLib.get()->render(state, deltaTime);
+				break;
+				
+			case GameStateType::Paused:
+				if (input == Input::Pause) {
+					state.isPaused = false;
+					state.currentState = GameStateType::Playing;
+				}
+				gfxLib.get()->render(state, 0.0f);
+				break;
+				
+			case GameStateType::GameOver:
+				if (input == Input::Enter) {
+					// Restart game - reset everything before changing state
+					snake = Snake(width, height);
+					food = Food(Utils::getRandomVec2(width - 1, height - 1), width, height);
+					state.snake = &snake;
+					state.food = &food;
+					state.score = 0;
+					state.gameOver = false;
+					state.isPaused = false;
+					accumulator = 0.0;  // Reset accumulator
+					gameManager.clearInputBuffer();  // Clear any buffered inputs
+					
+					// Now transition to menu (this ensures render is called with clean state)
+					state.currentState = GameStateType::Menu;
+				}
+				gfxLib.get()->renderGameOver(state);
+				break;
 		}
-		
-		gfxLib.get()->render(state, deltaTime);
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
-
+	
 	return 0;
 }

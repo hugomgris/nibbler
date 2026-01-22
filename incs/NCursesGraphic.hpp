@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cstring>
 
 class NCursesGraphic : public IGraphic {
 private:
@@ -25,6 +26,8 @@ public:
 	
 	void init(int w, int h) override;
 	void render(const GameState& state, float deltaTime) override;
+	void renderMenu(const GameState &state) override;
+	void renderGameOver(const GameState &state) override;
 	Input pollInput() override;
 
 	// Drawing functions

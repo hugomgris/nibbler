@@ -229,7 +229,6 @@ void RaylibGraphic::render(const GameState& state, float deltaTime){
 	
 	BeginMode3D(camera);
 	
-	// Draw in order: ground -> walls -> snake -> food
 	drawGroundPlane();
 	//drawWalls();
 	drawSnake(state.snake);
@@ -240,7 +239,6 @@ void RaylibGraphic::render(const GameState& state, float deltaTime){
 	
 	EndMode3D();
 	
-	// 2D HUD overlay
 	DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
 	DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
 	DrawFPS(screenWidth - 95, 10);
@@ -256,6 +254,34 @@ void RaylibGraphic::render(const GameState& state, float deltaTime){
 	EndDrawing();
 }
 
+void RaylibGraphic::renderMenu(const GameState& state) {
+	(void)state;
+	
+	BeginDrawing();
+	ClearBackground(customBlack);
+	
+	// TODO: Implement proper Raylib menu screen
+	DrawText("NIBBLER", screenWidth/2 - 150, screenHeight/2 - 100, 60, customWhite);
+	DrawText("Press ENTER to start", screenWidth/2 - 150, screenHeight/2, 30, customWhite);
+	
+	EndDrawing();
+}
+
+void RaylibGraphic::renderGameOver(const GameState& state) {
+	BeginDrawing();
+	ClearBackground(customBlack);
+	
+	// TODO: Implement proper Raylib game over screen
+	DrawText("GAME OVER", screenWidth/2 - 150, screenHeight/2 - 50, 50, customWhite);
+	
+	char scoreText[50];
+	snprintf(scoreText, sizeof(scoreText), "Score: %d", state.score);
+	DrawText(scoreText, screenWidth/2 - 80, screenHeight/2 + 20, 30, customWhite);
+	DrawText("Press ENTER to restart", screenWidth/2 - 150, screenHeight/2 + 80, 25, customWhite);
+	
+	EndDrawing();
+}
+
 Input RaylibGraphic::pollInput() {
 	if (IsKeyPressed(KEY_UP))		return Input::Up;
 	if (IsKeyPressed(KEY_DOWN))		return Input::Down;
@@ -267,6 +293,8 @@ Input RaylibGraphic::pollInput() {
 	if (IsKeyPressed(KEY_TWO))		return Input::SwitchLib2;
 	if (IsKeyPressed(KEY_THREE))	return Input::SwitchLib3;
 	if (IsKeyPressed(KEY_SPACE))	return Input::Pause;
+	if (IsKeyPressed(KEY_ENTER))	return Input::Enter;
+	if (IsKeyPressed(KEY_KP_ENTER))	return Input::Enter;
 	
 	if (WindowShouldClose())		return Input::Quit;
 	

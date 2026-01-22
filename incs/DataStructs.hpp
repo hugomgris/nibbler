@@ -9,13 +9,22 @@ struct Vec2 {
 class Snake;
 class Food;
 
+enum class GameStateType {
+    Menu,
+    Playing,
+    Paused,
+    GameOver
+};
+
 struct GameState {
-	int			width;
-	int			height;
-	Snake		*snake;
-	Food		*food;
-	const char	*foodChar;
-	bool		gameOver;
-	bool		isRunning;
-	bool		isPaused;
+	int				width;
+	int				height;
+	Snake			*snake;
+	Food			*food;
+	const char		*foodChar;
+	bool			gameOver;
+	bool			isRunning;
+	bool			isPaused;
+	GameStateType	currentState;
+	int				score;
 };

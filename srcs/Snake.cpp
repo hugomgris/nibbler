@@ -60,6 +60,7 @@ Snake &Snake::operator=(const Snake &other) {
 	if (this != &other)
 	{
 		this->_length = other._length;
+		this->_direction = other._direction;
 		for (int i = 0; i < this->_length; ++i)
 			this->_segments[i] = other._segments[i];
 	}

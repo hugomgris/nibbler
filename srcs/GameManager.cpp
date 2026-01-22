@@ -48,6 +48,7 @@ void GameManager::checkHeadFoodCollision() {
 	if (head.x == foodPos.x && head.y == foodPos.y)
 	{
 		_state->snake->grow();
+		_state->score++;  // Increment score when food is eaten
 		
 		if (!_state->food->replaceInFreeSpace(_state)) {
 			_state->isRunning = false;
@@ -73,4 +74,10 @@ bool GameManager::checkGameOverCollision()
 	}
 
 	return true;
+}
+
+void GameManager::clearInputBuffer() {
+	while (!inputBuffer.empty()) {
+		inputBuffer.pop();
+	}
 }

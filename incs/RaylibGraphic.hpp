@@ -76,6 +76,8 @@ public:
 
 	void init(int width, int height) override;
 	void render(const GameState& state, float deltaTime) override;
+	void renderMenu(const GameState &state) override;
+	void renderGameOver(const GameState &state) override;
 	Input pollInput() override;
 };
 
