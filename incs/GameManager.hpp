@@ -10,7 +10,7 @@
 
 class GameManager {
 	private:
-		GameState	*_state;
+		GameState*_state;
 		std::queue<Input> inputBuffer;
 		static const size_t MAX_BUFFER_SIZE = 3;
 
@@ -29,6 +29,7 @@ class GameManager {
 		void update();
 
 		void bufferInput(Input input);
+		void clearInputBuffer();
 
 		void checkHeadFoodCollision();
 		bool checkGameOverCollision();

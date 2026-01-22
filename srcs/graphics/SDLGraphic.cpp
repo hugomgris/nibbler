@@ -90,19 +90,15 @@ void SDLGraphic::drawFood(const GameState &state) {
 	int currentFoodX = state.food->getPosition().x;
 	int currentFoodY = state.food->getPosition().y;
 	
-	// Check if food position has changed (food was eaten)
 	if (lastFoodX != -1 && (lastFoodX != currentFoodX || lastFoodY != currentFoodY)) {
-		// Spawn explosion at old food position
 		float explosionX = borderOffset + (lastFoodX * cellSize) + (cellSize / 2.0f);
 		float explosionY = borderOffset + (lastFoodY * cellSize) + (cellSize / 2.0f);
 		spawnExplosion(explosionX, explosionY, 20);  // 20 particles per explosion
 	}
 	
-	// Update tracked position
 	lastFoodX = currentFoodX;
 	lastFoodY = currentFoodY;
 	
-	// Draw food
 	setRenderColor(lightRed);
 	SDL_Rect foodRect = {
 		borderOffset + (currentFoodX * cellSize),
@@ -152,6 +148,8 @@ Input SDLGraphic::pollInput() {
 				case SDLK_2:		return Input::SwitchLib2;
 				case SDLK_3:		return Input::SwitchLib3;
 				case SDLK_SPACE:	return Input::Pause;
+				case SDLK_RETURN:	return Input::Enter;
+				case SDLK_KP_ENTER:	return Input::Enter;
 			}
 		}
 	}
@@ -364,4 +362,194 @@ void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotatio
 	
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
+}
+
+void SDLGraphic::renderMenu(const GameState& state) {
+	(void)state;
+	
+	lastFoodX = -1;
+	lastFoodY = -1;
+	
+	particles.clear();
+	borderLines.clear();
+	
+	setRenderColor(customBlack);
+	SDL_RenderClear(renderer);
+	
+	drawBorder(cellSize);
+	
+	int windowWidth = (gridWidth * cellSize) + (2 * borderOffset);
+	int windowHeight = (gridHeight * cellSize) + (2 * borderOffset);
+	int centerX = windowWidth / 2;
+	int centerY = windowHeight / 2;
+	
+	setRenderColor(lightBlue);
+	
+	// N
+	SDL_Rect n1 = {centerX - 150, centerY - 80, 15, 60};
+	SDL_Rect n2 = {centerX - 150, centerY - 80, 40, 15};
+	SDL_Rect n3 = {centerX - 115, centerY - 65, 15, 60};
+	
+	// I
+	SDL_Rect i1 = {centerX - 90, centerY - 80, 15, 60};
+	
+	// B
+	SDL_Rect b1 = {centerX - 65, centerY - 80, 15, 60};
+	SDL_Rect b2 = {centerX - 65, centerY - 80, 35, 15};
+	SDL_Rect b3 = {centerX - 65, centerY - 50, 35, 15};
+	SDL_Rect b4 = {centerX - 65, centerY - 35, 35, 15};
+	SDL_Rect b5 = {centerX - 35, centerY - 65, 15, 15};
+	SDL_Rect b6 = {centerX - 35, centerY - 20, 15, 15};
+	
+	// B
+	SDL_Rect b7 = {centerX - 10, centerY - 80, 15, 60};
+	SDL_Rect b8 = {centerX - 10, centerY - 80, 35, 15};
+	SDL_Rect b9 = {centerX - 10, centerY - 50, 35, 15};
+	SDL_Rect b10 = {centerX - 10, centerY - 35, 35, 15};
+	SDL_Rect b11 = {centerX + 20, centerY - 65, 15, 15};
+	SDL_Rect b12 = {centerX + 20, centerY - 20, 15, 15};
+	
+	// L
+	SDL_Rect l1 = {centerX + 45, centerY - 80, 15, 60};
+	SDL_Rect l2 = {centerX + 45, centerY - 35, 40, 15};
+	
+	// E
+	SDL_Rect e1 = {centerX + 95, centerY - 80, 15, 60};
+	SDL_Rect e2 = {centerX + 95, centerY - 80, 40, 15};
+	SDL_Rect e3 = {centerX + 95, centerY - 50, 35, 15};
+	SDL_Rect e4 = {centerX + 95, centerY - 35, 40, 15};
+	
+	// R
+	SDL_Rect r1 = {centerX + 145, centerY - 80, 15, 60};
+	SDL_Rect r2 = {centerX + 145, centerY - 80, 35, 15};
+	SDL_Rect r3 = {centerX + 145, centerY - 50, 35, 15};
+	SDL_Rect r4 = {centerX + 175, centerY - 65, 15, 15};
+	SDL_Rect r5 = {centerX + 170, centerY - 35, 15, 25};
+	
+	SDL_RenderFillRect(renderer, &n1); SDL_RenderFillRect(renderer, &n2); SDL_RenderFillRect(renderer, &n3);
+	SDL_RenderFillRect(renderer, &i1);
+	SDL_RenderFillRect(renderer, &b1); SDL_RenderFillRect(renderer, &b2); SDL_RenderFillRect(renderer, &b3);
+	SDL_RenderFillRect(renderer, &b4); SDL_RenderFillRect(renderer, &b5); SDL_RenderFillRect(renderer, &b6);
+	SDL_RenderFillRect(renderer, &b7); SDL_RenderFillRect(renderer, &b8); SDL_RenderFillRect(renderer, &b9);
+	SDL_RenderFillRect(renderer, &b10); SDL_RenderFillRect(renderer, &b11); SDL_RenderFillRect(renderer, &b12);
+	SDL_RenderFillRect(renderer, &l1); SDL_RenderFillRect(renderer, &l2);
+	SDL_RenderFillRect(renderer, &e1); SDL_RenderFillRect(renderer, &e2); SDL_RenderFillRect(renderer, &e3); SDL_RenderFillRect(renderer, &e4);
+	SDL_RenderFillRect(renderer, &r1); SDL_RenderFillRect(renderer, &r2); SDL_RenderFillRect(renderer, &r3);
+	SDL_RenderFillRect(renderer, &r4); SDL_RenderFillRect(renderer, &r5);
+	
+	setRenderColor(customWhite);
+	
+	int textY = centerY + 40;
+	for (int i = 0; i < 45; i++) {
+		SDL_Rect dot = {centerX - 180 + (i * 8), textY, 5, 5};
+		SDL_RenderFillRect(renderer, &dot);
+	}
+	
+	// "1/2/3 to switch libraries"
+	textY = centerY + 80;
+	for (int i = 0; i < 35; i++) {
+		SDL_Rect dot = {centerX - 140 + (i * 8), textY, 5, 5};
+		SDL_RenderFillRect(renderer, &dot);
+	}
+	
+	SDL_RenderPresent(renderer);
+}
+
+void SDLGraphic::renderGameOver(const GameState& state) {
+	(void)state;  // Will be used when we add text rendering for score
+	
+	setRenderColor(customBlack);
+	SDL_RenderClear(renderer);
+	
+	drawBorder(cellSize);
+	
+	int windowWidth = (gridWidth * cellSize) + (2 * borderOffset);
+	int windowHeight = (gridHeight * cellSize) + (2 * borderOffset);
+	int centerX = windowWidth / 2;
+	int centerY = windowHeight / 2;
+	
+	setRenderColor(lightRed);
+	
+	// G
+	SDL_Rect g1 = {centerX - 120, centerY - 60, 15, 60};
+	SDL_Rect g2 = {centerX - 120, centerY - 60, 50, 15};
+	SDL_Rect g3 = {centerX - 120, centerY - 15, 50, 15};
+	SDL_Rect g4 = {centerX - 55, centerY - 40, 15, 25};
+	SDL_Rect g5 = {centerX - 85, centerY - 40, 30, 15};
+	
+	// A
+	SDL_Rect a1 = {centerX - 35, centerY - 60, 15, 60};
+	SDL_Rect a2 = {centerX - 35, centerY - 60, 40, 15};
+	SDL_Rect a3 = {centerX - 35, centerY - 40, 40, 15};
+	SDL_Rect a4 = {centerX + 5, centerY - 60, 15, 60};
+	
+	// M
+	SDL_Rect m1 = {centerX + 30, centerY - 60, 15, 60};
+	SDL_Rect m2 = {centerX + 30, centerY - 60, 15, 30};
+	SDL_Rect m3 = {centerX + 55, centerY - 45, 15, 45};
+	SDL_Rect m4 = {centerX + 80, centerY - 60, 15, 30};
+	SDL_Rect m5 = {centerX + 80, centerY - 60, 15, 60};
+	
+	// E (same as before)
+	SDL_Rect e1 = {centerX + 105, centerY - 60, 15, 60};
+	SDL_Rect e2 = {centerX + 105, centerY - 60, 40, 15};
+	SDL_Rect e3 = {centerX + 105, centerY - 40, 35, 15};
+	SDL_Rect e4 = {centerX + 105, centerY - 15, 40, 15};
+	
+	SDL_RenderFillRect(renderer, &g1); SDL_RenderFillRect(renderer, &g2); SDL_RenderFillRect(renderer, &g3);
+	SDL_RenderFillRect(renderer, &g4); SDL_RenderFillRect(renderer, &g5);
+	SDL_RenderFillRect(renderer, &a1); SDL_RenderFillRect(renderer, &a2); SDL_RenderFillRect(renderer, &a3); SDL_RenderFillRect(renderer, &a4);
+	SDL_RenderFillRect(renderer, &m1); SDL_RenderFillRect(renderer, &m2); SDL_RenderFillRect(renderer, &m3);
+	SDL_RenderFillRect(renderer, &m4); SDL_RenderFillRect(renderer, &m5);
+	SDL_RenderFillRect(renderer, &e1); SDL_RenderFillRect(renderer, &e2); SDL_RenderFillRect(renderer, &e3); SDL_RenderFillRect(renderer, &e4);
+	
+	// "OVER"
+	int overY = centerY + 5;
+	
+	// O
+	SDL_Rect o1 = {centerX - 60, overY, 15, 40};
+	SDL_Rect o2 = {centerX - 60, overY, 40, 15};
+	SDL_Rect o3 = {centerX - 60, overY + 25, 40, 15};
+	SDL_Rect o4 = {centerX - 25, overY, 15, 40};
+	
+	// V
+	SDL_Rect v1 = {centerX, overY, 15, 30};
+	SDL_Rect v2 = {centerX + 15, overY + 25, 15, 15};
+	SDL_Rect v3 = {centerX + 30, overY, 15, 30};
+	
+	// E
+	SDL_Rect e5 = {centerX + 55, overY, 15, 40};
+	SDL_Rect e6 = {centerX + 55, overY, 30, 15};
+	SDL_Rect e7 = {centerX + 55, overY + 12, 25, 15};
+	SDL_Rect e8 = {centerX + 55, overY + 25, 30, 15};
+	
+	// R
+	SDL_Rect r1 = {centerX + 95, overY, 15, 40};
+	SDL_Rect r2 = {centerX + 95, overY, 30, 15};
+	SDL_Rect r3 = {centerX + 95, overY + 12, 30, 15};
+	SDL_Rect r4 = {centerX + 120, overY, 15, 12};
+	SDL_Rect r5 = {centerX + 115, overY + 25, 15, 15};
+	
+	SDL_RenderFillRect(renderer, &o1); SDL_RenderFillRect(renderer, &o2); SDL_RenderFillRect(renderer, &o3); SDL_RenderFillRect(renderer, &o4);
+	SDL_RenderFillRect(renderer, &v1); SDL_RenderFillRect(renderer, &v2); SDL_RenderFillRect(renderer, &v3);
+	SDL_RenderFillRect(renderer, &e5); SDL_RenderFillRect(renderer, &e6); SDL_RenderFillRect(renderer, &e7); SDL_RenderFillRect(renderer, &e8);
+	SDL_RenderFillRect(renderer, &r1); SDL_RenderFillRect(renderer, &r2); SDL_RenderFillRect(renderer, &r3);
+	SDL_RenderFillRect(renderer, &r4); SDL_RenderFillRect(renderer, &r5);
+	
+	// Score display placeholder
+	setRenderColor(customWhite);
+	int scoreY = centerY + 70;
+	for (int i = 0; i < 25; i++) {
+		SDL_Rect dot = {centerX - 100 + (i * 8), scoreY, 5, 5};
+		SDL_RenderFillRect(renderer, &dot);
+	}
+	
+	// Enter to restart placeholder
+	int textY = centerY + 100;
+	for (int i = 0; i < 40; i++) {
+		SDL_Rect dot = {centerX - 160 + (i * 8), textY, 5, 5};
+		SDL_RenderFillRect(renderer, &dot);
+	}
+	
+	SDL_RenderPresent(renderer);
 }
