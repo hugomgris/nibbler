@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 		"./nibbler_sdl.so",
 		"./nibbler_raylib.so"
 	};
-	int currentLib = 0;
+	int currentLib = 2;
 
 	LibraryManager gfxLib;
 	if (!gfxLib.load(libs[currentLib]))
@@ -78,13 +78,11 @@ int main(int argc, char **argv) {
 		
 		Input input = gfxLib.get()->pollInput();
 		
-		// Global quit handling
 		if (input == Input::Quit) {
 			state.isRunning = false;
 			break;
 		}
 		
-		// Library switching (works in any state)
 		if (input >= Input::SwitchLib1 && input <= Input::SwitchLib3) {
 			int newLib = (int)input - 1;
 			if (newLib != currentLib) {
@@ -100,7 +98,7 @@ int main(int argc, char **argv) {
 			case GameStateType::Menu:
 				if (input == Input::Enter) {
 					state.currentState = GameStateType::Playing;
-					accumulator = 0.0;  // Reset accumulator when starting game
+					accumulator = 0.0;
 				}
 				gfxLib.get()->renderMenu(state);
 				break;
@@ -119,10 +117,9 @@ int main(int argc, char **argv) {
 					gameManager.update();
 					accumulator -= FRAME_TIME;
 					
-					// Check for game over (isRunning is set to false by GameManager)
 					if (!state.isRunning) {
 						state.currentState = GameStateType::GameOver;
-						state.isRunning = true; // Reset for potential restart
+						state.isRunning = true;
 						break;
 					}
 				}
@@ -140,7 +137,6 @@ int main(int argc, char **argv) {
 				
 			case GameStateType::GameOver:
 				if (input == Input::Enter) {
-					// Restart game - reset everything before changing state
 					snake = Snake(width, height);
 					food = Food(Utils::getRandomVec2(width - 1, height - 1), width, height);
 					state.snake = &snake;
@@ -148,10 +144,9 @@ int main(int argc, char **argv) {
 					state.score = 0;
 					state.gameOver = false;
 					state.isPaused = false;
-					accumulator = 0.0;  // Reset accumulator
-					gameManager.clearInputBuffer();  // Clear any buffered inputs
+					accumulator = 0.0;
+					gameManager.clearInputBuffer();
 					
-					// Now transition to menu (this ensures render is called with clean state)
 					state.currentState = GameStateType::Menu;
 				}
 				gfxLib.get()->renderGameOver(state);

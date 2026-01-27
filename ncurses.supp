@@ -1,0 +1,92 @@
+# Valgrind suppression file for NCurses internal allocations
+# These are not leaks - they're part of NCurses' internal state management
+
+{
+   ncurses_tparm_setup
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:tparm_setup
+   fun:_nc_tiparm
+   ...
+}
+
+{
+   ncurses_color_init
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:set_background_color
+   fun:_nc_do_color_sp
+   ...
+}
+
+{
+   ncurses_still_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*/libncursesw.so*
+   ...
+}
+
+{
+   ncurses_init
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   ...
+   fun:initscr
+   ...
+}
+
+{
+   ncurses_newwin
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   ...
+   fun:newwin
+   ...
+}
+
+{
+   ncurses_doupdate_unknown_so
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:doupdate_sp
+   obj:*nibbler_ncurses.so
+   ...
+}
+
+{
+   ncurses_vid_puts_chain
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:_nc_do_color_sp
+   fun:vid_puts_sp
+   fun:EmitRange
+   fun:TransformLine
+   fun:doupdate_sp
+   ...
+}
+
+{
+   ncurses_tparm_tsearch
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:tsearch
+   fun:tparm_setup
+   ...
+}
+
+{
+   ncurses_tparm_strdup
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:strdup
+   fun:tparm_setup
+   ...
+}

@@ -1,0 +1,77 @@
+# Valgrind suppression file for Raylib
+# Raylib uses GLFW for window management and OpenGL for rendering
+# These suppressions cover internal library state that's by design
+
+{
+   raylib_dlopen_possibly_lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:malloc
+   fun:_dl_find_object_update_1
+   ...
+   fun:dlopen*
+}
+
+{
+   raylib_dlopen_state
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   obj:*/ld-*.so*
+}
+
+{
+   raylib_glfw_init
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   fun:*alloc
+   ...
+   obj:*/libglfw*.so*
+}
+
+{
+   raylib_opengl_driver
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   fun:*alloc
+   ...
+   obj:*/libGL*.so*
+}
+
+{
+   raylib_mesa_driver
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   fun:*alloc
+   ...
+   obj:*/mesa/*
+}
+
+{
+   raylib_internal_state
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   obj:*/nibbler_raylib.so
+}
+
+{
+   raylib_x11_glx
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   fun:*alloc
+   ...
+   obj:*/libX11*.so*
+}
+
+{
+   raylib_drm_driver
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,possible,reachable
+   fun:*alloc
+   ...
+   obj:*/libdrm*.so*
+}

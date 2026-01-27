@@ -1,7 +1,7 @@
 # Nibbler - Devlog - 9
 
 ## Table of Contents
-1. [Day Eight Plan](#91-day-nine-plan)
+1. [Day Nine Plan](#91-day-nine-plan)
 2. [Tis All About States](#92-tis-all-about-states)
 
 <br>

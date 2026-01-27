@@ -1,0 +1,171 @@
+# Valgrind suppression file for SDL2 and its dependencies
+# SDL2 on Linux uses X11, which has internal allocations that are not freed
+# These are not leaks - they're part of SDL2/X11's internal state management
+
+# SDL2 video driver initialization
+{
+   sdl2_video_init
+   Memcheck:Leak
+   match-leak-kinds: definite,reachable,possible,indirect
+   ...
+   obj:*/libSDL2*
+   ...
+}
+
+# X11 library internals
+{
+   x11_internal_state
+   Memcheck:Leak
+   match-leak-kinds: reachable,indirect
+   ...
+   obj:*/libX11.so*
+   ...
+}
+
+{
+   x11_locale_modifiers
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:XSetLocaleModifiers
+   ...
+}
+
+{
+   x11_string_to_quark
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_XrmInternalStringToQuark
+   ...
+}
+
+# DRI/OpenGL driver internals (used by SDL2)
+{
+   dri_driver_init
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,reachable
+   ...
+   obj:*/dri/*
+   ...
+}
+
+# Mesa/libGL internals
+{
+   mesa_gl_internal
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect,reachable
+   ...
+   obj:*/libGL.so*
+   ...
+}
+
+# LLVM internals (used by Mesa drivers)
+{
+   llvm_internal
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*/libLLVM*.so*
+   ...
+}
+
+# Dynamic linker (dlopen) internals
+{
+   dlopen_internal
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   ...
+   fun:_dl_new_object
+   ...
+}
+
+{
+   dlopen_map_versions
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   ...
+   fun:_dl_check_map_versions
+   ...
+}
+
+{
+   dlopen_find_object
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   fun:_dl_find_object_update
+   ...
+}
+
+# SDL2 specific video driver allocations
+{
+   sdl2_video_driver_unknown
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:calloc
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   ...
+}
+
+{
+   sdl2_video_driver_malloc
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:malloc
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   ...
+}
+
+{
+   sdl2_video_driver_realloc
+   Memcheck:Leak
+   match-leak-kinds: definite,indirect
+   fun:realloc
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   ...
+}
+
+# Still reachable SDL2 memory
+{
+   sdl2_still_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*/libSDL2*
+   ...
+}
+
+{
+   sdl2_still_reachable_unknown
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   obj:*
+   obj:*
+   obj:*
+   ...
+}
