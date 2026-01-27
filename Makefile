@@ -173,6 +173,7 @@ clean:
 fclean: clean
 	@/bin/rm -f $(NAME) $(SDL_LIB_NAME) $(RAYLIB_LIB_NAME) $(NCURSES_LIB_NAME)
 	@/bin/rm -fr $(SDL_DIR) $(RAYLIB_DIR) $(NCURSES_DIR)
+	@/bin/rm -fr checks/valgrind-unified.txt checks/valgrind-ncurses-out.txt checks/valgrind-sdl-out.txt checks/valgrind-raylib-out.txt
 	@echo "$(RED)Cleaned all binaries and external libraries$(DEF_COLOR)"
 
 re: fclean all
