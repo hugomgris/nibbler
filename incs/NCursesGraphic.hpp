@@ -10,6 +10,8 @@
 #include <vector>
 #include <random>
 #include <cstring>
+#include <fstream>
+#include <string>
 
 class NCursesGraphic : public IGraphic {
 private:
@@ -31,6 +33,8 @@ public:
 	Input pollInput() override;
 
 	// Drawing functions
+	void drawStartScreen(int win_height, int win_width);
+	void drawTitle(int win_height, int win_width);
 	void drawGround();
 	void drawBorder();
 	void drawSnake(const GameState &state);
