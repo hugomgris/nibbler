@@ -395,58 +395,113 @@ void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
 	int lineCounter = 0;
 	std::string filepath;
 
-	filepath = "logos/ncurses_gameover_big_B.txt";
-
-	// OVER
-	std::ifstream fileA(filepath);
-	if (!fileA.is_open())
+	if (win_width / 2 < 38)
 	{
-		std::cerr << "Failed to fetch title file" << std::endl;
-		return;
-	}
-	else 
-	{
-		std::string line;
-		std::getline(fileA, line);
-		int anchorX = (win_width - std::stoi(line)) / 2;
-		std::getline(fileA, line);
-		int anchorY = ((win_height - std::stoi(line)) / 2);
+		filepath = "logos/ncurses_gameover_small_B.txt";
 
-		while (std::getline(fileA, line))
+		// OVER
+		std::ifstream fileA(filepath);
+		if (!fileA.is_open())
 		{
-			wattron(gameWindow, COLOR_PAIR(2));
-			mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-			wattroff(gameWindow, COLOR_PAIR(2));
-			lineCounter++;
+			std::cerr << "Failed to fetch title file" << std::endl;
+			return;
 		}
-		
-	}
-
-	// GAME
-	filepath = "logos/ncurses_gameover_big_A.txt";
-	lineCounter = 0;
-	std::ifstream fileB(filepath);
-	if (!fileB.is_open())
-	{
-		std::cerr << "Failed to fetch title file" << std::endl;
-		return;
-	}
-	else 
-	{
-		std::string line;
-		std::getline(fileB, line);
-		int anchorX = (win_width - std::stoi(line)) / 2;
-		std::getline(fileB, line);
-		int anchorY = ((win_height - std::stoi(line)) / 2) - 4;
-
-		while (std::getline(fileB, line))
+		else 
 		{
-			wattron(gameWindow, COLOR_PAIR(1));
-			mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-			wattroff(gameWindow, COLOR_PAIR(1));
-			lineCounter++;
+			std::string line;
+			std::getline(fileA, line);
+			int anchorX = (win_width - std::stoi(line)) / 2;
+			std::getline(fileA, line);
+			int anchorY = ((win_height - std::stoi(line)) / 2 - 2);
+
+			while (std::getline(fileA, line))
+			{
+				wattron(gameWindow, COLOR_PAIR(2));
+				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
+				wattroff(gameWindow, COLOR_PAIR(2));
+				lineCounter++;
+			}
+			
 		}
-		
+
+		// GAME
+		filepath = "logos/ncurses_gameover_small_A.txt";
+		lineCounter = 0;
+		std::ifstream fileB(filepath);
+		if (!fileB.is_open())
+		{
+			std::cerr << "Failed to fetch title file" << std::endl;
+			return;
+		}
+		else 
+		{
+			std::string line;
+			std::getline(fileB, line);
+			int anchorX = (win_width - std::stoi(line)) / 2;
+			std::getline(fileB, line);
+			int anchorY = ((win_height - std::stoi(line)) / 2 - 2);
+
+			while (std::getline(fileB, line))
+			{
+				wattron(gameWindow, COLOR_PAIR(1));
+				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
+				wattroff(gameWindow, COLOR_PAIR(1));
+				lineCounter++;
+			}
+		}
+	} else {
+		filepath = "logos/ncurses_gameover_big_B.txt";
+
+		// OVER
+		std::ifstream fileA(filepath);
+		if (!fileA.is_open())
+		{
+			std::cerr << "Failed to fetch title file" << std::endl;
+			return;
+		}
+		else 
+		{
+			std::string line;
+			std::getline(fileA, line);
+			int anchorX = (win_width - std::stoi(line)) / 2;
+			std::getline(fileA, line);
+			int anchorY = ((win_height - std::stoi(line)) / 2 - 2);
+
+			while (std::getline(fileA, line))
+			{
+				wattron(gameWindow, COLOR_PAIR(2));
+				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
+				wattroff(gameWindow, COLOR_PAIR(2));
+				lineCounter++;
+			}
+			
+		}
+
+		// GAME
+		filepath = "logos/ncurses_gameover_big_A.txt";
+		lineCounter = 0;
+		std::ifstream fileB(filepath);
+		if (!fileB.is_open())
+		{
+			std::cerr << "Failed to fetch title file" << std::endl;
+			return;
+		}
+		else 
+		{
+			std::string line;
+			std::getline(fileB, line);
+			int anchorX = (win_width - std::stoi(line)) / 2;
+			std::getline(fileB, line);
+			int anchorY = ((win_height - std::stoi(line)) / 2) - 5.5;
+
+			while (std::getline(fileB, line))
+			{
+				wattron(gameWindow, COLOR_PAIR(1));
+				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
+				wattroff(gameWindow, COLOR_PAIR(1));
+				lineCounter++;
+			}
+		}
 	}
 }
 
@@ -457,25 +512,46 @@ void NCursesGraphic::drawGameOverScreen(const GameState &state, int win_height, 
 
 	drawGameOverTitle(win_height, win_width);
 
-	wattron(gameWindow, COLOR_PAIR(5));
-	//char *score = std::to_string(state.score).c_str();
-	const char *instructions = "YOU ATE    APPLES";
-	int instrY = anchorY + 4.5;
-	mvwaddstr(gameWindow, instrY, 
-			(win_width / 2) - 10, instructions);
 	
-	const char *controls = "[⬆⬇⬅➡]·········MOVE";
-	int controlsY = instrY + 1;
+	int scoreY = ((win_width / 2) < 38) ? anchorY + 2.5 : anchorY + 4.5;
+	wattron(gameWindow, COLOR_PAIR(1));
+	mvwaddstr(gameWindow, scoreY, (win_width / 2) - 9, "YOU ");
+	wattroff(gameWindow, COLOR_PAIR(1));
+
+	wattron(gameWindow, COLOR_PAIR(5));
+	std::string scoreString = std::to_string(state.score);
+	std::string scoreMessage;
+	if (state.score == 1) {
+		scoreMessage = "ATE   APPLE";
+	}
+	else if (state.score == 0) {
+		scoreMessage = "ATE   APPLES";
+	}
+	else if (state.score > 1 && state.score < 9) {
+		scoreMessage = "ATE   APPLES";
+	} else {
+		scoreMessage = "ATE    APPLES";
+	}
+
+	mvwaddstr(gameWindow, scoreY, 
+			(win_width / 2) - 5, scoreMessage.c_str());
+
+	wattroff(gameWindow, COLOR_PAIR(5));
+
+	wattron(gameWindow, COLOR_PAIR(2));
+	mvwaddstr(gameWindow, scoreY, 
+			(win_width / 2) - 1, scoreString.c_str());
+	wattroff(gameWindow, COLOR_PAIR(2));
+
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *replay = "[ENTER]·······RETRY";
+	int controlsY = scoreY + 2;
 	mvwaddstr(gameWindow, controlsY,
-			(win_width / 2) - 10, controls);
-	const char *libs = "[1/2/3]······TRAVEL";
+			(win_width / 2) - 10, replay);
+	const char *libs = "[Q/ESC]········QUIT";
 	int libsY = controlsY + 1;
 	mvwaddstr(gameWindow, libsY,
 			(win_width / 2) - 10, libs);
-	const char *quit = "[Q/ESC]········QUIT";
-	int quitY = libsY + 1;
-	mvwaddstr(gameWindow, quitY,
-			(win_width / 2) - 10, quit);
 	wattroff(gameWindow, COLOR_PAIR(5));
 }
 
