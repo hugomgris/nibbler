@@ -452,6 +452,7 @@ void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
 
 void NCursesGraphic::drawGameOverScreen(const GameState &state, int win_height, int win_width)
 {
+	(void)state;
 	int anchorY = ((win_width / 2) < 38) ? win_height / 2 : (win_height / 2) + 5;
 
 	drawGameOverTitle(win_height, win_width);
