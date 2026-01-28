@@ -35,6 +35,8 @@ public:
 	// Drawing functions
 	void drawStartScreen(int win_height, int win_width);
 	void drawTitle(int win_height, int win_width);
+	void drawGameOverScreen(const GameState &state, int win_height, int win_width);
+	void drawGameOverTitle(int win_height, int win_width);
 	void drawGround();
 	void drawBorder();
 	void drawSnake(const GameState &state);

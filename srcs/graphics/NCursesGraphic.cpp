@@ -390,31 +390,116 @@ void NCursesGraphic::renderMenu(const GameState &state) {
 	doupdate();
 }
 
-void NCursesGraphic::renderGameOver(const GameState& state) {
-	werase(gameWindow);
+void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
+{
+	int lineCounter = 0;
+	std::string filepath;
+
+	filepath = "logos/ncurses_gameover_big_B.txt";
+
+	// OVER
+	std::ifstream fileA(filepath);
+	if (!fileA.is_open())
+	{
+		std::cerr << "Failed to fetch title file" << std::endl;
+		return;
+	}
+	else 
+	{
+		std::string line;
+		std::getline(fileA, line);
+		int anchorX = (win_width - std::stoi(line)) / 2;
+		std::getline(fileA, line);
+		int anchorY = ((win_height - std::stoi(line)) / 2);
+
+		while (std::getline(fileA, line))
+		{
+			wattron(gameWindow, COLOR_PAIR(2));
+			mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
+			wattroff(gameWindow, COLOR_PAIR(2));
+			lineCounter++;
+		}
+		
+	}
+
+	// GAME
+	filepath = "logos/ncurses_gameover_big_A.txt";
+	lineCounter = 0;
+	std::ifstream fileB(filepath);
+	if (!fileB.is_open())
+	{
+		std::cerr << "Failed to fetch title file" << std::endl;
+		return;
+	}
+	else 
+	{
+		std::string line;
+		std::getline(fileB, line);
+		int anchorX = (win_width - std::stoi(line)) / 2;
+		std::getline(fileB, line);
+		int anchorY = ((win_height - std::stoi(line)) / 2) - 4;
+
+		while (std::getline(fileB, line))
+		{
+			wattron(gameWindow, COLOR_PAIR(1));
+			mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
+			wattroff(gameWindow, COLOR_PAIR(1));
+			lineCounter++;
+		}
+		
+	}
+}
+
+void NCursesGraphic::drawGameOverScreen(const GameState &state, int win_height, int win_width)
+{
+	int anchorY = ((win_width / 2) < 38) ? win_height / 2 : (win_height / 2) + 5;
+
+	drawGameOverTitle(win_height, win_width);
+
+	wattron(gameWindow, COLOR_PAIR(5));
+	//char *score = std::to_string(state.score).c_str();
+	const char *instructions = "YOU ATE    APPLES";
+	int instrY = anchorY + 4.5;
+	mvwaddstr(gameWindow, instrY, 
+			(win_width / 2) - 10, instructions);
 	
+	const char *controls = "[⬆⬇⬅➡]·········MOVE";
+	int controlsY = instrY + 1;
+	mvwaddstr(gameWindow, controlsY,
+			(win_width / 2) - 10, controls);
+	const char *libs = "[1/2/3]······TRAVEL";
+	int libsY = controlsY + 1;
+	mvwaddstr(gameWindow, libsY,
+			(win_width / 2) - 10, libs);
+	const char *quit = "[Q/ESC]········QUIT";
+	int quitY = libsY + 1;
+	mvwaddstr(gameWindow, quitY,
+			(win_width / 2) - 10, quit);
+	wattroff(gameWindow, COLOR_PAIR(5));
+}
+
+void NCursesGraphic::renderGameOver(const GameState &state)
+{
+	(void)state;
+	werase(gameWindow);
+
 	int win_height, win_width;
 	getmaxyx(gameWindow, win_height, win_width);
-	
-	drawBorder();
-	
-	wattron(gameWindow, COLOR_PAIR(2) | A_BOLD);
-	const char* gameOverText = "GAME OVER";
-	mvwaddstr(gameWindow, win_height / 2 - 2, 
-			(win_width - strlen(gameOverText)) / 2, gameOverText);
-	wattroff(gameWindow, COLOR_PAIR(2) | A_BOLD);
-	
+
 	wattron(gameWindow, COLOR_PAIR(4));
-	char scoreText[50];
-	snprintf(scoreText, sizeof(scoreText), "Final Score: %d", state.score);
-	mvwaddstr(gameWindow, win_height / 2, 
-			(win_width - strlen(scoreText)) / 2, scoreText);
-	
-	const char* restartText = "Press ENTER to restart | Q to quit";
-	mvwaddstr(gameWindow, win_height / 2 + 2,
-			(win_width - strlen(restartText)) / 2, restartText);
+	for (int x = 0; x < win_width - 1; x++)
+	{
+		for (int y = 0; y < win_height - 1; y++)
+		{
+			mvwaddch(gameWindow, y, x, ' ');
+		}
+	}
 	wattroff(gameWindow, COLOR_PAIR(4));
-	
+
+	drawBorder();
+
+	drawGameOverScreen(state, win_height, win_width);
+
 	wnoutrefresh(stdscr);
 	wnoutrefresh(gameWindow);
 	doupdate();
