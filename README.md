@@ -26,11 +26,11 @@
 3. [Technical Architecture](#technical-architecture)
 4. [Building & Running](#building--running)
 5. [Current State](#current-state)
-6. [What's Working](#whats-working)
-7. [What's Left](#whats-left)
+6. [What's Working](#donezo)
+7. [What's Left](#donezont)
 8. [Memory Management](#memory-management)
-9. [Controls](#controls)
-10. [Troubleshooting](#troubleshooting)
+9. [Next Steps](#next-steps)
+10. [Contributing](#contributing)
 
 <br>
 
