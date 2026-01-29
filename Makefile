@@ -153,6 +153,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp Makefile
 $(NAME): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(LDFLAGS)
 	@echo "$(GREEN)Built $(NAME)$(DEF_COLOR)"
+	@echo "$(RED)Snakeboarding is not a crime!$(DEF_COLOR)"
 
 -include $(DEPS)
 -include $(DEPDIR)/libs/*.d

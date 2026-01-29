@@ -24,8 +24,8 @@ Food &Food::operator=(const Food & other)
 bool Food::replaceInFreeSpace(GameState *gameState)
 {
 	std::vector<Vec2> snakeSegments;
-	for (int i = 0; i < gameState->snake->getLength(); i++) {
-		snakeSegments.push_back(gameState->snake->getSegments()[i]);
+	for (int i = 0; i < gameState->snake.getLength(); i++) {
+		snakeSegments.push_back(gameState->snake.getSegments()[i]);
 	}
 
 	std::vector<Vec2> availableCells;

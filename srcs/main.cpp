@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <iostream>
 #include <ncurses.h>
+#include <array>
+#include <string_view>
 
 // Cleanup handler for ncurses when program exits
 void cleanupNCurses() {
@@ -20,7 +22,7 @@ void cleanupNCurses() {
 }
 
 int main(int argc, char **argv) {
-	std::atexit(cleanupNCurses);
+	std::atexit(cleanupNCurses); // This might not be necessary after switching to an external, dynamically linked Ncurses, but we'll leave it just in case (legacy!)
 	
 	if (argc != 3)
 	{
@@ -37,15 +39,15 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	const char *libs[] = {
+	constexpr std::array<std::string_view, 3> libs = {
 		"./nibbler_ncurses.so",
 		"./nibbler_sdl.so",
 		"./nibbler_raylib.so"
 	};
-	int currentLib = 0;
+	int currentLib = 1;
 
 	LibraryManager gfxLib;
-	if (!gfxLib.load(libs[currentLib]))
+	if (!gfxLib.load(libs[currentLib].data()))
 		return 1;
 
 	gfxLib.get()->init(width, height);
@@ -53,7 +55,7 @@ int main(int argc, char **argv) {
 	Snake snake(width, height);
 	Food food(Utils::getRandomVec2(width - 1, height - 1), width, height);
 	GameState state {
-		width, height, &snake, &food, NULL,
+		width, height, snake, food,
 		false,
 		true,
 		false,
@@ -87,7 +89,7 @@ int main(int argc, char **argv) {
 			int newLib = (int)input - 1;
 			if (newLib != currentLib) {
 				gfxLib.unload();
-				if (!gfxLib.load(libs[newLib])) return 1;
+				if (!gfxLib.load(libs[newLib].data())) return 1;
 				gfxLib.get()->init(width, height);
 				currentLib = newLib;
 			}
@@ -139,8 +141,6 @@ int main(int argc, char **argv) {
 				if (input == Input::Enter) {
 					snake = Snake(width, height);
 					food = Food(Utils::getRandomVec2(width - 1, height - 1), width, height);
-					state.snake = &snake;
-					state.food = &food;
 					state.score = 0;
 					state.gameOver = false;
 					state.isPaused = false;
