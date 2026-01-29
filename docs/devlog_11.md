@@ -59,7 +59,7 @@ Snake, apple... Eden vibes, right? Whatever, there's design work to do...
 
 First, let's try to finish the `NCurses` implementations by redesigning the gameover screens, both for small and large formats. I'll just reuse what I wrote for the start screen and use it to also draw the ending statuses. Here they are:
 
-<p float="left">
+<p float="center">
   <img src="ncurses_gameover_big.png" alt="NCurses game over screen in its big format" height=400>
   <img src="ncurses_gameover_small.png" alt="NCurses game over screen in its small format" height=400>
 </p>
