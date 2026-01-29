@@ -8,8 +8,8 @@ class IGraphic {
 
 		virtual void init(int width, int height) = 0;
 		virtual void render(const GameState &state, float deltaTime) = 0;
-		virtual void renderMenu(const GameState& state) = 0;
-		virtual void renderGameOver(const GameState& state) = 0;
+		virtual void renderMenu(const GameState& state, float deltaTime) = 0;
+		virtual void renderGameOver(const GameState& state, float deltaTime) = 0;
 		virtual Input pollInput() = 0;
 };
 

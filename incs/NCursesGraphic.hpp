@@ -43,8 +43,8 @@ public:
 	
 	void init(int w, int h) override;
 	void render(const GameState& state, float deltaTime) override;
-	void renderMenu(const GameState &state) override;
-	void renderGameOver(const GameState &state) override;
+	void renderMenu(const GameState &state, float deltaTime) override;
+	void renderGameOver(const GameState &state, float deltaTime) override;
 	Input pollInput() override;
 
 	// Drawing functions

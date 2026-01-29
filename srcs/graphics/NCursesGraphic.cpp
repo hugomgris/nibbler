@@ -235,7 +235,7 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 }
 
 void NCursesGraphic::drawStartScreen(int win_height, int win_width) {
-	int anchorY = ((win_width / 2) < 38) ? win_height / 2 : (win_height / 2) + 5;
+	int anchorY = ((win_width / 2) < 38) ? win_height / 2 + 1 : (win_height / 2) + 5;
 
 	drawTitle(win_height, win_width);
 
@@ -260,8 +260,9 @@ void NCursesGraphic::drawStartScreen(int win_height, int win_width) {
 	wattroff(gameWindow, COLOR_PAIR(5));
 }
 
-void NCursesGraphic::renderMenu(const GameState &state) {
+void NCursesGraphic::renderMenu(const GameState &state, float deltaTime) {
 	(void)state;
+	(void)deltaTime;
 	
 	werase(gameWindow);
 
@@ -383,9 +384,9 @@ void NCursesGraphic::drawGameOverScreen(const GameState &state, int win_height, 
 	wattroff(gameWindow, COLOR_PAIR(5));
 }
 
-void NCursesGraphic::renderGameOver(const GameState &state)
+void NCursesGraphic::renderGameOver(const GameState &state, float deltaTime)
 {
-	(void)state;
+	(void)deltaTime;
 	werase(gameWindow);
 
 	int win_height, win_width;

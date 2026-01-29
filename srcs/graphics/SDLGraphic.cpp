@@ -3,10 +3,8 @@
 
 SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
 	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
-	maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
-	dustMinSize(2.0f), dustMaxSize(15.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f),
-	explosionMinSize(1.0f), explosionMaxSize(50.0f),
-	lastFoodX(-1), lastFoodY(-1) {
+	lastFoodX(-1), lastFoodY(-1),
+	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true) {
 	lastSpawnTime = std::chrono::high_resolution_clock::now();
 }
 
@@ -43,7 +41,9 @@ void SDLGraphic::init(int width, int height) {
 	
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	
-	particles.reserve(maxDustDensity);
+	// Initialize particle system
+	particleSystem = std::make_unique<ParticleSystem>(renderer, width, height, cellSize, borderOffset);
+	
 	borderLines.reserve(100);
 	
 	std::cout << BRED << "[SDL2] Initialized: " << width << "x" << height << RESET << std::endl;
@@ -61,13 +61,13 @@ void SDLGraphic::setRenderColor(SDL_Color color, bool customAlpha, Uint8 alphaVa
 void SDLGraphic::render(const GameState& state, float deltaTime) {
 
 	updateTunnelEffect(deltaTime);
-	updateParticles(deltaTime);
+	particleSystem->update(deltaTime);
 
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
 	
 	renderTunnelEffect();
-	renderParticles();
+	particleSystem->render();
 	
 	drawSnake(state);
 	drawFood(state);
@@ -87,6 +87,40 @@ void SDLGraphic::drawSnake(const GameState &state) {
 			cellSize
 		};
 		SDL_RenderFillRect(renderer, &rect);
+		
+		if (i == state.snake.getLength() - 1 && state.snake.getLength() > 1) {
+			float tailX = borderOffset + (state.snake.getSegments()[i].x * cellSize) + (cellSize / 2.0f);
+			float tailY = borderOffset + (state.snake.getSegments()[i].y * cellSize) + (cellSize / 2.0f);
+			
+			Vec2 tail = state.snake.getSegments()[i];
+			Vec2 beforeTail = state.snake.getSegments()[i - 1];
+			float direction = 0.0f;
+			
+			if (tail.x > beforeTail.x) direction = 0.0f;		// Moving right
+			else if (tail.x < beforeTail.x) direction = 180.0f;	// Moving left
+			else if (tail.y > beforeTail.y) direction = 90.0f;  // Moving down
+			else if (tail.y < beforeTail.y) direction = 270.0f; // Moving up
+			
+			if (!isFirstFrame && (lastTailX != tailX || lastTailY != tailY)) {
+				float dx = tailX - lastTailX;
+				float dy = tailY - lastTailY;
+				float distance = sqrtf(dx * dx + dy * dy);
+				
+				int steps = static_cast<int>(distance / 15.0f) + 1;
+				
+				for (int step = 0; step < steps; ++step) {
+					float t = static_cast<float>(step) / static_cast<float>(steps);
+					float interpX = lastTailX + (dx * t);
+					float interpY = lastTailY + (dy * t);
+					
+					particleSystem->spawnSnakeTrail(interpX - 10.0f, interpY - 10.0f, 1, direction, lightBlue);
+				}
+			}
+			
+			lastTailX = tailX;
+			lastTailY = tailY;
+			isFirstFrame = false;
+		}
 	}
 }
 
@@ -97,7 +131,7 @@ void SDLGraphic::drawFood(const GameState &state) {
 	if (lastFoodX != -1 && (lastFoodX != currentFoodX || lastFoodY != currentFoodY)) {
 		float explosionX = borderOffset + (lastFoodX * cellSize) + (cellSize / 2.0f);
 		float explosionY = borderOffset + (lastFoodY * cellSize) + (cellSize / 2.0f);
-		spawnExplosion(explosionX, explosionY, 20);  // 20 particles per explosion
+		particleSystem->spawnExplosion(explosionX, explosionY, 20);  // 20 particles per explosion
 	}
 	
 	lastFoodX = currentFoodX;
@@ -251,134 +285,36 @@ void SDLGraphic::renderTunnelEffect() {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
-void SDLGraphic::updateParticles(float deltaTime) {
-	dustSpawnTimer += deltaTime;
-	if (dustSpawnTimer >= dustSpawnInterval) {
-		spawnDustParticle();
-		dustSpawnTimer = 0.0f;
-	}
-	
-	// Update all particles
-	for (auto& particle : particles) {
-		particle.age += deltaTime;
-		particle.rotation += particle.rotationSpeed * deltaTime;
-		
-		// This only applies to explosions, i.e. the only ones with values for vx/vy
-		particle.x += particle.vx * deltaTime;
-		particle.y += particle.vy * deltaTime;
-		
-		// Shrinking 
-		float progress = particle.age / particle.lifetime;
-		particle.currentSize = particle.initialSize * (1.0f - progress) + 1.0f * progress;
-	}
-	
-	// Dead particle removal
-	particles.erase(
-		std::remove_if(particles.begin(), particles.end(),
-			[](const Particle& p) { return p.age >= p.lifetime; }),
-		particles.end()
-	);
-}
-
-void SDLGraphic::renderParticles() {
-	for (const auto& particle : particles) {
-		// Fade out
-		float progress = particle.age / particle.lifetime;
-		Uint8 alpha;
-		
-		// Alpha handling based on type
-		if (particle.type == ParticleType::Dust) {
-			alpha = static_cast<Uint8>((1.0f - progress) * 120);
-		} else {  // Explosion
-			alpha = static_cast<Uint8>((1.0f - progress) * 200);
-		}
-		
-		drawRotatedSquare(particle.x, particle.y, particle.currentSize, particle.rotation, particle.color, alpha);
+void SDLGraphic::drawRects(const std::vector<SDL_Rect>& rects) {
+	for (const auto& rect : rects) {
+		SDL_RenderFillRect(renderer, &rect);
 	}
 }
 
-void SDLGraphic::spawnDustParticle() {
-	int dustCount = 0;
-	for (const auto& p : particles) {
-		if (p.type == ParticleType::Dust) dustCount++;
-	}
-	if (dustCount >= maxDustDensity) return;
-	
-	int arenaX = borderOffset;
-	int arenaY = borderOffset;
-	int arenaW = gridWidth * cellSize;
-	int arenaH = gridHeight * cellSize;
-	
-	float x = arenaX + static_cast<float>(rand() % arenaW);
-	float y = arenaY + static_cast<float>(rand() % arenaH);
-	
-	particles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
-}
-
-void SDLGraphic::spawnExplosion(float x, float y, int count) {
-	for (int i = 0; i < count; i++) {
-		// Random outward velocity
-		float angle = (rand() % 360) * 3.14159f / 180.0f;
-		float speed = 50.0f + (rand() % 150);  // 50-200 pixels/sec
-		float vx = cosf(angle) * speed;
-		float vy = sinf(angle) * speed;
-		
-		SDL_Color explosionColor = lightRed;
-		
-		particles.emplace_back(x, y, explosionMinSize, explosionMaxSize, 0.5f, 1.0f, vx, vy, explosionColor);
-	}
-}
-
-void SDLGraphic::drawRotatedSquare(float cx, float cy, float size, float rotation, SDL_Color color, Uint8 alpha) {
-	// Rotation -> Radians
-	float rad = rotation * 3.14159f / 180.0f;
-	float halfSize = size / 2.0f;
-	
-	// 4 corners of the square (centered at origin)
-	float corners[4][2] = {
-		{-halfSize, -halfSize},  // Top-left
-		{ halfSize, -halfSize},  // Top-right
-		{ halfSize,  halfSize},  // Bottom-right
-		{-halfSize,  halfSize}   // Bottom-left
-	};
-	
-	Sint16 vx[4], vy[4];
-	for (int i = 0; i < 4; i++) {
-		float x = corners[i][0];
-		float y = corners[i][1];
-		
-		float rotatedX = x * cosf(rad) - y * sinf(rad);
-		float rotatedY = x * sinf(rad) + y * cosf(rad);
-		
-		vx[i] = static_cast<Sint16>(cx + rotatedX);
-		vy[i] = static_cast<Sint16>(cy + rotatedY);
-	}
-	
-	SDL_Vertex vertices[4];
-	for (int i = 0; i < 4; i++) {
-		vertices[i].position.x = static_cast<float>(vx[i]);
-		vertices[i].position.y = static_cast<float>(vy[i]);
-		vertices[i].color = {color.r, color.g, color.b, alpha};
-		vertices[i].tex_coord = {0, 0};
-	}
-	
-	int indices[6] = {0, 1, 2, 0, 2, 3};
-	
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-	SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
-}
-
-void SDLGraphic::renderMenu(const GameState& state) {
+void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	(void)state;
 	
 	lastFoodX = -1;
 	lastFoodY = -1;
-	
-	particles.clear();
-	borderLines.clear();
+
+	// Test dematerializing trail effect - spawning right, so trail goes left (180°)
+	// Only 1 particle every few frames creates a sparse trail
+	static int frameCounter = 0;
+	if (frameCounter % 333 == 0) {  // Spawn every 3rd frame
+		particleSystem->spawnSnakeTrail(1610, 1110, 1, 0, lightBlue);  // Direction: 0° (moving right), trail goes left
+	}
+	frameCounter++;
+
+	// Update animations
+	updateTunnelEffect(deltaTime);
+	particleSystem->update(deltaTime);
 	
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
+	
+	// Render animations
+	renderTunnelEffect();
+	particleSystem->render();
 	
 	drawBorder(cellSize);
 	
@@ -386,84 +322,99 @@ void SDLGraphic::renderMenu(const GameState& state) {
 	int windowHeight = (gridHeight * cellSize) + (2 * borderOffset);
 	int centerX = windowWidth / 2;
 	int centerY = windowHeight / 2;
+	int sep = 50;
+	int square = 50;
 	
-	setRenderColor(lightBlue);
+	int totalWidth = (26 * square) + (6 * sep);
+	int startX = centerX - (totalWidth / 2);
 	
-	// N
-	SDL_Rect n1 = {centerX - 150, centerY - 80, 15, 60};
-	SDL_Rect n2 = {centerX - 150, centerY - 80, 40, 15};
-	SDL_Rect n3 = {centerX - 115, centerY - 65, 15, 60};
-	
-	// I
-	SDL_Rect i1 = {centerX - 90, centerY - 80, 15, 60};
-	
-	// B
-	SDL_Rect b1 = {centerX - 65, centerY - 80, 15, 60};
-	SDL_Rect b2 = {centerX - 65, centerY - 80, 35, 15};
-	SDL_Rect b3 = {centerX - 65, centerY - 50, 35, 15};
-	SDL_Rect b4 = {centerX - 65, centerY - 35, 35, 15};
-	SDL_Rect b5 = {centerX - 35, centerY - 65, 15, 15};
-	SDL_Rect b6 = {centerX - 35, centerY - 20, 15, 15};
-	
-	// B
-	SDL_Rect b7 = {centerX - 10, centerY - 80, 15, 60};
-	SDL_Rect b8 = {centerX - 10, centerY - 80, 35, 15};
-	SDL_Rect b9 = {centerX - 10, centerY - 50, 35, 15};
-	SDL_Rect b10 = {centerX - 10, centerY - 35, 35, 15};
-	SDL_Rect b11 = {centerX + 20, centerY - 65, 15, 15};
-	SDL_Rect b12 = {centerX + 20, centerY - 20, 15, 15};
-	
-	// L
-	SDL_Rect l1 = {centerX + 45, centerY - 80, 15, 60};
-	SDL_Rect l2 = {centerX + 45, centerY - 35, 40, 15};
-	
-	// E
-	SDL_Rect e1 = {centerX + 95, centerY - 80, 15, 60};
-	SDL_Rect e2 = {centerX + 95, centerY - 80, 40, 15};
-	SDL_Rect e3 = {centerX + 95, centerY - 50, 35, 15};
-	SDL_Rect e4 = {centerX + 95, centerY - 35, 40, 15};
-	
-	// R
-	SDL_Rect r1 = {centerX + 145, centerY - 80, 15, 60};
-	SDL_Rect r2 = {centerX + 145, centerY - 80, 35, 15};
-	SDL_Rect r3 = {centerX + 145, centerY - 50, 35, 15};
-	SDL_Rect r4 = {centerX + 175, centerY - 65, 15, 15};
-	SDL_Rect r5 = {centerX + 170, centerY - 35, 15, 25};
-	
-	SDL_RenderFillRect(renderer, &n1); SDL_RenderFillRect(renderer, &n2); SDL_RenderFillRect(renderer, &n3);
-	SDL_RenderFillRect(renderer, &i1);
-	SDL_RenderFillRect(renderer, &b1); SDL_RenderFillRect(renderer, &b2); SDL_RenderFillRect(renderer, &b3);
-	SDL_RenderFillRect(renderer, &b4); SDL_RenderFillRect(renderer, &b5); SDL_RenderFillRect(renderer, &b6);
-	SDL_RenderFillRect(renderer, &b7); SDL_RenderFillRect(renderer, &b8); SDL_RenderFillRect(renderer, &b9);
-	SDL_RenderFillRect(renderer, &b10); SDL_RenderFillRect(renderer, &b11); SDL_RenderFillRect(renderer, &b12);
-	SDL_RenderFillRect(renderer, &l1); SDL_RenderFillRect(renderer, &l2);
-	SDL_RenderFillRect(renderer, &e1); SDL_RenderFillRect(renderer, &e2); SDL_RenderFillRect(renderer, &e3); SDL_RenderFillRect(renderer, &e4);
-	SDL_RenderFillRect(renderer, &r1); SDL_RenderFillRect(renderer, &r2); SDL_RenderFillRect(renderer, &r3);
-	SDL_RenderFillRect(renderer, &r4); SDL_RenderFillRect(renderer, &r5);
-	
+	//n
 	setRenderColor(customWhite);
+
+	std::vector<SDL_Rect> nRects = {
+		{startX, centerY - (square * 3), square, square * 5},						// n - left vertical
+		{startX + square, centerY - (square * 3), square * 3, square},				// n - top horizontal
+		{startX + (square * 3), centerY - (square * 2), square * 2, square},		// n - middle diagonal
+		{startX + (square * 4), centerY - (square * 1), square, square * 3},		// n - right vertical
+	};
+
+	drawRects(nRects);
+
+	// i base
+	setRenderColor(lightBlue);
+
+	std::vector<SDL_Rect> iBaseRects = {
+		{startX + (square * 5) + sep, centerY - (square * 4), square, square * 7},			// i - left
+		{startX + (square * 5) + sep, centerY + (square * 3), square * 23, square},			// i - base
+		/* {startX + (square * 17) + (sep * 3), centerY - (square * 6), square, square * 9},	// i - right
+		{startX + (square * 18) + (sep * 3), centerY - (square * 7), square, square * 2},	// i - squiggle
+		{startX + (square * 19) + (sep * 3), centerY - (square * 8), square, square * 2},	// i - squiggle
+		{startX + (square * 20) + (sep * 3), centerY - (square * 8), square * 5, square},	// i - squiggle */
+	};
+
+	drawRects(iBaseRects);
+
+	// i dot
+	setRenderColor(lightRed);
+
+	std::vector<SDL_Rect> iDotRects = {
+		{startX + (square * 5) + sep, centerY - (square * 6), square, square},  // i - dot
+	};
+
+	drawRects(iDotRects);
+
+	// bbler
+	setRenderColor(customWhite);
+
+	int bStartX = startX + (square * 6) + (sep * 2);
 	
-	int textY = centerY + 40;
-	for (int i = 0; i < 45; i++) {
-		SDL_Rect dot = {centerX - 180 + (i * 8), textY, 5, 5};
-		SDL_RenderFillRect(renderer, &dot);
-	}
-	
-	// "1/2/3 to switch libraries"
-	textY = centerY + 80;
-	for (int i = 0; i < 35; i++) {
-		SDL_Rect dot = {centerX - 140 + (i * 8), textY, 5, 5};
-		SDL_RenderFillRect(renderer, &dot);
-	}
+	std::vector<SDL_Rect> bblerRects = {
+		// First 'b'
+		{bStartX, centerY - (square * 6), square, square * 8},								// b - stem
+		{bStartX + square, centerY - (square * 3), square * 4, square},						// b - base, top
+		{bStartX + (square * 4), centerY - (square * 2), square, square * 4},				// b - base, right
+		{bStartX + square, centerY + square, square * 3, square},							// b - base, bottom
+
+		// Second 'b'
+		{bStartX + (square * 5) + sep, centerY - (square * 6), square, square * 8},			// b - stem
+		{bStartX + (square * 6) + sep, centerY - (square * 3), square * 4, square},			// b - base, top
+		{bStartX + (square * 9) + sep, centerY - (square * 2), square, square * 4},			// b - base, right
+		{bStartX + (square * 6) + sep, centerY + square, square * 3, square},				// b - base, bottom
+
+		// 'l'
+		{bStartX + (square * 10) + (sep * 2), centerY - (square * 6), square, square * 8},	// l
+
+		// 'e'
+		{bStartX + (square * 11) + (sep * 3), centerY - (square * 3), square, square * 5},	// e - left
+		{bStartX + (square * 12) + (sep * 3), centerY - (square * 3), square * 4, square},	// e - top
+		{bStartX + (square * 15) + (sep * 3), centerY - (square * 3), square, square * 3},	// e - right
+		{bStartX + (square * 12) + (sep * 3), centerY - square, square * 3, square},		// e - mid
+		{bStartX + (square * 12) + (sep * 3), centerY + square, square * 4, square},		// e - bot
+
+		// 'r'
+		{bStartX + (square * 16) + (sep * 4), centerY - (square * 3), square, square * 5},	// r - stem
+		{bStartX + (square * 17) + (sep * 4), centerY - (square * 3), square * 3, square},	// r - side
+	};
+
+	drawRects(bblerRects);
 	
 	SDL_RenderPresent(renderer);
 }
 
-void SDLGraphic::renderGameOver(const GameState& state) {
+void SDLGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	(void)state;  // Will be used when we add text rendering for score
+
+	// Update animations
+	updateTunnelEffect(deltaTime);
+	particleSystem->update(deltaTime);
 	
 	setRenderColor(customBlack);
 	SDL_RenderClear(renderer);
+	
+	// Render animations
+	renderTunnelEffect();
+	particleSystem->render();
+	
 	
 	drawBorder(cellSize);
 	
@@ -474,71 +425,58 @@ void SDLGraphic::renderGameOver(const GameState& state) {
 	
 	setRenderColor(lightRed);
 	
-	// G
-	SDL_Rect g1 = {centerX - 120, centerY - 60, 15, 60};
-	SDL_Rect g2 = {centerX - 120, centerY - 60, 50, 15};
-	SDL_Rect g3 = {centerX - 120, centerY - 15, 50, 15};
-	SDL_Rect g4 = {centerX - 55, centerY - 40, 15, 25};
-	SDL_Rect g5 = {centerX - 85, centerY - 40, 30, 15};
+	// GAME
+	std::vector<SDL_Rect> gameRects = {
+		// G
+		{centerX - 120, centerY - 60, 15, 60},
+		{centerX - 120, centerY - 60, 50, 15},
+		{centerX - 120, centerY - 15, 50, 15},
+		{centerX - 55, centerY - 40, 15, 25},
+		{centerX - 85, centerY - 40, 30, 15},
+		// A
+		{centerX - 35, centerY - 60, 15, 60},
+		{centerX - 35, centerY - 60, 40, 15},
+		{centerX - 35, centerY - 40, 40, 15},
+		{centerX + 5, centerY - 60, 15, 60},
+		// M
+		{centerX + 30, centerY - 60, 15, 60},
+		{centerX + 30, centerY - 60, 15, 30},
+		{centerX + 55, centerY - 45, 15, 45},
+		{centerX + 80, centerY - 60, 15, 30},
+		{centerX + 80, centerY - 60, 15, 60},
+		// E
+		{centerX + 105, centerY - 60, 15, 60},
+		{centerX + 105, centerY - 60, 40, 15},
+		{centerX + 105, centerY - 40, 35, 15},
+		{centerX + 105, centerY - 15, 40, 15}
+	};
+	drawRects(gameRects);
 	
-	// A
-	SDL_Rect a1 = {centerX - 35, centerY - 60, 15, 60};
-	SDL_Rect a2 = {centerX - 35, centerY - 60, 40, 15};
-	SDL_Rect a3 = {centerX - 35, centerY - 40, 40, 15};
-	SDL_Rect a4 = {centerX + 5, centerY - 60, 15, 60};
-	
-	// M
-	SDL_Rect m1 = {centerX + 30, centerY - 60, 15, 60};
-	SDL_Rect m2 = {centerX + 30, centerY - 60, 15, 30};
-	SDL_Rect m3 = {centerX + 55, centerY - 45, 15, 45};
-	SDL_Rect m4 = {centerX + 80, centerY - 60, 15, 30};
-	SDL_Rect m5 = {centerX + 80, centerY - 60, 15, 60};
-	
-	// E (same as before)
-	SDL_Rect e1 = {centerX + 105, centerY - 60, 15, 60};
-	SDL_Rect e2 = {centerX + 105, centerY - 60, 40, 15};
-	SDL_Rect e3 = {centerX + 105, centerY - 40, 35, 15};
-	SDL_Rect e4 = {centerX + 105, centerY - 15, 40, 15};
-	
-	SDL_RenderFillRect(renderer, &g1); SDL_RenderFillRect(renderer, &g2); SDL_RenderFillRect(renderer, &g3);
-	SDL_RenderFillRect(renderer, &g4); SDL_RenderFillRect(renderer, &g5);
-	SDL_RenderFillRect(renderer, &a1); SDL_RenderFillRect(renderer, &a2); SDL_RenderFillRect(renderer, &a3); SDL_RenderFillRect(renderer, &a4);
-	SDL_RenderFillRect(renderer, &m1); SDL_RenderFillRect(renderer, &m2); SDL_RenderFillRect(renderer, &m3);
-	SDL_RenderFillRect(renderer, &m4); SDL_RenderFillRect(renderer, &m5);
-	SDL_RenderFillRect(renderer, &e1); SDL_RenderFillRect(renderer, &e2); SDL_RenderFillRect(renderer, &e3); SDL_RenderFillRect(renderer, &e4);
-	
-	// "OVER"
+	// OVER
 	int overY = centerY + 5;
-	
-	// O
-	SDL_Rect o1 = {centerX - 60, overY, 15, 40};
-	SDL_Rect o2 = {centerX - 60, overY, 40, 15};
-	SDL_Rect o3 = {centerX - 60, overY + 25, 40, 15};
-	SDL_Rect o4 = {centerX - 25, overY, 15, 40};
-	
-	// V
-	SDL_Rect v1 = {centerX, overY, 15, 30};
-	SDL_Rect v2 = {centerX + 15, overY + 25, 15, 15};
-	SDL_Rect v3 = {centerX + 30, overY, 15, 30};
-	
-	// E
-	SDL_Rect e5 = {centerX + 55, overY, 15, 40};
-	SDL_Rect e6 = {centerX + 55, overY, 30, 15};
-	SDL_Rect e7 = {centerX + 55, overY + 12, 25, 15};
-	SDL_Rect e8 = {centerX + 55, overY + 25, 30, 15};
-	
-	// R
-	SDL_Rect r1 = {centerX + 95, overY, 15, 40};
-	SDL_Rect r2 = {centerX + 95, overY, 30, 15};
-	SDL_Rect r3 = {centerX + 95, overY + 12, 30, 15};
-	SDL_Rect r4 = {centerX + 120, overY, 15, 12};
-	SDL_Rect r5 = {centerX + 115, overY + 25, 15, 15};
-	
-	SDL_RenderFillRect(renderer, &o1); SDL_RenderFillRect(renderer, &o2); SDL_RenderFillRect(renderer, &o3); SDL_RenderFillRect(renderer, &o4);
-	SDL_RenderFillRect(renderer, &v1); SDL_RenderFillRect(renderer, &v2); SDL_RenderFillRect(renderer, &v3);
-	SDL_RenderFillRect(renderer, &e5); SDL_RenderFillRect(renderer, &e6); SDL_RenderFillRect(renderer, &e7); SDL_RenderFillRect(renderer, &e8);
-	SDL_RenderFillRect(renderer, &r1); SDL_RenderFillRect(renderer, &r2); SDL_RenderFillRect(renderer, &r3);
-	SDL_RenderFillRect(renderer, &r4); SDL_RenderFillRect(renderer, &r5);
+	std::vector<SDL_Rect> overRects = {
+		// O
+		{centerX - 60, overY, 15, 40},
+		{centerX - 60, overY, 40, 15},
+		{centerX - 60, overY + 25, 40, 15},
+		{centerX - 25, overY, 15, 40},
+		// V
+		{centerX, overY, 15, 30},
+		{centerX + 15, overY + 25, 15, 15},
+		{centerX + 30, overY, 15, 30},
+		// E
+		{centerX + 55, overY, 15, 40},
+		{centerX + 55, overY, 30, 15},
+		{centerX + 55, overY + 12, 25, 15},
+		{centerX + 55, overY + 25, 30, 15},
+		// R
+		{centerX + 95, overY, 15, 40},
+		{centerX + 95, overY, 30, 15},
+		{centerX + 95, overY + 12, 30, 15},
+		{centerX + 120, overY, 15, 12},
+		{centerX + 115, overY + 25, 15, 15}
+	};
+	drawRects(overRects);
 	
 	// Score display placeholder
 	setRenderColor(customWhite);

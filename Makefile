@@ -54,11 +54,11 @@ NCURSES_URL     := https://invisible-mirror.net/archives/ncurses/ncurses-6.4.tar
 
 GFX_DIR          := srcs/graphics
 
-SDL_SRC          := SDLGraphic.cpp
+SDL_SRC          := SDLGraphic.cpp ParticleSystem.cpp
 RAYLIB_SRC       := RaylibGraphic.cpp
 NCURSES_SRC      := NCursesGraphic.cpp
 
-SDL_OBJS         := .obj/libs/SDLGraphic.o
+SDL_OBJS         := .obj/libs/SDLGraphic.o .obj/libs/ParticleSystem.o
 RAYLIB_OBJS      := .obj/libs/RaylibGraphic.o
 NCURSES_OBJS     := .obj/libs/NCursesGraphic.o
 
@@ -132,6 +132,12 @@ $(NCURSES_LIB_NAME): $(NCURSES_OBJS) $(GAME_OBJS)
 	@mkdir -p .obj/libs
 	@mkdir -p .dep/libs
 	$(CC) $(SDL_CFLAGS) $(DEPFLAGS) -c $< -o $@ -MF .dep/libs/SDLGraphic.d
+
+# ParticleSystem object file compilation (for SDL)
+.obj/libs/ParticleSystem.o: $(GFX_DIR)/ParticleSystem.cpp Makefile
+	@mkdir -p .obj/libs
+	@mkdir -p .dep/libs
+	$(CC) $(SDL_CFLAGS) $(DEPFLAGS) -c $< -o $@ -MF .dep/libs/ParticleSystem.d
 
 # Raylib object file compilation
 .obj/libs/RaylibGraphic.o: $(GFX_DIR)/RaylibGraphic.cpp Makefile

@@ -254,8 +254,9 @@ void RaylibGraphic::render(const GameState& state, float deltaTime){
 	EndDrawing();
 }
 
-void RaylibGraphic::renderMenu(const GameState& state) {
+void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
 	(void)state;
+	(void)deltaTime;
 	
 	BeginDrawing();
 	ClearBackground(customBlack);
@@ -267,7 +268,9 @@ void RaylibGraphic::renderMenu(const GameState& state) {
 	EndDrawing();
 }
 
-void RaylibGraphic::renderGameOver(const GameState& state) {
+void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
+	(void)deltaTime;
+	
 	BeginDrawing();
 	ClearBackground(customBlack);
 	

@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 					state.currentState = GameStateType::Playing;
 					accumulator = 0.0;
 				}
-				gfxLib.get()->renderMenu(state);
+				gfxLib.get()->renderMenu(state, deltaTime);
 				break;
 				
 			case GameStateType::Playing:
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 					
 					state.currentState = GameStateType::Menu;
 				}
-				gfxLib.get()->renderGameOver(state);
+				gfxLib.get()->renderGameOver(state, deltaTime);
 				break;
 		}
 		
