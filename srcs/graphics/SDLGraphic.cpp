@@ -29,6 +29,14 @@ void SDLGraphic::init(int width, int height) {
 	// Window size = game arena + 2*borderOffset (on each side)
 	int windowWidth = (width * cellSize) + (2 * borderOffset);
 	int windowHeight = (height * cellSize) + (2 * borderOffset);
+
+	if ((windowWidth / 2) < 900) {
+		sep = 20;
+		square = 20;
+	} else {
+		sep = 45;
+		square = 45;
+	}
 	
 	window = SDL_CreateWindow(
 		"Nibbler - SDL2",
@@ -156,7 +164,7 @@ void SDLGraphic::drawBorder(int thickness) {
 	int innerW = gridWidth * cellSize;
 	int innerH = gridHeight * cellSize;
 	
-	// Draw 4 filled semi-transparent borders
+	// splitting the border into 4 filled rectangles because this is my life now
 	SDL_Rect top    = {innerX - thickness, innerY - thickness, innerW + (2 * thickness), thickness};
 	SDL_Rect bottom = {innerX - thickness, innerY + innerH, innerW + (2 * thickness), thickness};
 	SDL_Rect left   = {innerX - thickness, innerY, thickness, innerH};
@@ -291,40 +299,7 @@ void SDLGraphic::drawRects(const std::vector<SDL_Rect>& rects) {
 	}
 }
 
-void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
-	(void)state;
-	
-	lastFoodX = -1;
-	lastFoodY = -1;
-
-	// Test dematerializing trail effect - spawning right, so trail goes left (180°)
-	// Only 1 particle every few frames creates a sparse trail
-	static int frameCounter = 0;
-	if (frameCounter % 333 == 0) {  // Spawn every 3rd frame
-		particleSystem->spawnSnakeTrail(1610, 1110, 1, 0, lightBlue);  // Direction: 0° (moving right), trail goes left
-	}
-	frameCounter++;
-
-	// Update animations
-	updateTunnelEffect(deltaTime);
-	particleSystem->update(deltaTime);
-	
-	setRenderColor(customBlack);
-	SDL_RenderClear(renderer);
-	
-	// Render animations
-	renderTunnelEffect();
-	particleSystem->render();
-	
-	drawBorder(cellSize);
-	
-	int windowWidth = (gridWidth * cellSize) + (2 * borderOffset);
-	int windowHeight = (gridHeight * cellSize) + (2 * borderOffset);
-	int centerX = windowWidth / 2;
-	int centerY = windowHeight / 2;
-	int sep = 50;
-	int square = 50;
-	
+void SDLGraphic::drawTitle(int centerX, int centerY) {
 	int totalWidth = (26 * square) + (6 * sep);
 	int startX = centerX - (totalWidth / 2);
 	
@@ -346,10 +321,6 @@ void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	std::vector<SDL_Rect> iBaseRects = {
 		{startX + (square * 5) + sep, centerY - (square * 4), square, square * 7},			// i - left
 		{startX + (square * 5) + sep, centerY + (square * 3), square * 23, square},			// i - base
-		/* {startX + (square * 17) + (sep * 3), centerY - (square * 6), square, square * 9},	// i - right
-		{startX + (square * 18) + (sep * 3), centerY - (square * 7), square, square * 2},	// i - squiggle
-		{startX + (square * 19) + (sep * 3), centerY - (square * 8), square, square * 2},	// i - squiggle
-		{startX + (square * 20) + (sep * 3), centerY - (square * 8), square * 5, square},	// i - squiggle */
 	};
 
 	drawRects(iBaseRects);
@@ -397,6 +368,40 @@ void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	};
 
 	drawRects(bblerRects);
+}
+
+void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
+	(void)state;
+	
+	windowWidth = (gridWidth * cellSize) + (2 * borderOffset);
+	windowHeight = (gridHeight * cellSize) + (2 * borderOffset);
+
+	lastFoodX = -1;
+	lastFoodY = -1;
+
+	static int frameCounter = 0;
+	if (frameCounter % 111 == 0) {
+		particleSystem->spawnSnakeTrail(windowWidth / 2 + (square * 13), windowHeight / 2 + (square * 3), 1, 0, lightBlue);  // Direction: 0° (moving right), trail goes left
+	}
+	frameCounter++;
+
+	// Update animations
+	updateTunnelEffect(deltaTime);
+	particleSystem->update(deltaTime);
+	
+	setRenderColor(customBlack);
+	SDL_RenderClear(renderer);
+	
+	// Render animations
+	renderTunnelEffect();
+	particleSystem->render();
+	
+	drawBorder(cellSize);
+	
+	int centerX = windowWidth / 2;
+	int centerY = windowHeight / 2;
+
+	drawTitle(centerX, centerY);
 	
 	SDL_RenderPresent(renderer);
 }

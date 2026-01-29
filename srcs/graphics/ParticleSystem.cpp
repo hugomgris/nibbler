@@ -1,7 +1,4 @@
 #include "../../incs/ParticleSystem.hpp"
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
 
 // Particle constructors
 Particle::Particle(float px, float py, float minSize, float maxSize, float minLifetime, float maxLifetime)
@@ -175,8 +172,8 @@ void ParticleSystem::spawnSnakeTrail(float x, float y, int count, float directio
 		float vx = cosf(angle) * speed;
 		float vy = sinf(angle) * speed;
 		
-		float minSize = 20.0f;
-		float maxSize = 25.0f;
+		float minSize = (x <= 1135.0f) ? 10.0f : 20.0f;
+		float maxSize = (x <= 1135.0f) ? 15.0f : 25.0f;
 		float lifetime = 0.2f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 1.5f;
 		
 		// here particles have no rotation because I want a straight trail

@@ -1,6 +1,10 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <vector>
+#include <cmath>
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
 
 enum class ParticleType {
 	Dust,

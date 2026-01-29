@@ -22,9 +22,13 @@ class SDLGraphic : public IGraphic {
 	private:
 		SDL_Window						*window;
 		SDL_Renderer					*renderer;
+		int								windowWidth;
+		int								windowHeight;
 		int								gridWidth;
 		int								gridHeight;
 		int								cellSize;
+		int								square;
+		int								sep;
 		int								borderOffset;
 		std::unique_ptr<ParticleSystem>	particleSystem;
 
@@ -66,6 +70,7 @@ class SDLGraphic : public IGraphic {
 		void drawSnake(const GameState &state);
 		void drawFood(const GameState &state);
 		void drawBorder(int thickness);
+		void drawTitle(int centerX, int centerY);
 		
 		// Helper to draw multiple rectangles at once
 		void drawRects(const std::vector<SDL_Rect>& rects);
