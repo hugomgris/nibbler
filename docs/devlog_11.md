@@ -59,7 +59,9 @@ Snake, apple... Eden vibes, right? Whatever, there's design work to do...
 
 First, let's try to finish the `NCurses` implementations by redesigning the gameover screens, both for small and large formats. I'll just reuse what I wrote for the start screen and use it to also draw the ending statuses. Here they are:
 
-<img src="ncurses_gameover_big.png" alt="NCurses game over screen in its big format" height=500>
-<img src="ncurses_gameover_small.png" alt="NCurses game over screen in its small format" height=500>
+<p float="left">
+  <img src="ncurses_gameover_big.png" alt="NCurses game over screen in its big format" height=500>
+  <img src="ncurses_gameover_small.png" alt="NCurses game over screen in its small format" height=500 hspace="40">
+</p>
 
 Now, let's move on to the 2D realms of `SDL2`. This will first need a somewhat of homogenization (however this cursed word is written) pass, as I'd like for the main logic for the manus and middle screen to be the same across platforms. 
