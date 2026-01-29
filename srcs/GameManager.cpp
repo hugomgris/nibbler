@@ -4,7 +4,7 @@ GameManager::GameManager(GameState *state) : _state(state) {}
 
 void GameManager::update()  {
 	processNextInput();
-	_state->snake->move();
+	_state->snake.move();
 	_state->isRunning = checkGameOverCollision();
 	checkHeadFoodCollision();
 }
@@ -24,16 +24,16 @@ void GameManager::processNextInput() {
 		
 		switch (input) {
 			case Input::Up:
-				_state->snake->changeDirection(UP);
+				_state->snake.changeDirection(Direction::Up);
 				break;
 			case Input::Down:
-				_state->snake->changeDirection(DOWN);
+				_state->snake.changeDirection(Direction::Down);
 				break;
 			case Input::Left:
-				_state->snake->changeDirection(LEFT);
+				_state->snake.changeDirection(Direction::Left);
 				break;
 			case Input::Right:
-				_state->snake->changeDirection(RIGHT);
+				_state->snake.changeDirection(Direction::Right);
 				break;
 			default:
 				break;
@@ -42,15 +42,15 @@ void GameManager::processNextInput() {
 }
 
 void GameManager::checkHeadFoodCollision() {
-	Vec2	head = _state->snake->getSegments()[0];
-	Vec2	foodPos = _state->food->getPosition();
+	Vec2	head = _state->snake.getSegments()[0];
+	Vec2	foodPos = _state->food.getPosition();
 
 	if (head.x == foodPos.x && head.y == foodPos.y)
 	{
-		_state->snake->grow();
+		_state->snake.grow();
 		_state->score++;  // Increment score when food is eaten
 		
-		if (!_state->food->replaceInFreeSpace(_state)) {
+		if (!_state->food.replaceInFreeSpace(_state)) {
 			_state->isRunning = false;
 			std::cout << "YOU WIN" << std::endl;
 		}
@@ -60,16 +60,16 @@ void GameManager::checkHeadFoodCollision() {
 
 bool GameManager::checkGameOverCollision()
 {
-	Vec2	head = _state->snake->getSegments()[0];
+	Vec2	head = _state->snake.getSegments()[0];
 	if (head.x < 0 || head.x > _state->width - 1)
 		return false;
 
 	if (head.y < 0 || head.y > _state->height - 1)
 		return false;
 
-	for (int i = 1; i < _state->snake->getLength(); i++)
+	for (int i = 1; i < _state->snake.getLength(); i++)
 	{
-		if (_state->snake->getSegments()[i].x == head.x && _state->snake->getSegments()[i].y == head.y)
+		if (_state->snake.getSegments()[i].x == head.x && _state->snake.getSegments()[i].y == head.y)
 			return false;
 	}
 

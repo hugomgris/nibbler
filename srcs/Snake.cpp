@@ -5,44 +5,44 @@ Snake::Snake(int width, int height): _length(4) {
 	switch (Utils::getRandomInt(3))
 	{
 		case 0:
-			_direction = UP;
+			_direction = Direction::Up;
 			break;
 		case 1:
-			_direction = DOWN;
+			_direction = Direction::Down;
 			break;
 		case 2:
-			_direction = LEFT;
+			_direction = Direction::Left;
 			break;
 		case 3:
-			_direction = RIGHT;
+			_direction = Direction::Right;
 			break;
 	}
 
 	Vec2 headPosition = { Utils::getRandomRangeInt(8, width - 8), Utils::getRandomRangeInt(8, height - 8) };
 
 	switch (_direction) {
-		case UP:
+		case Direction::Up:
 			_segments[0] = headPosition;
 			_segments[1] = { headPosition.x, headPosition.y + 1 };
 			_segments[2] = { headPosition.x, headPosition.y + 2 };
 			_segments[3] = { headPosition.x, headPosition.y + 3 };
 			break;
 
-		case DOWN:
+		case Direction::Down:
 			_segments[0] = headPosition;
 			_segments[1] = { headPosition.x, headPosition.y - 1 };
 			_segments[2] = { headPosition.x, headPosition.y - 2 };
 			_segments[3] = { headPosition.x, headPosition.y - 3 };
 			break;
 
-		case LEFT:
+		case Direction::Left:
 			_segments[0] = headPosition;
 			_segments[1] = { headPosition.x + 1, headPosition.y };
 			_segments[2] = { headPosition.x + 2, headPosition.y };
 			_segments[3] = { headPosition.x + 3, headPosition.y };
 			break;
 
-		case RIGHT:
+		case Direction::Right:
 			_segments[0] = headPosition;
 			_segments[1] = { headPosition.x - 1, headPosition.y };
 			_segments[2] = { headPosition.x - 2, headPosition.y };
@@ -69,7 +69,7 @@ Snake &Snake::operator=(const Snake &other) {
 
 int Snake::getLength() const { return _length; }
 
-const Vec2 *Snake::getSegments() const { return _segments; }
+const Vec2 *Snake::getSegments() const { return _segments.data(); }
 
 void Snake::move(){
 	auto head = _segments[0];
@@ -80,19 +80,19 @@ void Snake::move(){
 	
 	switch (_direction)
 	{
-		case LEFT:
+		case Direction::Left:
 			head.x--;
 			break;
 
-		case RIGHT:
+		case Direction::Right:
 			head.x++;
 			break;
 
-		case UP:
+		case Direction::Up:
 			head.y--;
 			break;
 
-		case DOWN:
+		case Direction::Down:
 			head.y++;
 			break;
 	}
@@ -108,11 +108,11 @@ void Snake::move(){
 	}
 }
 
-void Snake::changeDirection(direction dir) { 
-	if ((_direction == UP && dir == DOWN)
-		|| (_direction == DOWN && dir == UP)
-		|| (_direction == LEFT && dir == RIGHT)
-		|| (_direction == RIGHT && dir == LEFT))
+void Snake::changeDirection(Direction dir) { 
+	if ((_direction == Direction::Up && dir == Direction::Down)
+		|| (_direction == Direction::Down && dir == Direction::Up)
+		|| (_direction == Direction::Left && dir == Direction::Right)
+		|| (_direction == Direction::Right && dir == Direction::Left))
 	{
 		return;
 	}

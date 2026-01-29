@@ -87,14 +87,14 @@ class SDLGraphic : public IGraphic {
 		int	lastFoodY;
 
 		// Colors
-		SDL_Color	customWhite = { 255, 248, 227, 255};	// Off-white
-		SDL_Color	customBlack = { 23, 23, 23, 255};		// Charcoal black
+		static constexpr SDL_Color customWhite{255, 248, 227, 255};	// Off-white
+		static constexpr SDL_Color customBlack{23, 23, 23, 255};	// Charcoal black
 
-		SDL_Color	lightRed = { 254, 74, 81, 255 };
-		//SDL_Color darkRed = { 180, 52, 58, 255 };
+		static constexpr SDL_Color lightRed{254, 74, 81, 255};
+		//static constexpr SDL_Color darkRed{180, 52, 58, 255};
 
-		SDL_Color	lightBlue = { 70, 130, 180, 255 };
-		//SDL_Color darkBlue = { 18, 45, 68, 255 };
+		static constexpr SDL_Color lightBlue{70, 130, 180, 255};
+		//static constexpr SDL_Color darkBlue{18, 45, 68, 255};
 		
 		// Helper function to set render color from SDL_Color
 		void setRenderColor(SDL_Color color, bool customAlpha = false, Uint8 alphaValue = 255);

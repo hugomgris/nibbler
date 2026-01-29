@@ -42,6 +42,10 @@ void SDLGraphic::init(int width, int height) {
 	);
 	
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	
+	particles.reserve(maxDustDensity);
+	borderLines.reserve(100);
+	
 	std::cout << BRED << "[SDL2] Initialized: " << width << "x" << height << RESET << std::endl;
 }
 
@@ -75,10 +79,10 @@ void SDLGraphic::render(const GameState& state, float deltaTime) {
 
 void SDLGraphic::drawSnake(const GameState &state) {
 	setRenderColor(lightBlue);
-	for (int i = 0; i < state.snake->getLength(); ++i) {
+	for (int i = 0; i < state.snake.getLength(); ++i) {
 		SDL_Rect rect = {
-			borderOffset + (state.snake->getSegments()[i].x * cellSize),
-			borderOffset + (state.snake->getSegments()[i].y * cellSize),
+			borderOffset + (state.snake.getSegments()[i].x * cellSize),
+			borderOffset + (state.snake.getSegments()[i].y * cellSize),
 			cellSize,
 			cellSize
 		};
@@ -87,8 +91,8 @@ void SDLGraphic::drawSnake(const GameState &state) {
 }
 
 void SDLGraphic::drawFood(const GameState &state) {
-	int currentFoodX = state.food->getPosition().x;
-	int currentFoodY = state.food->getPosition().y;
+	int currentFoodX = state.food.getPosition().x;
+	int currentFoodY = state.food.getPosition().y;
 	
 	if (lastFoodX != -1 && (lastFoodX != currentFoodX || lastFoodY != currentFoodY)) {
 		float explosionX = borderOffset + (lastFoodX * cellSize) + (cellSize / 2.0f);

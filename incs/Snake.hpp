@@ -1,19 +1,20 @@
 #pragma once
 #include "DataStructs.hpp"
 #include "Utils.hpp"
+#include <array>
 
-enum direction {
-	LEFT,
-	RIGHT,
-	UP,
-	DOWN
+enum class Direction {
+	Left,
+	Right,
+	Up,
+	Down
 };
 
 class Snake {
 	private:
 		int			_length;
-		Vec2		_segments[100];
-		direction	_direction;
+		std::array<Vec2, 100>	_segments;
+		Direction	_direction;
 
 
 	public:
@@ -29,6 +30,6 @@ class Snake {
 		const Vec2 *getSegments() const;
 
 		void move();
-		void changeDirection(direction dir);
+		void changeDirection(Direction dir);
 		void grow();
 };

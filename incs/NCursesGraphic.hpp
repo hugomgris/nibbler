@@ -13,12 +13,27 @@
 #include <fstream>
 #include <string>
 
+struct AsciiArtFile {
+	std::vector<std::string> lines;
+	int width;
+	int height;
+};
+
 class NCursesGraphic : public IGraphic {
 private:
 	int		width, height;
 	WINDOW	*gameWindow;
 	bool	isInitialized;
 	std::vector<std::vector<char>> groundPattern;  // Stores the ground texture
+	
+	// Logo Cache
+	AsciiArtFile titleSmallA, titleSmallB, titleSmallC, titleSmallD;
+	AsciiArtFile titleBigA, titleBigB, titleBigC, titleBigD;
+	AsciiArtFile gameoverSmallA, gameoverSmallB;
+	AsciiArtFile gameoverBigA, gameoverBigB;
+	
+	// Logo drawing helper
+	bool loadAsciiArtFile(const std::string& filepath, AsciiArtFile& art);
 	
 public:
 	NCursesGraphic();

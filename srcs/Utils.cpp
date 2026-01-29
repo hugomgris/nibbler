@@ -1,26 +1,25 @@
 #include "../incs/Utils.hpp"
 
+static std::mt19937& getGenerator() {
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	return gen;
+}
+
 int Utils::getRandomInt(int max)
 {
-	std::random_device rd;
-	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> distr(0, max);
-	return distr(gen);
+	return distr(getGenerator());
 }
 
 int Utils::getRandomRangeInt(int min, int max)
 {
-	std::random_device rd;
-	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> distr(min, max);
-	return distr(gen);
+	return distr(getGenerator());
 }
 
 Vec2 Utils::getRandomVec2(int xMax, int yMax)
 {
-	std::random_device rd;
-	std::mt19937 gen(rd());
-
 	return Vec2{getRandomInt(xMax - 1), getRandomInt(yMax - 1)};
 }
 

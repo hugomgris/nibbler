@@ -30,6 +30,30 @@ NCursesGraphic::~NCursesGraphic() {
 	isInitialized = false;
 }
 
+bool NCursesGraphic::loadAsciiArtFile(const std::string& filepath, AsciiArtFile& art) {
+	std::ifstream file(filepath);
+	if (!file.is_open()) {
+		std::cerr << "Failed to load ASCII art file: " << filepath << std::endl;
+		return false;
+	}
+	
+	std::string line;
+	// Logo Width
+	std::getline(file, line);
+	art.width = std::stoi(line);
+	// Logo height
+	std::getline(file, line);
+	art.height = std::stoi(line);
+	
+	// Logo contents
+	art.lines.clear();
+	while (std::getline(file, line)) {
+		art.lines.push_back(line);
+	}
+	
+	return true;
+}
+
 void NCursesGraphic::init(int w, int h) {
 	setlocale(LC_ALL, "");
 	width = w;
@@ -88,6 +112,20 @@ if (has_colors()) {
 	
 	generateGroundPattern();
 	
+	// Load ASCII art files once during initialization
+	loadAsciiArtFile("logos/ncurses_title_small_A.txt", titleSmallA);
+	loadAsciiArtFile("logos/ncurses_title_small_B.txt", titleSmallB);
+	loadAsciiArtFile("logos/ncurses_title_small_C.txt", titleSmallC);
+	loadAsciiArtFile("logos/ncurses_title_small_D.txt", titleSmallD);
+	loadAsciiArtFile("logos/ncurses_title_big_A.txt", titleBigA);
+	loadAsciiArtFile("logos/ncurses_title_big_B.txt", titleBigB);
+	loadAsciiArtFile("logos/ncurses_title_big_C.txt", titleBigC);
+	loadAsciiArtFile("logos/ncurses_title_big_D.txt", titleBigD);
+	loadAsciiArtFile("logos/ncurses_gameover_small_A.txt", gameoverSmallA);
+	loadAsciiArtFile("logos/ncurses_gameover_small_B.txt", gameoverSmallB);
+	loadAsciiArtFile("logos/ncurses_gameover_big_A.txt", gameoverBigA);
+	loadAsciiArtFile("logos/ncurses_gameover_big_B.txt", gameoverBigB);
+	
 	isInitialized = true;
 }
 
@@ -115,224 +153,83 @@ void NCursesGraphic::render(const GameState& state, float deltaTime) {
 
 void NCursesGraphic::drawTitle(int win_height, int win_width)
 {
-	int lineCounter = 0;
-	std::string filepath;
-
 	if (win_width / 2 < 38)
 	{
-		// bbler
-		filepath = "logos/ncurses_title_small_D.txt";
-
-		std::ifstream file(filepath);
-		if (!file.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
+		// Small version
+		int anchorX = (win_width - titleSmallD.width) / 2;
+		int anchorY = (win_height - titleSmallD.height) / 2;
+		
+		// Draw "bbler"
+		for (size_t i = 0; i < titleSmallD.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(4));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallD.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(4));
 		}
-		else 
-		{
-			std::string line;
-			std::getline(file, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(file, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(file, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(4));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(4));
-				lineCounter++;
-			}
-			
+		
+		// Draw "i base"
+		anchorX = (win_width - titleSmallC.width) / 2;
+		anchorY = (win_height - titleSmallC.height) / 2;
+		for (size_t i = 0; i < titleSmallC.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(1));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallC.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(1));
 		}
-
-		// i base
-		lineCounter = 0;
-		filepath = "logos/ncurses_title_small_C.txt";
-		std::ifstream fileC(filepath);
-		if (!fileC.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
+		
+		// Draw "i dot"
+		anchorX = (win_width - titleSmallB.width) / 2;
+		anchorY = (win_height - titleSmallB.height) / 2;
+		for (size_t i = 0; i < titleSmallB.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(2));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallB.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(2));
 		}
-		else 
-		{
-			std::string line;
-			std::getline(fileC, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileC, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileC, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(1));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(1));
-				lineCounter++;
-			}
-			
-		}
-
-		// i dot
-		filepath = "logos/ncurses_title_small_B.txt";
-
-		std::ifstream fileB(filepath);
-		if (!fileB.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
-		}
-		else 
-		{
-			std::string line;
-			std::getline(fileB, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileB, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileB, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(2));
-				mvwaddstr(gameWindow, anchorY + lineCounter - 3, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(2));
-				lineCounter++;
-			}
-		}
-
-		// n
-		lineCounter = 0;
-		filepath = "logos/ncurses_title_small_A.txt";
-
-		std::ifstream fileA(filepath);
-		if (!fileB.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
-		}
-		else 
-		{
-			std::string line;
-			std::getline(fileA, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileA, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileA, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(4));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(4));
-				lineCounter++;
-			}
+		
+		// Draw "n"
+		anchorX = (win_width - titleSmallA.width) / 2;
+		anchorY = (win_height - titleSmallA.height) / 2;
+		for (size_t i = 0; i < titleSmallA.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(4));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallA.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(4));
 		}
 	}
 	else {
-		// bbler
-		filepath = "logos/ncurses_title_big_D.txt";
-
-		std::ifstream fileD(filepath);
-		if (!fileD.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
+		// Big version
+		int anchorX = (win_width - titleBigD.width) / 2;
+		int anchorY = (win_height - titleBigD.height) / 2;
+		
+		// Draw "bbler"
+		for (size_t i = 0; i < titleBigD.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(4) | A_BOLD);
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleBigD.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(4) | A_BOLD);
 		}
-		else 
-		{
-			std::string line;
-			std::getline(fileD, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileD, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileD, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(4) | A_BOLD);
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(4) | A_BOLD);
-				lineCounter++;
-			}
-			
+		
+		// Draw "i base"
+		anchorX = (win_width - titleBigC.width) / 2;
+		anchorY = (win_height - titleBigC.height) / 2;
+		for (size_t i = 0; i < titleBigC.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(1));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleBigC.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(1));
 		}
-
-		// i base
-		lineCounter = 0;
-		filepath = "logos/ncurses_title_big_C.txt";
-		std::ifstream fileC(filepath);
-		if (!fileC.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
+		
+		// Draw "i dot"
+		anchorX = (win_width - titleBigB.width) / 2;
+		anchorY = (win_height - titleBigB.height) / 2;
+		for (size_t i = 0; i < titleBigB.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(2));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleBigB.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(2));
 		}
-		else 
-		{
-			std::string line;
-			std::getline(fileC, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileC, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileC, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(1));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(1));
-				lineCounter++;
-			}
-			
-		}
-
-		// i dot
-		filepath = "logos/ncurses_title_big_B.txt";
-
-		std::ifstream fileB(filepath);
-		if (!fileB.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
-		}
-		else 
-		{
-			std::string line;
-			std::getline(fileB, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileB, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileB, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(2));
-				mvwaddstr(gameWindow, anchorY + lineCounter - 7, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(2));
-				lineCounter++;
-			}
-		}
-
-		// n
-		lineCounter = 0;
-		filepath = "logos/ncurses_title_big_A.txt";
-
-		std::ifstream fileA(filepath);
-		if (!fileB.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
-		}
-		else 
-		{
-			std::string line;
-			std::getline(fileA, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileA, line);
-			int anchorY = (win_height - std::stoi(line)) / 2;
-
-			while (std::getline(fileA, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(4));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(4));
-				lineCounter++;
-			}
+		
+		// Draw "n"
+		anchorX = (win_width - titleBigA.width) / 2;
+		anchorY = (win_height - titleBigA.height) / 2;
+		for (size_t i = 0; i < titleBigA.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(4));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, titleBigA.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(4));
 		}
 	}
 }
@@ -392,115 +289,46 @@ void NCursesGraphic::renderMenu(const GameState &state) {
 
 void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
 {
-	int lineCounter = 0;
-	std::string filepath;
-
 	if (win_width / 2 < 38)
 	{
-		filepath = "logos/ncurses_gameover_small_B.txt";
-
-		// OVER
-		std::ifstream fileA(filepath);
-		if (!fileA.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
+		// Small version
+		int anchorX = (win_width - gameoverSmallB.width) / 2;
+		int anchorY = ((win_height - gameoverSmallB.height) / 2 - 2);
+		
+		// Draw "OVER"
+		for (size_t i = 0; i < gameoverSmallB.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(2));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverSmallB.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(2));
 		}
-		else 
-		{
-			std::string line;
-			std::getline(fileA, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileA, line);
-			int anchorY = ((win_height - std::stoi(line)) / 2 - 2);
-
-			while (std::getline(fileA, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(2));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(2));
-				lineCounter++;
-			}
-			
-		}
-
-		// GAME
-		filepath = "logos/ncurses_gameover_small_A.txt";
-		lineCounter = 0;
-		std::ifstream fileB(filepath);
-		if (!fileB.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
-		}
-		else 
-		{
-			std::string line;
-			std::getline(fileB, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileB, line);
-			int anchorY = ((win_height - std::stoi(line)) / 2 - 2);
-
-			while (std::getline(fileB, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(1));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(1));
-				lineCounter++;
-			}
+		
+		// Draw "GAME"
+		anchorX = (win_width - gameoverSmallA.width) / 2;
+		anchorY = ((win_height - gameoverSmallA.height) / 2 - 2);
+		for (size_t i = 0; i < gameoverSmallA.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(1));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverSmallA.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(1));
 		}
 	} else {
-		filepath = "logos/ncurses_gameover_big_B.txt";
-
-		// OVER
-		std::ifstream fileA(filepath);
-		if (!fileA.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
+		// Big version
+		int anchorX = (win_width - gameoverBigB.width) / 2;
+		int anchorY = ((win_height - gameoverBigB.height) / 2 - 2);
+		
+		// Draw "OVER"
+		for (size_t i = 0; i < gameoverBigB.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(2));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverBigB.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(2));
 		}
-		else 
-		{
-			std::string line;
-			std::getline(fileA, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileA, line);
-			int anchorY = ((win_height - std::stoi(line)) / 2 - 2);
-
-			while (std::getline(fileA, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(2));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(2));
-				lineCounter++;
-			}
-			
-		}
-
-		// GAME
-		filepath = "logos/ncurses_gameover_big_A.txt";
-		lineCounter = 0;
-		std::ifstream fileB(filepath);
-		if (!fileB.is_open())
-		{
-			std::cerr << "Failed to fetch title file" << std::endl;
-			return;
-		}
-		else 
-		{
-			std::string line;
-			std::getline(fileB, line);
-			int anchorX = (win_width - std::stoi(line)) / 2;
-			std::getline(fileB, line);
-			int anchorY = ((win_height - std::stoi(line)) / 2) - 5.5;
-
-			while (std::getline(fileB, line))
-			{
-				wattron(gameWindow, COLOR_PAIR(1));
-				mvwaddstr(gameWindow, anchorY + lineCounter, anchorX, line.c_str());
-				wattroff(gameWindow, COLOR_PAIR(1));
-				lineCounter++;
-			}
+		
+		// Draw "GAME"
+		anchorX = (win_width - gameoverBigA.width) / 2;
+		anchorY = ((win_height - gameoverBigA.height) / 2) - 5.5;
+		for (size_t i = 0; i < gameoverBigA.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(1));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverBigA.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(1));
 		}
 	}
 }
@@ -654,15 +482,15 @@ void NCursesGraphic::drawBorder() {
 
 void NCursesGraphic::drawSnake(const GameState &state) {
 	wattron(gameWindow, COLOR_PAIR(1));
-	for (int i = 0; i < state.snake->getLength(); ++i) {
-		int y = state.snake->getSegments()[i].y + 4;
-		int x = (state.snake->getSegments()[i].x * 2) + 4;
+	for (int i = 0; i < state.snake.getLength(); ++i) {
+		int y = state.snake.getSegments()[i].y + 4;
+		int x = (state.snake.getSegments()[i].x * 2) + 4;
 		
 		if (i == 0) {
 			mvwaddstr(gameWindow, y, x, "⬢ ");
 		} else {
 			mvwaddstr(gameWindow, y, x,
-				(i == state.snake->getLength() - 1) ? "○ " :
+				(i == state.snake.getLength() - 1) ? "○ " :
 				(i % 2 == 0) ? "✛ " : "✲ "
 			);
 		}
@@ -672,8 +500,8 @@ void NCursesGraphic::drawSnake(const GameState &state) {
 
 void NCursesGraphic::drawFood(const GameState &state) {
 	wattron(gameWindow, COLOR_PAIR(2));
-	int foodX = (state.food->getPosition().x * 2) + 4;
-	mvwaddstr(gameWindow, state.food->getPosition().y + 4, foodX, state.food->getFoodChar());
+	int foodX = (state.food.getPosition().x * 2) + 4;
+	mvwaddstr(gameWindow, state.food.getPosition().y + 4, foodX, state.food.getFoodChar());
 	wattroff(gameWindow, COLOR_PAIR(2));
 }
 

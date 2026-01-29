@@ -19,9 +19,8 @@ enum class GameStateType {
 struct GameState {
 	int				width;
 	int				height;
-	Snake			*snake;
-	Food			*food;
-	const char		*foodChar;
+	Snake&			snake;
+	Food&			food;
 	bool			gameOver;
 	bool			isRunning;
 	bool			isPaused;
