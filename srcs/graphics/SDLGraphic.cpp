@@ -4,14 +4,12 @@
 SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
 	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
 	lastFoodX(-1), lastFoodY(-1),
-	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true),
-	font(nullptr), smallFont(nullptr) {
+	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true) {
 	lastSpawnTime = std::chrono::high_resolution_clock::now();
 }
 
 SDLGraphic::~SDLGraphic() {
-	if (font) TTF_CloseFont(font);
-	if (smallFont) TTF_CloseFont(smallFont);
+	textRenderer.reset();
 	TTF_Quit();
 	if (renderer) SDL_DestroyRenderer(renderer);
 	if (window) SDL_DestroyWindow(window);
@@ -58,23 +56,10 @@ void SDLGraphic::init(int width, int height) {
 		std::cerr << "TTF_Init error: " << TTF_GetError() << std::endl;
 	}
 	
-	// Custom fonts -> all free to use, don't call the cops on me please
-	font = TTF_OpenFont("fonts/JetBrainsMono-VariableFont_wght.ttf", 40);
-	if (!font) {
-		// Fallback to a system font
-		font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40);
-	}
-	if (!font) {
-		std::cerr << "Font loading warning: " << TTF_GetError() << std::endl;
-	}
-	
-	smallFont = TTF_OpenFont("fonts/JetBrainsMono-VariableFont_wght.ttf", 24);
-	if (!smallFont && font) {
-		smallFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
-	}
-
-	if (!smallFont) {
-		std::cerr << "Font loading warning: " << TTF_GetError() << std::endl;
+	// Initialize text renderer
+	textRenderer = std::make_unique<TextRenderer>(renderer);
+	if (!textRenderer->init(windowWidth)) {
+		std::cerr << "TextRenderer initialization failed" << std::endl;
 	}
 	
 	// Initialize particle system
@@ -398,100 +383,69 @@ void SDLGraphic::drawTitle(int centerX, int centerY) {
 	drawRects(bblerRects);
 }
 
-void SDLGraphic::drawInstructions(int centerX, int centerY) {
-	if (!smallFont) return;  // No font loaded, skip text rendering
+void SDLGraphic::drawGameOverText(int centerX, int centerY) {
+	if (!textRenderer || !textRenderer->isInitialized()) return;
 
-	bool smallMode = ((windowWidth / 2) < 900) ? true : false;
-
-	TTF_Font *currentFont = smallMode ? smallFont : font;
+	bool smallMode = ((windowWidth / 2) < 900);
 	
-	// Enter
-	SDL_Color textColor = customWhite;
-	std::string instructionTextA = smallMode ?
-		"[ ENTER ]          START" :
-		"[ ENTER ]             START" ;
-	std::string instructionTextB = smallMode ?
-		"          ········      " :
-		"          ···········     " ;
-	int offset = square * 7;
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
+	// Render score
+	textRenderer->renderScore(centerX, centerY, 0, smallMode);  // TODO: Pass actual score
 	
-	// Arrows
-	textColor = customWhite;
-	instructionTextA = smallMode ?
-		"[ ↑ ↓ ← → ]         MOVE" :
-		"[ ↑ ↓ ← → ]            MOVE" ;
-	instructionTextB = smallMode ?
-		"            ·······     " :
-		"            ··········     " ;
-	offset = offset + (square * 2);
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
-
-	// Travel
-	textColor = customWhite;
-	instructionTextA = smallMode ?
-		"[ 1   2   3 ]     TRAVEL" :
-		"[ 1   2   3 ]        TRAVEL" ;
-	instructionTextB = smallMode ?
-		"    /   /     ···       " :
-		"    /   /     ······       " ;
-	offset = offset + (square * 2);
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
-
-	// Quit
-	textColor = customWhite;
-	instructionTextA = smallMode ?
-		"[ Q   ESC ]         QUIT" :
-		"[ Q   ESC ]            QUIT" ;
-	instructionTextB = smallMode ?
-		"    /       ·······     " :
-		"    /       ··········    " ;
-	offset = offset + (square * 2);
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
+	// Render retry prompt
+	textRenderer->renderRetryPrompt(centerX, centerY, smallMode);
 }
 
-bool SDLGraphic::renderText(const std::string& text, int x, int y, int offset, TTF_Font* fontToUse, SDL_Color color, bool centered) {
-	if (!fontToUse) return false;
+void SDLGraphic::drawInstructions(int centerX, int centerY) {
+	if (!textRenderer || !textRenderer->isInitialized()) return;
 
-	// Use UTF8 version to properly handle special characters like "·"
-	SDL_Surface* surface = TTF_RenderUTF8_Blended(fontToUse, text.c_str(), color);
-	if (!surface) {
-		std::cerr << "Text render error: " << TTF_GetError() << std::endl;
-		return false;
-	}
+	bool smallMode = ((windowWidth / 2) < 900);
+	TTF_Font *currentFont = smallMode ? textRenderer->getSmallFont() : textRenderer->getMainFont();
+	
+	int offset = square * 7;
+	
+	// Enter instructions
+	std::string instructionTextA = smallMode ?
+		"[ ENTER ]          START" :
+		"[ ENTER ]             START";
+	std::string instructionTextB = smallMode ?
+		"          ········      " :
+		"          ···········     ";
+	textRenderer->renderInstruction(centerX, centerY, offset, 
+	                                instructionTextA, instructionTextB, 
+	                                smallMode, currentFont);
+	
+	// Move instructions
+	instructionTextA = smallMode ?
+		"[ ↑ ↓ ← → ]         MOVE" :
+		"[ ↑ ↓ ← → ]            MOVE";
+	instructionTextB = smallMode ?
+		"            ·······     " :
+		"            ··········     ";
+	textRenderer->renderInstruction(centerX, centerY, offset, 
+	                                instructionTextA, instructionTextB, 
+	                                smallMode, currentFont);
 
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	if (!texture) {
-		SDL_FreeSurface(surface);
-		return false;
-	}
-	
-	SDL_Rect destRect;
-	if (centered) {
-		destRect = {
-			x - (surface->w / 2),
-			y - (surface->h / 2) + offset,
-			surface->w,
-			surface->h
-		};
-	} else {
-		destRect = { x, y, surface->w, surface->h };
-	}
-	
-	SDL_RenderCopy(renderer, texture, nullptr, &destRect);
-	
-	SDL_DestroyTexture(texture);
-	SDL_FreeSurface(surface);
-	
-	return true;
+	// Travel instructions
+	instructionTextA = smallMode ?
+		"[ 1   2   3 ]     TRAVEL" :
+		"[ 1   2   3 ]        TRAVEL";
+	instructionTextB = smallMode ?
+		"    /   /     ···       " :
+		"    /   /     ······       ";
+	textRenderer->renderInstruction(centerX, centerY, offset, 
+	                                instructionTextA, instructionTextB, 
+	                                smallMode, currentFont);
+
+	// Quit instructions
+	instructionTextA = smallMode ?
+		"[ Q   ESC ]         QUIT" :
+		"[ Q   ESC ]            QUIT";
+	instructionTextB = smallMode ?
+		"    /       ·······     " :
+		"    /       ··········    ";
+	textRenderer->renderInstruction(centerX, centerY, offset, 
+	                                instructionTextA, instructionTextB, 
+	                                smallMode, currentFont);
 }
 
 void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
@@ -608,20 +562,8 @@ void SDLGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	};
 	drawRects(overRects);
 	
-	// Score display placeholder
-	setRenderColor(customWhite);
-	int scoreY = centerY + 70;
-	for (int i = 0; i < 25; i++) {
-		SDL_Rect dot = {centerX - 100 + (i * 8), scoreY, 5, 5};
-		SDL_RenderFillRect(renderer, &dot);
-	}
-	
-	// Enter to restart placeholder
-	int textY = centerY + 100;
-	for (int i = 0; i < 40; i++) {
-		SDL_Rect dot = {centerX - 160 + (i * 8), textY, 5, 5};
-		SDL_RenderFillRect(renderer, &dot);
-	}
+	// Render text (score and retry prompt)
+	drawGameOverText(centerX, centerY);
 	
 	SDL_RenderPresent(renderer);
 }

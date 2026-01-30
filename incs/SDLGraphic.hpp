@@ -3,6 +3,7 @@
 #include "Snake.hpp"
 #include "Food.hpp"
 #include "ParticleSystem.hpp"
+#include "TextRenderer.hpp"
 #include "colors.h"
 #include <SDL2/SDL.h>
 #include <SDL_ttf.h>
@@ -33,6 +34,7 @@ class SDLGraphic : public IGraphic {
 		int								sep;
 		int								borderOffset;
 		std::unique_ptr<ParticleSystem>	particleSystem;
+		std::unique_ptr<TextRenderer>	textRenderer;
 
 		// Tunnel effect animation
 		std::vector<BorderLine>							borderLines;
@@ -49,10 +51,6 @@ class SDLGraphic : public IGraphic {
 		float lastTailX;
 		float lastTailY;
 		bool isFirstFrame;
-
-		// Font management
-		TTF_Font* font;
-		TTF_Font* smallFont;
 
 		// Colors
 		static constexpr SDL_Color customWhite{255, 248, 227, 255};	// Off-white
@@ -79,8 +77,7 @@ class SDLGraphic : public IGraphic {
 		void drawBorder(int thickness);
 		void drawTitle(int centerX, int centerY);
 		void drawInstructions(int centerX, int centerY);
-		
-		bool renderText(const std::string& text, int x, int y, int offset,  TTF_Font* fontToUse, SDL_Color color, bool centered = false);
+		void drawGameOverText(int centerX, int centerY);
 		
 		// Helper to draw multiple rectangles at once
 		void drawRects(const std::vector<SDL_Rect>& rects);

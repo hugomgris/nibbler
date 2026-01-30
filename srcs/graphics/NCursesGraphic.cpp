@@ -237,25 +237,60 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 void NCursesGraphic::drawInstructions(int win_height, int win_width) {
 	int anchorY = ((win_width / 2) < 38) ? win_height / 2 + 1 : (win_height / 2) + 5;
 
-	wattron(gameWindow, COLOR_PAIR(5));
+	wattron(gameWindow, COLOR_PAIR(4));
 	const char *instructions = "[ENTER]·······START";
 	int instrY = anchorY + 2;
 	mvwaddstr(gameWindow, instrY, 
 			(win_width / 2) - 10, instructions);
+
+	wattroff(gameWindow, COLOR_PAIR(4));
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *instructionsDots = "·······";
+	int instrDotsY = anchorY + 2;
+	mvwaddstr(gameWindow, instrDotsY, 
+			(win_width / 2) - 3, instructionsDots);
+	wattroff(gameWindow, COLOR_PAIR(5));
+	wattron(gameWindow, COLOR_PAIR(4));
 	
 	const char *controls = "[↑↓←→]·········MOVE";
 	int controlsY = instrY + 1;
 	mvwaddstr(gameWindow, controlsY,
 			(win_width / 2) - 10, controls);
+
+	wattroff(gameWindow, COLOR_PAIR(4));
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *controlsDots = "·········";
+	mvwaddstr(gameWindow, controlsY, 
+			(win_width / 2) - 4, controlsDots);
+	wattroff(gameWindow, COLOR_PAIR(5));
+	wattron(gameWindow, COLOR_PAIR(4));
+
 	const char *libs = "[1/2/3]······TRAVEL";
 	int libsY = controlsY + 1;
 	mvwaddstr(gameWindow, libsY,
 			(win_width / 2) - 10, libs);
+
+	wattroff(gameWindow, COLOR_PAIR(4));
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *travelDots = "······";
+	mvwaddstr(gameWindow, libsY, 
+			(win_width / 2) - 3, travelDots);
+	wattroff(gameWindow, COLOR_PAIR(5));
+	wattron(gameWindow, COLOR_PAIR(4));
+
 	const char *quit = "[Q/ESC]········QUIT";
 	int quitY = libsY + 1;
 	mvwaddstr(gameWindow, quitY,
 			(win_width / 2) - 10, quit);
 	wattroff(gameWindow, COLOR_PAIR(5));
+
+	wattroff(gameWindow, COLOR_PAIR(4));
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *quitDots = "········";
+	mvwaddstr(gameWindow, quitY, 
+			(win_width / 2) - 3, quitDots);
+	wattroff(gameWindow, COLOR_PAIR(5));
+	wattron(gameWindow, COLOR_PAIR(4));
 }
 
 void NCursesGraphic::renderMenu(const GameState &state, float deltaTime) {
