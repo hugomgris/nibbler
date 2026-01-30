@@ -383,18 +383,6 @@ void SDLGraphic::drawTitle(int centerX, int centerY) {
 	drawRects(bblerRects);
 }
 
-void SDLGraphic::drawGameOverText(int centerX, int centerY) {
-	if (!textRenderer || !textRenderer->isInitialized()) return;
-
-	bool smallMode = ((windowWidth / 2) < 900);
-	
-	// Render score
-	textRenderer->renderScore(centerX, centerY, 0, smallMode);  // TODO: Pass actual score
-	
-	// Render retry prompt
-	textRenderer->renderRetryPrompt(centerX, centerY, smallMode);
-}
-
 void SDLGraphic::drawInstructions(int centerX, int centerY) {
 	if (!textRenderer || !textRenderer->isInitialized()) return;
 
@@ -485,8 +473,60 @@ void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	SDL_RenderPresent(renderer);
 }
 
+void SDLGraphic::drawGameOver(int centerX, int centerY) {
+	int totalWidth = (22 * square) + (6 * sep);
+	int startX = centerX - (totalWidth / 2);
+
+	// g
+	setRenderColor(customWhite);
+
+	std::vector<SDL_Rect> gRects = {
+		{startX, centerY - (square * 3), square * 5, square},						// g
+		{startX, centerY - (square * 2), square, square * 4},
+		{startX + (square * 4), centerY - (square * 2), square, square * 7},
+		{startX + square, centerY + (square), square * 3, square},
+		{startX, centerY + (square * 4), square * 5, square},
+	};
+
+	drawRects(gRects);
+
+	// a
+		std::vector<SDL_Rect> aRects = {
+		{startX + (square * 5) + (sep), centerY - (square * 3), square * 5, square},						// a
+		{startX + (square * 5) + (sep), centerY - (square * 2), square, square * 3},
+		{startX + (square * 9) + (sep), centerY - (square * 2), square, square * 3},
+		{startX + (square * 5) + (sep), centerY + (square), square * 7, square},
+	};
+
+	drawRects(aRects);
+
+	// m
+		std::vector<SDL_Rect> mRects = {
+		{startX + (square * 10) + (sep * 2), centerY - (square * 3), square, square * 3},						// m
+		{startX + (square * 11) + (sep * 2), centerY - (square * 3), square * 3, square},
+		{startX + (square * 13) + (sep * 2), centerY - (square * 2), square, square * 3},
+		{startX + (square * 14) + (sep * 2), centerY - (square * 2), square, square * 3},
+		{startX + (square * 15) + (sep * 2), centerY - (square * 2), square * 3, square},
+		{startX + (square * 17) + (sep * 2), centerY - (square), square, square * 3},
+	};
+
+	drawRects(mRects);
+}
+
+void SDLGraphic::drawRetryText(const GameState &state, int centerX, int centerY) {
+	if (!textRenderer || !textRenderer->isInitialized()) return;
+
+	bool smallMode = ((windowWidth / 2) < 900);
+	
+	// Render score
+	textRenderer->renderScore(centerX, centerY, state.score, smallMode);  // TODO: Pass actual score
+	
+	// Render retry prompt
+	textRenderer->renderRetryPrompt(centerX, centerY, smallMode);
+}
+
 void SDLGraphic::renderGameOver(const GameState& state, float deltaTime) {
-	(void)state;  // Will be used when we add text rendering for score
+	(void)state;
 
 	// Update animations
 	updateTunnelEffect(deltaTime);
@@ -509,61 +549,8 @@ void SDLGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	
 	setRenderColor(lightRed);
 	
-	// GAME
-	std::vector<SDL_Rect> gameRects = {
-		// G
-		{centerX - 120, centerY - 60, 15, 60},
-		{centerX - 120, centerY - 60, 50, 15},
-		{centerX - 120, centerY - 15, 50, 15},
-		{centerX - 55, centerY - 40, 15, 25},
-		{centerX - 85, centerY - 40, 30, 15},
-		// A
-		{centerX - 35, centerY - 60, 15, 60},
-		{centerX - 35, centerY - 60, 40, 15},
-		{centerX - 35, centerY - 40, 40, 15},
-		{centerX + 5, centerY - 60, 15, 60},
-		// M
-		{centerX + 30, centerY - 60, 15, 60},
-		{centerX + 30, centerY - 60, 15, 30},
-		{centerX + 55, centerY - 45, 15, 45},
-		{centerX + 80, centerY - 60, 15, 30},
-		{centerX + 80, centerY - 60, 15, 60},
-		// E
-		{centerX + 105, centerY - 60, 15, 60},
-		{centerX + 105, centerY - 60, 40, 15},
-		{centerX + 105, centerY - 40, 35, 15},
-		{centerX + 105, centerY - 15, 40, 15}
-	};
-	drawRects(gameRects);
-	
-	// OVER
-	int overY = centerY + 5;
-	std::vector<SDL_Rect> overRects = {
-		// O
-		{centerX - 60, overY, 15, 40},
-		{centerX - 60, overY, 40, 15},
-		{centerX - 60, overY + 25, 40, 15},
-		{centerX - 25, overY, 15, 40},
-		// V
-		{centerX, overY, 15, 30},
-		{centerX + 15, overY + 25, 15, 15},
-		{centerX + 30, overY, 15, 30},
-		// E
-		{centerX + 55, overY, 15, 40},
-		{centerX + 55, overY, 30, 15},
-		{centerX + 55, overY + 12, 25, 15},
-		{centerX + 55, overY + 25, 30, 15},
-		// R
-		{centerX + 95, overY, 15, 40},
-		{centerX + 95, overY, 30, 15},
-		{centerX + 95, overY + 12, 30, 15},
-		{centerX + 120, overY, 15, 12},
-		{centerX + 115, overY + 25, 15, 15}
-	};
-	drawRects(overRects);
-	
-	// Render text (score and retry prompt)
-	drawGameOverText(centerX, centerY);
+	drawGameOver(centerX, centerY);
+	drawRetryText(state, centerX, centerY);
 	
 	SDL_RenderPresent(renderer);
 }

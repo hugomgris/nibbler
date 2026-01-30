@@ -78,7 +78,90 @@ BEAKING NEWS! I've been working on the game's title/logo/whateveryouwantocallit.
 
 <br>
 
-Anyway, working in `SDL2` is been somewhat of a (small) challenge. I decided to draw by hand the logo, before moving into researching how to render text. I learned that a new sub-library needed to be handled, `SDL_ttf`, so I had to add the process of its fetching to `Makefile`. After that, the basic flow of text rendering was easy to get around (plenty of examples out there). A specific function dedicated to render text to serve as helper, and we're set:
+Anyway, working in `SDL2` is been somewhat of a (small) challenge. I decided to draw by hand the logo, before moving into researching how to render text. I learned that a new sub-library needed to be handled, `SDL_ttf`, so I had to add the process of its fetching to `Makefile`. After that, the basic flow of text rendering was easy to get around (plenty of examples out there). I tackled this by writing an specific function dedicated to render text to serve as helper, but because things grew too much, I ended up dettaching the logic from `SDLGraphic` into it's own class (did the same for the particle System):
+
+```cpp
+#ifndef TEXTRENDERER_HPP
+#define TEXTRENDERER_HPP
+
+#include <SDL2/SDL.h>
+#include <SDL_ttf.h>
+#include <string>
+#include <iostream>
+#include "colors.h"
+
+static constexpr SDL_Color customWhite{255, 248, 227, 255};  // Off-white
+static constexpr SDL_Color customGray{136, 136, 136, 255};   // Gray
+
+class TextRenderer {
+private:
+	SDL_Renderer* renderer;
+	TTF_Font* mainFont;
+	TTF_Font* smallFont;
+	bool initialized;
+
+public:
+	TextRenderer(SDL_Renderer* renderer);
+	~TextRenderer();
+
+	bool init(int windowWidth);
+
+	bool renderText(const std::string& text, int x, int y, int offset, 
+	                TTF_Font* fontToUse, SDL_Color color, bool centered = false);
+
+	void renderInstruction(int centerX, int centerY, int& offset,
+	                       const std::string& labelText, const std::string& dotText,
+	                       bool smallMode, TTF_Font* currentFont);
+
+	void renderScore(int centerX, int centerY, int score, bool smallMode);
+	void renderRetryPrompt(int centerX, int centerY, bool smallMode);
+
+	TTF_Font* getMainFont() const { return mainFont; }
+	TTF_Font* getSmallFont() const { return smallFont; }
+	bool isInitialized() const { return initialized; }
+};
+
+#endif
+```
+
+The core of the text rendering pipeline is this function:
+```cpp
+bool TextRenderer::renderText(const std::string& text, int x, int y, int offset, 
+								TTF_Font* fontToUse, SDL_Color color, bool centered) {
+	if (!fontToUse || !initialized) return false;
+
+	SDL_Surface* surface = TTF_RenderUTF8_Blended(fontToUse, text.c_str(), color);
+	if (!surface) {
+		std::cerr << "Text render error: " << TTF_GetError() << std::endl;
+		return false;
+	}
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	if (!texture) {
+		SDL_FreeSurface(surface);
+		return false;
+	}
+
+	SDL_Rect destRect;
+	if (centered) {
+		destRect = {
+			x - (surface->w / 2),
+			y - (surface->h / 2) + offset,
+			surface->w,
+			surface->h
+		};
+	} else {
+		destRect = { x, y + offset, surface->w, surface->h };
+	}
+
+	SDL_RenderCopy(renderer, texture, nullptr, &destRect);
+
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+
+	return true;
+}
+```
 
 <br>
 <br>

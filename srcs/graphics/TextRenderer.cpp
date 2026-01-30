@@ -47,7 +47,7 @@ bool TextRenderer::init(int windowWidth) {
 }
 
 bool TextRenderer::renderText(const std::string& text, int x, int y, int offset, 
-                               TTF_Font* fontToUse, SDL_Color color, bool centered) {
+								TTF_Font* fontToUse, SDL_Color color, bool centered) {
 	if (!fontToUse || !initialized) return false;
 
 	SDL_Surface* surface = TTF_RenderUTF8_Blended(fontToUse, text.c_str(), color);
@@ -103,8 +103,9 @@ void TextRenderer::renderScore(int centerX, int centerY, int score, bool smallMo
 
 	TTF_Font* currentFont = smallMode ? smallFont : mainFont;
 	
-	std::string scoreText = "SCORE: " + std::to_string(score);
-	int offset = 70;
+	// TODO: manage different outputs (0 apples, 1 apple, >1 Appels)
+	std::string scoreText = "YOU ATE " + std::to_string(score) + " APPLES";
+	int offset = 150;
 	
 	renderText(scoreText, centerX, centerY, offset, currentFont, customWhite, true);
 }
@@ -121,7 +122,7 @@ void TextRenderer::renderRetryPrompt(int centerX, int centerY, bool smallMode) {
 		"          ·······      " :
 		"          ··········     ";
 	
-	int offset = 100;
+	int offset = 170;
 	
 	// Render label
 	renderText(promptTextA, centerX, centerY, offset, currentFont, customWhite, true);

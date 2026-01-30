@@ -77,7 +77,8 @@ class SDLGraphic : public IGraphic {
 		void drawBorder(int thickness);
 		void drawTitle(int centerX, int centerY);
 		void drawInstructions(int centerX, int centerY);
-		void drawGameOverText(int centerX, int centerY);
+		void drawGameOver(int centerX, int centerY);
+		void drawRetryText(const GameState &state, int centerX, int centerY);
 		
 		// Helper to draw multiple rectangles at once
 		void drawRects(const std::vector<SDL_Rect>& rects);
