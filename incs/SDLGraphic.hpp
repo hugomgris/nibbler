@@ -5,7 +5,9 @@
 #include "ParticleSystem.hpp"
 #include "colors.h"
 #include <SDL2/SDL.h>
+#include <SDL_ttf.h>
 #include <iostream>
+#include <string>
 #include <vector>
 #include <chrono>
 #include <algorithm>
@@ -48,8 +50,13 @@ class SDLGraphic : public IGraphic {
 		float lastTailY;
 		bool isFirstFrame;
 
+		// Font management
+		TTF_Font* font;
+		TTF_Font* smallFont;
+
 		// Colors
 		static constexpr SDL_Color customWhite{255, 248, 227, 255};	// Off-white
+		static constexpr SDL_Color customGray{136, 136, 136, 255};	// Gray
 		static constexpr SDL_Color customBlack{23, 23, 23, 255};	// Charcoal black
 
 		static constexpr SDL_Color lightRed{254, 74, 81, 255};
@@ -71,6 +78,9 @@ class SDLGraphic : public IGraphic {
 		void drawFood(const GameState &state);
 		void drawBorder(int thickness);
 		void drawTitle(int centerX, int centerY);
+		void drawInstructions(int centerX, int centerY);
+		
+		bool renderText(const std::string& text, int x, int y, int offset,  TTF_Font* fontToUse, SDL_Color color, bool centered = false);
 		
 		// Helper to draw multiple rectangles at once
 		void drawRects(const std::vector<SDL_Rect>& rects);

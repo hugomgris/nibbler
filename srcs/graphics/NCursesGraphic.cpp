@@ -234,10 +234,8 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 	}
 }
 
-void NCursesGraphic::drawStartScreen(int win_height, int win_width) {
+void NCursesGraphic::drawInstructions(int win_height, int win_width) {
 	int anchorY = ((win_width / 2) < 38) ? win_height / 2 + 1 : (win_height / 2) + 5;
-
-	drawTitle(win_height, win_width);
 
 	wattron(gameWindow, COLOR_PAIR(5));
 	const char *instructions = "[ENTER]·······START";
@@ -245,7 +243,7 @@ void NCursesGraphic::drawStartScreen(int win_height, int win_width) {
 	mvwaddstr(gameWindow, instrY, 
 			(win_width / 2) - 10, instructions);
 	
-	const char *controls = "[⬆⬇⬅➡]·········MOVE";
+	const char *controls = "[↑↓←→]·········MOVE";
 	int controlsY = instrY + 1;
 	mvwaddstr(gameWindow, controlsY,
 			(win_width / 2) - 10, controls);
@@ -281,7 +279,8 @@ void NCursesGraphic::renderMenu(const GameState &state, float deltaTime) {
 
 	drawBorder();
 
-	drawStartScreen(win_height, win_width);
+	drawTitle(win_height, win_width);
+	drawInstructions(win_height, win_width);	
 	
 	wnoutrefresh(stdscr);
 	wnoutrefresh(gameWindow);
@@ -325,7 +324,7 @@ void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
 		
 		// Draw "GAME"
 		anchorX = (win_width - gameoverBigA.width) / 2;
-		anchorY = ((win_height - gameoverBigA.height) / 2) - 5.5;
+		anchorY += 2.0f;
 		for (size_t i = 0; i < gameoverBigA.lines.size(); ++i) {
 			wattron(gameWindow, COLOR_PAIR(1));
 			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverBigA.lines[i].c_str());

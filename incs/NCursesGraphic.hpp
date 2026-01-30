@@ -31,6 +31,18 @@ private:
 	AsciiArtFile titleBigA, titleBigB, titleBigC, titleBigD;
 	AsciiArtFile gameoverSmallA, gameoverSmallB;
 	AsciiArtFile gameoverBigA, gameoverBigB;
+
+	// Drawing functions
+	void drawStartScreen(int win_height, int win_width);
+	void drawTitle(int win_height, int win_width);
+	void drawInstructions(int win_height, int win_width);
+	void drawGameOverScreen(const GameState &state, int win_height, int win_width);
+	void drawGameOverTitle(int win_height, int win_width);
+	void drawGround();
+	void drawBorder();
+	void drawSnake(const GameState &state);
+	void drawFood(const GameState &state);
+	void generateGroundPattern();
 	
 	// Logo drawing helper
 	bool loadAsciiArtFile(const std::string& filepath, AsciiArtFile& art);
@@ -46,17 +58,6 @@ public:
 	void renderMenu(const GameState &state, float deltaTime) override;
 	void renderGameOver(const GameState &state, float deltaTime) override;
 	Input pollInput() override;
-
-	// Drawing functions
-	void drawStartScreen(int win_height, int win_width);
-	void drawTitle(int win_height, int win_width);
-	void drawGameOverScreen(const GameState &state, int win_height, int win_width);
-	void drawGameOverTitle(int win_height, int win_width);
-	void drawGround();
-	void drawBorder();
-	void drawSnake(const GameState &state);
-	void drawFood(const GameState &state);
-	void generateGroundPattern();
 };
 
 extern "C" IGraphic* createGraphic() {

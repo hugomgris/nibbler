@@ -77,6 +77,10 @@ BEAKING NEWS! I've been working on the game's title/logo/whateveryouwantocallit.
 </p>
 
 <br>
+
+Anyway, working in `SDL2` is been somewhat of a (small) challenge. I decided to draw by hand the logo, before moving into researching how to render text. I learned that a new sub-library needed to be handled, `SDL_ttf`, so I had to add the process of its fetching to `Makefile`. After that, the basic flow of text rendering was easy to get around (plenty of examples out there). A specific function dedicated to render text to serve as helper, and we're set:
+
+<br>
 <br>
 
 ## 11.4 Encouraging, Which Is a Gerund

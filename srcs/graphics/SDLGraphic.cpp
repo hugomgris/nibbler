@@ -4,11 +4,15 @@
 SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
 	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
 	lastFoodX(-1), lastFoodY(-1),
-	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true) {
+	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true),
+	font(nullptr), smallFont(nullptr) {
 	lastSpawnTime = std::chrono::high_resolution_clock::now();
 }
 
 SDLGraphic::~SDLGraphic() {
+	if (font) TTF_CloseFont(font);
+	if (smallFont) TTF_CloseFont(smallFont);
+	TTF_Quit();
 	if (renderer) SDL_DestroyRenderer(renderer);
 	if (window) SDL_DestroyWindow(window);
 	SDL_Quit();
@@ -48,6 +52,30 @@ void SDLGraphic::init(int width, int height) {
 	);
 	
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	
+	// TTF initialization for text rendering
+	if (TTF_Init() < 0) {
+		std::cerr << "TTF_Init error: " << TTF_GetError() << std::endl;
+	}
+	
+	// Custom fonts -> all free to use, don't call the cops on me please
+	font = TTF_OpenFont("fonts/JetBrainsMono-VariableFont_wght.ttf", 40);
+	if (!font) {
+		// Fallback to a system font
+		font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40);
+	}
+	if (!font) {
+		std::cerr << "Font loading warning: " << TTF_GetError() << std::endl;
+	}
+	
+	smallFont = TTF_OpenFont("fonts/JetBrainsMono-VariableFont_wght.ttf", 24);
+	if (!smallFont && font) {
+		smallFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
+	}
+
+	if (!smallFont) {
+		std::cerr << "Font loading warning: " << TTF_GetError() << std::endl;
+	}
 	
 	// Initialize particle system
 	particleSystem = std::make_unique<ParticleSystem>(renderer, width, height, cellSize, borderOffset);
@@ -370,6 +398,102 @@ void SDLGraphic::drawTitle(int centerX, int centerY) {
 	drawRects(bblerRects);
 }
 
+void SDLGraphic::drawInstructions(int centerX, int centerY) {
+	if (!smallFont) return;  // No font loaded, skip text rendering
+
+	bool smallMode = ((windowWidth / 2) < 900) ? true : false;
+
+	TTF_Font *currentFont = smallMode ? smallFont : font;
+	
+	// Enter
+	SDL_Color textColor = customWhite;
+	std::string instructionTextA = smallMode ?
+		"[ ENTER ]          START" :
+		"[ ENTER ]             START" ;
+	std::string instructionTextB = smallMode ?
+		"          ········      " :
+		"          ···········     " ;
+	int offset = square * 7;
+	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
+	textColor = customGray;
+	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
+	
+	// Arrows
+	textColor = customWhite;
+	instructionTextA = smallMode ?
+		"[ ↑ ↓ ← → ]         MOVE" :
+		"[ ↑ ↓ ← → ]            MOVE" ;
+	instructionTextB = smallMode ?
+		"            ·······     " :
+		"            ··········     " ;
+	offset = offset + (square * 2);
+	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
+	textColor = customGray;
+	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
+
+	// Travel
+	textColor = customWhite;
+	instructionTextA = smallMode ?
+		"[ 1   2   3 ]     TRAVEL" :
+		"[ 1   2   3 ]        TRAVEL" ;
+	instructionTextB = smallMode ?
+		"    /   /     ···       " :
+		"    /   /     ······       " ;
+	offset = offset + (square * 2);
+	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
+	textColor = customGray;
+	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
+
+	// Quit
+	textColor = customWhite;
+	instructionTextA = smallMode ?
+		"[ Q   ESC ]         QUIT" :
+		"[ Q   ESC ]            QUIT" ;
+	instructionTextB = smallMode ?
+		"    /       ·······     " :
+		"    /       ··········    " ;
+	offset = offset + (square * 2);
+	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
+	textColor = customGray;
+	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
+}
+
+bool SDLGraphic::renderText(const std::string& text, int x, int y, int offset, TTF_Font* fontToUse, SDL_Color color, bool centered) {
+	if (!fontToUse) return false;
+
+	// Use UTF8 version to properly handle special characters like "·"
+	SDL_Surface* surface = TTF_RenderUTF8_Blended(fontToUse, text.c_str(), color);
+	if (!surface) {
+		std::cerr << "Text render error: " << TTF_GetError() << std::endl;
+		return false;
+	}
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	if (!texture) {
+		SDL_FreeSurface(surface);
+		return false;
+	}
+	
+	SDL_Rect destRect;
+	if (centered) {
+		destRect = {
+			x - (surface->w / 2),
+			y - (surface->h / 2) + offset,
+			surface->w,
+			surface->h
+		};
+	} else {
+		destRect = { x, y, surface->w, surface->h };
+	}
+	
+	SDL_RenderCopy(renderer, texture, nullptr, &destRect);
+	
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+	
+	return true;
+}
+
 void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	(void)state;
 	
@@ -381,7 +505,7 @@ void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 
 	static int frameCounter = 0;
 	if (frameCounter % 111 == 0) {
-		particleSystem->spawnSnakeTrail(windowWidth / 2 + (square * 13), windowHeight / 2 + (square * 3), 1, 0, lightBlue);  // Direction: 0° (moving right), trail goes left
+		particleSystem->spawnSnakeTrail(windowWidth / 2 + (square * 13.2), windowHeight / 2 + (square * 3.2), 1, 0, lightBlue);  // Direction: 0° (moving right), trail goes left
 	}
 	frameCounter++;
 
@@ -402,6 +526,7 @@ void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	int centerY = windowHeight / 2;
 
 	drawTitle(centerX, centerY);
+	drawInstructions(centerX, centerY);
 	
 	SDL_RenderPresent(renderer);
 }
