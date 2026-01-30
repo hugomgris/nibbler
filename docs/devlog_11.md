@@ -4,6 +4,7 @@
 1. [Day Eleven Plan](#111-day-eleven-plan)
 2. [The Miracle of Standards](#112-the-miracle-of-standards)
 3. [The Graphic Gardens of Eden](#112-the-graphic-gardens-of-eden)
+4. [Encouraging, Which Is a Gerund]
 
 <br>
 <br>
@@ -13,6 +14,8 @@
 A considerable chunk of today's working time has gone towards job applications, so I don't think there will be great advancements today. Still, there are a couple of hours left on the workclock, so let's put them to good use. Today's plan doesn't need a list, as it is quite straight forward: **working on the start and gameover screens** across platforms.
 
 > *As I wrote this devlog, it seems that I fully adopted a snake + apple = garden of eden theme. By day 11, one must find ways to keep things joyful, right?*
+
+> *This log ended up being about more than one day: from the 11th to the 13th work session. I don't want to change too much stuff here, so I'll just make the 12th devlog tart with *Day Fourtheen Plans*.
 
 <br>
 <br>
@@ -64,4 +67,26 @@ First, let's try to finish the `NCurses` implementations by redesigning the game
   <img src="ncurses_gameover_small.png" alt="NCurses game over screen in its small format" height=500 hspace="40">
 </p>
 
-Now, let's move on to the 2D realms of `SDL2`. This will first need a somewhat of homogenization (however this cursed word is written) pass, as I'd like for the main logic for the manus and middle screen to be the same across platforms. 
+Now, let's move on to the 2D realms of `SDL2`. This will first need a somewhat of homogenization (*however this cursed word is written*) pass, as I'd like for the main logic for the manus and middle screen to be the same across platforms. 
+
+BEAKING NEWS! I've been working on the game's title/logo/whateveryouwantocallit. While drawing the `SDL`start screen, I started playing around with the idea of the `i` of `nibble` be the snake, blue body and red dot, and after a couple of iterations I arrived to a version that, at least for now, I like. I also implemented some particles as a trail for the snake, which are included in the title. So after doing this, I went back to `NCurses` to modify its logos to h o m o g e n i z e (*or however this cursed workd is written*) the a e s t h e t i c s. So here's the current state:
+
+<p float="left">
+  <img src="NCurses_logo2_small.png" alt="NCurses game over screen in its big format" height=500>
+  <img src="NCurses_logo2_big.png" alt="NCurses game over screen in its small format" height=500 hspace="40">
+</p>
+
+<br>
+
+Anyway, working in `SDL2` is been somewhat of a (small) challenge. I decided to draw by hand the logo, before moving into researching how to render text. I learned that a new sub-library needed to be handled, `SDL_ttf`, so I had to add the process of its fetching to `Makefile`. After that, the basic flow of text rendering was easy to get around (plenty of examples out there). A specific function dedicated to render text to serve as helper, and we're set:
+
+<br>
+<br>
+
+## 11.4 Encouraging, Which Is a Gerund
+This section's title is just another byproduct of me losing my mind. *"Animando, que es gerundio"*, blended through Google Translator just as a joke. Anyway, I'd like for my menu screens to be animated at some point (something e x t r e m e l y time dependent), but just in case I actually find the time to make it happen, some ideas:
+- `NCurses`
+	- Change the dithered parts of the big logo, randomizing them in the animation loop, making it look glitchy. (Why glitchy? I don't know, it might just be because it combines two important features: *cool* and *doable*)
+	- Make the squiggles of the small logo slightly twitchy, growing and shrinking in the animation loop
+- `SDL2`
+	- Try to mimic the border animation in the letters (*this might break my spirit*)

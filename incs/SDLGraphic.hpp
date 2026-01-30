@@ -2,12 +2,16 @@
 #include "IGraphic.hpp"
 #include "Snake.hpp"
 #include "Food.hpp"
+#include "ParticleSystem.hpp"
 #include "colors.h"
 #include <SDL2/SDL.h>
+#include <SDL_ttf.h>
 #include <iostream>
+#include <string>
 #include <vector>
 #include <chrono>
 #include <algorithm>
+#include <memory>
 
 struct BorderLine {
 	float progress;        // 0 = at arena, 1 = at window edge
@@ -16,51 +20,19 @@ struct BorderLine {
 	BorderLine() : progress(0.0f), age(0.0f) {}
 };
 
-enum class ParticleType {
-	Dust,
-	Explosion
-};
-
-struct Particle {
-	float			x, y;				// Center position
-	float			vx, vy;				// Neded for explosion, maybe something else/more in the future
-	float			rotation;          
-	float			rotationSpeed;     
-	float			initialSize;
-	float			currentSize;
-	float			lifetime;
-	float			age;
-	ParticleType	type;
-	SDL_Color		color;
-	
-	Particle(float px, float py, float minSize, float maxSize, float minLifetime, float maxLifetime)
-		: x(px), y(py), vx(0), vy(0), age(0.0f), type(ParticleType::Dust), color({ 255, 248, 227, 255}) {
-		initialSize = minSize + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxSize - minSize);
-		currentSize = initialSize;
-		lifetime = minLifetime + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxLifetime - minLifetime);
-		rotation = static_cast<float>(rand() % 360);
-		rotationSpeed = -30.0f + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 60.0f;  // -30 to +30 deg/s
-	}
-
-	Particle(float px, float py, float minSize, float maxSize, float minLifetime, float maxLifetime, 
-			float velocityX, float velocityY, SDL_Color particleColor)
-		: x(px), y(py), vx(velocityX), vy(velocityY), age(0.0f), type(ParticleType::Explosion), color(particleColor) {
-		initialSize = minSize + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxSize - minSize);
-		currentSize = initialSize;
-		lifetime = minLifetime + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxLifetime - minLifetime);
-		rotation = static_cast<float>(rand() % 360);
-		rotationSpeed = -50.0f + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 100.0f;  // -50 to +50 deg/s for explosions
-	}
-};
-
 class SDLGraphic : public IGraphic {
 	private:
-		SDL_Window		*window;
-		SDL_Renderer	*renderer;
-		int				gridWidth;
-		int				gridHeight;
-		int				cellSize;
-		int				borderOffset;
+		SDL_Window						*window;
+		SDL_Renderer					*renderer;
+		int								windowWidth;
+		int								windowHeight;
+		int								gridWidth;
+		int								gridHeight;
+		int								cellSize;
+		int								square;
+		int								sep;
+		int								borderOffset;
+		std::unique_ptr<ParticleSystem>	particleSystem;
 
 		// Tunnel effect animation
 		std::vector<BorderLine>							borderLines;
@@ -69,25 +41,22 @@ class SDLGraphic : public IGraphic {
 		float											animationSpeed;
 		bool											enableTunnelEffect;
 
-		// Particle system
-		std::vector<Particle>	particles;
-		int						maxDustDensity;
-		float					dustSpawnInterval;
-		float					dustSpawnTimer;
-		float					dustMinSize;
-		float					dustMaxSize;
-		float					dustMinLifetime;
-		float dustMaxLifetime;
-
-		float					explosionMinSize;
-		float					explosionMaxSize;
-		
 		// This is needed for explosion particle spawning
 		int	lastFoodX;
 		int	lastFoodY;
+		
+		// Snake trail tracking for smooth interpolation
+		float lastTailX;
+		float lastTailY;
+		bool isFirstFrame;
+
+		// Font management
+		TTF_Font* font;
+		TTF_Font* smallFont;
 
 		// Colors
 		static constexpr SDL_Color customWhite{255, 248, 227, 255};	// Off-white
+		static constexpr SDL_Color customGray{136, 136, 136, 255};	// Gray
 		static constexpr SDL_Color customBlack{23, 23, 23, 255};	// Charcoal black
 
 		static constexpr SDL_Color lightRed{254, 74, 81, 255};
@@ -108,13 +77,13 @@ class SDLGraphic : public IGraphic {
 		void drawSnake(const GameState &state);
 		void drawFood(const GameState &state);
 		void drawBorder(int thickness);
-
-		// Particle system helpers
-		void updateParticles(float deltaTime);
-		void renderParticles();
-		void spawnDustParticle();
-		void spawnExplosion(float x, float y, int count);
-		void drawRotatedSquare(float cx, float cy, float size, float rotation, SDL_Color color, Uint8 alpha);
+		void drawTitle(int centerX, int centerY);
+		void drawInstructions(int centerX, int centerY);
+		
+		bool renderText(const std::string& text, int x, int y, int offset,  TTF_Font* fontToUse, SDL_Color color, bool centered = false);
+		
+		// Helper to draw multiple rectangles at once
+		void drawRects(const std::vector<SDL_Rect>& rects);
 		
 	public:
 		SDLGraphic();
@@ -124,8 +93,8 @@ class SDLGraphic : public IGraphic {
 		
 		void init(int width, int height) override;
 		void render(const GameState& state, float deltaTime) override;
-		void renderMenu(const GameState &state) override;
-		void renderGameOver(const GameState &state) override;
+		void renderMenu(const GameState &state, float deltaTime) override;
+		void renderGameOver(const GameState &state, float deltaTime) override;
 		Input pollInput() override;
 };
 
