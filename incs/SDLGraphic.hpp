@@ -3,6 +3,8 @@
 #include "Snake.hpp"
 #include "Food.hpp"
 #include "ParticleSystem.hpp"
+#include "TextRenderer.hpp"
+#include "TitleHandler.hpp"
 #include "colors.h"
 #include <SDL2/SDL.h>
 #include <SDL_ttf.h>
@@ -22,19 +24,19 @@ struct BorderLine {
 
 class SDLGraphic : public IGraphic {
 	private:
-		SDL_Window						*window;
-		SDL_Renderer					*renderer;
-		int								windowWidth;
-		int								windowHeight;
-		int								gridWidth;
-		int								gridHeight;
-		int								cellSize;
-		int								square;
-		int								sep;
-		int								borderOffset;
-		std::unique_ptr<ParticleSystem>	particleSystem;
-
-		// Tunnel effect animation
+		SDL_Window*										window;
+		SDL_Renderer*									renderer;
+		int												windowWidth;
+		int												windowHeight;
+		int												gridWidth;
+		int												gridHeight;
+		int												cellSize;
+		int												square;
+		int												sep;
+		int												borderOffset;
+		std::unique_ptr<ParticleSystem>					particleSystem;
+		std::unique_ptr<TextRenderer>					textRenderer;
+		std::unique_ptr<TitleHandler>					titleHandler;
 		std::vector<BorderLine>							borderLines;
 		std::chrono::high_resolution_clock::time_point	lastSpawnTime;
 		float											spawnInterval;
@@ -42,17 +44,13 @@ class SDLGraphic : public IGraphic {
 		bool											enableTunnelEffect;
 
 		// This is needed for explosion particle spawning
-		int	lastFoodX;
-		int	lastFoodY;
+		int												lastFoodX;
+		int												lastFoodY;
 		
-		// Snake trail tracking for smooth interpolation
-		float lastTailX;
-		float lastTailY;
-		bool isFirstFrame;
-
-		// Font management
-		TTF_Font* font;
-		TTF_Font* smallFont;
+		// Snake trail tracking for interpolation -> the lerping of the trail particles, so that they don't look BAD
+		float											lastTailX;
+		float											lastTailY;
+		bool											isFirstFrame;
 
 		// Colors
 		static constexpr SDL_Color customWhite{255, 248, 227, 255};	// Off-white
@@ -77,15 +75,8 @@ class SDLGraphic : public IGraphic {
 		void drawSnake(const GameState &state);
 		void drawFood(const GameState &state);
 		void drawBorder(int thickness);
-		void drawTitle(int centerX, int centerY);
 		void drawInstructions(int centerX, int centerY);
-		
-		bool renderText(const std::string& text, int x, int y, int offset,  TTF_Font* fontToUse, SDL_Color color, bool centered = false);
-		
-		// Helper to draw multiple rectangles at once
-		void drawRects(const std::vector<SDL_Rect>& rects);
-		
-	public:
+		void drawRetryText(const GameState &state, int centerX, int centerY);	public:
 		SDLGraphic();
 		SDLGraphic(const SDLGraphic&) = delete;
 		SDLGraphic &operator=(const SDLGraphic&) = delete;

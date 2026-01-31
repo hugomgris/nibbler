@@ -4,14 +4,12 @@
 SDLGraphic::SDLGraphic() : window(nullptr), renderer(nullptr), cellSize(50), borderOffset(0),
 	spawnInterval(0.3f), animationSpeed(.5f), enableTunnelEffect(true),
 	lastFoodX(-1), lastFoodY(-1),
-	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true),
-	font(nullptr), smallFont(nullptr) {
+	lastTailX(-1.0f), lastTailY(-1.0f), isFirstFrame(true) {
 	lastSpawnTime = std::chrono::high_resolution_clock::now();
 }
 
 SDLGraphic::~SDLGraphic() {
-	if (font) TTF_CloseFont(font);
-	if (smallFont) TTF_CloseFont(smallFont);
+	textRenderer.reset();
 	TTF_Quit();
 	if (renderer) SDL_DestroyRenderer(renderer);
 	if (window) SDL_DestroyWindow(window);
@@ -38,8 +36,8 @@ void SDLGraphic::init(int width, int height) {
 		sep = 20;
 		square = 20;
 	} else {
-		sep = 45;
-		square = 45;
+		sep = 40;
+		square = 40;
 	}
 	
 	window = SDL_CreateWindow(
@@ -58,24 +56,14 @@ void SDLGraphic::init(int width, int height) {
 		std::cerr << "TTF_Init error: " << TTF_GetError() << std::endl;
 	}
 	
-	// Custom fonts -> all free to use, don't call the cops on me please
-	font = TTF_OpenFont("fonts/JetBrainsMono-VariableFont_wght.ttf", 40);
-	if (!font) {
-		// Fallback to a system font
-		font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40);
-	}
-	if (!font) {
-		std::cerr << "Font loading warning: " << TTF_GetError() << std::endl;
+	// Initialize text renderer
+	textRenderer = std::make_unique<TextRenderer>(renderer);
+	if (!textRenderer->init(windowWidth)) {
+		std::cerr << "TextRenderer initialization failed" << std::endl;
 	}
 	
-	smallFont = TTF_OpenFont("fonts/JetBrainsMono-VariableFont_wght.ttf", 24);
-	if (!smallFont && font) {
-		smallFont = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
-	}
-
-	if (!smallFont) {
-		std::cerr << "Font loading warning: " << TTF_GetError() << std::endl;
-	}
+	// Initialize title handler
+	titleHandler = std::make_unique<TitleHandler>(renderer);
 	
 	// Initialize particle system
 	particleSystem = std::make_unique<ParticleSystem>(renderer, width, height, cellSize, borderOffset);
@@ -321,177 +309,11 @@ void SDLGraphic::renderTunnelEffect() {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
-void SDLGraphic::drawRects(const std::vector<SDL_Rect>& rects) {
-	for (const auto& rect : rects) {
-		SDL_RenderFillRect(renderer, &rect);
-	}
-}
-
-void SDLGraphic::drawTitle(int centerX, int centerY) {
-	int totalWidth = (26 * square) + (6 * sep);
-	int startX = centerX - (totalWidth / 2);
-	
-	//n
-	setRenderColor(customWhite);
-
-	std::vector<SDL_Rect> nRects = {
-		{startX, centerY - (square * 3), square, square * 5},						// n - left vertical
-		{startX + square, centerY - (square * 3), square * 3, square},				// n - top horizontal
-		{startX + (square * 3), centerY - (square * 2), square * 2, square},		// n - middle diagonal
-		{startX + (square * 4), centerY - (square * 1), square, square * 3},		// n - right vertical
-	};
-
-	drawRects(nRects);
-
-	// i base
-	setRenderColor(lightBlue);
-
-	std::vector<SDL_Rect> iBaseRects = {
-		{startX + (square * 5) + sep, centerY - (square * 4), square, square * 7},			// i - left
-		{startX + (square * 5) + sep, centerY + (square * 3), square * 23, square},			// i - base
-	};
-
-	drawRects(iBaseRects);
-
-	// i dot
-	setRenderColor(lightRed);
-
-	std::vector<SDL_Rect> iDotRects = {
-		{startX + (square * 5) + sep, centerY - (square * 6), square, square},  // i - dot
-	};
-
-	drawRects(iDotRects);
-
-	// bbler
-	setRenderColor(customWhite);
-
-	int bStartX = startX + (square * 6) + (sep * 2);
-	
-	std::vector<SDL_Rect> bblerRects = {
-		// First 'b'
-		{bStartX, centerY - (square * 6), square, square * 8},								// b - stem
-		{bStartX + square, centerY - (square * 3), square * 4, square},						// b - base, top
-		{bStartX + (square * 4), centerY - (square * 2), square, square * 4},				// b - base, right
-		{bStartX + square, centerY + square, square * 3, square},							// b - base, bottom
-
-		// Second 'b'
-		{bStartX + (square * 5) + sep, centerY - (square * 6), square, square * 8},			// b - stem
-		{bStartX + (square * 6) + sep, centerY - (square * 3), square * 4, square},			// b - base, top
-		{bStartX + (square * 9) + sep, centerY - (square * 2), square, square * 4},			// b - base, right
-		{bStartX + (square * 6) + sep, centerY + square, square * 3, square},				// b - base, bottom
-
-		// 'l'
-		{bStartX + (square * 10) + (sep * 2), centerY - (square * 6), square, square * 8},	// l
-
-		// 'e'
-		{bStartX + (square * 11) + (sep * 3), centerY - (square * 3), square, square * 5},	// e - left
-		{bStartX + (square * 12) + (sep * 3), centerY - (square * 3), square * 4, square},	// e - top
-		{bStartX + (square * 15) + (sep * 3), centerY - (square * 3), square, square * 3},	// e - right
-		{bStartX + (square * 12) + (sep * 3), centerY - square, square * 3, square},		// e - mid
-		{bStartX + (square * 12) + (sep * 3), centerY + square, square * 4, square},		// e - bot
-
-		// 'r'
-		{bStartX + (square * 16) + (sep * 4), centerY - (square * 3), square, square * 5},	// r - stem
-		{bStartX + (square * 17) + (sep * 4), centerY - (square * 3), square * 3, square},	// r - side
-	};
-
-	drawRects(bblerRects);
-}
-
 void SDLGraphic::drawInstructions(int centerX, int centerY) {
-	if (!smallFont) return;  // No font loaded, skip text rendering
+	if (!textRenderer || !textRenderer->isInitialized()) return;
 
-	bool smallMode = ((windowWidth / 2) < 900) ? true : false;
-
-	TTF_Font *currentFont = smallMode ? smallFont : font;
-	
-	// Enter
-	SDL_Color textColor = customWhite;
-	std::string instructionTextA = smallMode ?
-		"[ ENTER ]          START" :
-		"[ ENTER ]             START" ;
-	std::string instructionTextB = smallMode ?
-		"          ········      " :
-		"          ···········     " ;
-	int offset = square * 7;
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
-	
-	// Arrows
-	textColor = customWhite;
-	instructionTextA = smallMode ?
-		"[ ↑ ↓ ← → ]         MOVE" :
-		"[ ↑ ↓ ← → ]            MOVE" ;
-	instructionTextB = smallMode ?
-		"            ·······     " :
-		"            ··········     " ;
-	offset = offset + (square * 2);
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
-
-	// Travel
-	textColor = customWhite;
-	instructionTextA = smallMode ?
-		"[ 1   2   3 ]     TRAVEL" :
-		"[ 1   2   3 ]        TRAVEL" ;
-	instructionTextB = smallMode ?
-		"    /   /     ···       " :
-		"    /   /     ······       " ;
-	offset = offset + (square * 2);
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
-
-	// Quit
-	textColor = customWhite;
-	instructionTextA = smallMode ?
-		"[ Q   ESC ]         QUIT" :
-		"[ Q   ESC ]            QUIT" ;
-	instructionTextB = smallMode ?
-		"    /       ·······     " :
-		"    /       ··········    " ;
-	offset = offset + (square * 2);
-	renderText(instructionTextA, centerX, centerY, offset, currentFont, textColor, true);
-	textColor = customGray;
-	renderText(instructionTextB, centerX, centerY, offset, currentFont, textColor, true);
-}
-
-bool SDLGraphic::renderText(const std::string& text, int x, int y, int offset, TTF_Font* fontToUse, SDL_Color color, bool centered) {
-	if (!fontToUse) return false;
-
-	// Use UTF8 version to properly handle special characters like "·"
-	SDL_Surface* surface = TTF_RenderUTF8_Blended(fontToUse, text.c_str(), color);
-	if (!surface) {
-		std::cerr << "Text render error: " << TTF_GetError() << std::endl;
-		return false;
-	}
-
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	if (!texture) {
-		SDL_FreeSurface(surface);
-		return false;
-	}
-	
-	SDL_Rect destRect;
-	if (centered) {
-		destRect = {
-			x - (surface->w / 2),
-			y - (surface->h / 2) + offset,
-			surface->w,
-			surface->h
-		};
-	} else {
-		destRect = { x, y, surface->w, surface->h };
-	}
-	
-	SDL_RenderCopy(renderer, texture, nullptr, &destRect);
-	
-	SDL_DestroyTexture(texture);
-	SDL_FreeSurface(surface);
-	
-	return true;
+	bool smallMode = ((windowWidth / 2) < 900);
+	textRenderer->renderInstructions(centerX, centerY, smallMode, square);
 }
 
 void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
@@ -525,14 +347,26 @@ void SDLGraphic::renderMenu(const GameState& state, float deltaTime) {
 	int centerX = windowWidth / 2;
 	int centerY = windowHeight / 2;
 
-	drawTitle(centerX, centerY);
+	titleHandler->renderTitle(centerX, centerY, square, sep, customWhite, lightBlue, lightRed);
 	drawInstructions(centerX, centerY);
 	
 	SDL_RenderPresent(renderer);
 }
 
+void SDLGraphic::drawRetryText(const GameState &state, int centerX, int centerY) {
+	if (!textRenderer || !textRenderer->isInitialized()) return;
+
+	bool smallMode = ((windowWidth / 2) < 900);
+	
+	// Render score
+	textRenderer->renderScore(centerX, centerY, state.score, smallMode, square);
+	
+	// Render retry prompt
+	textRenderer->renderRetryPrompt(centerX, centerY, smallMode, square);
+}
+
 void SDLGraphic::renderGameOver(const GameState& state, float deltaTime) {
-	(void)state;  // Will be used when we add text rendering for score
+	(void)state;
 
 	// Update animations
 	updateTunnelEffect(deltaTime);
@@ -553,75 +387,8 @@ void SDLGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	int centerX = windowWidth / 2;
 	int centerY = windowHeight / 2;
 	
-	setRenderColor(lightRed);
-	
-	// GAME
-	std::vector<SDL_Rect> gameRects = {
-		// G
-		{centerX - 120, centerY - 60, 15, 60},
-		{centerX - 120, centerY - 60, 50, 15},
-		{centerX - 120, centerY - 15, 50, 15},
-		{centerX - 55, centerY - 40, 15, 25},
-		{centerX - 85, centerY - 40, 30, 15},
-		// A
-		{centerX - 35, centerY - 60, 15, 60},
-		{centerX - 35, centerY - 60, 40, 15},
-		{centerX - 35, centerY - 40, 40, 15},
-		{centerX + 5, centerY - 60, 15, 60},
-		// M
-		{centerX + 30, centerY - 60, 15, 60},
-		{centerX + 30, centerY - 60, 15, 30},
-		{centerX + 55, centerY - 45, 15, 45},
-		{centerX + 80, centerY - 60, 15, 30},
-		{centerX + 80, centerY - 60, 15, 60},
-		// E
-		{centerX + 105, centerY - 60, 15, 60},
-		{centerX + 105, centerY - 60, 40, 15},
-		{centerX + 105, centerY - 40, 35, 15},
-		{centerX + 105, centerY - 15, 40, 15}
-	};
-	drawRects(gameRects);
-	
-	// OVER
-	int overY = centerY + 5;
-	std::vector<SDL_Rect> overRects = {
-		// O
-		{centerX - 60, overY, 15, 40},
-		{centerX - 60, overY, 40, 15},
-		{centerX - 60, overY + 25, 40, 15},
-		{centerX - 25, overY, 15, 40},
-		// V
-		{centerX, overY, 15, 30},
-		{centerX + 15, overY + 25, 15, 15},
-		{centerX + 30, overY, 15, 30},
-		// E
-		{centerX + 55, overY, 15, 40},
-		{centerX + 55, overY, 30, 15},
-		{centerX + 55, overY + 12, 25, 15},
-		{centerX + 55, overY + 25, 30, 15},
-		// R
-		{centerX + 95, overY, 15, 40},
-		{centerX + 95, overY, 30, 15},
-		{centerX + 95, overY + 12, 30, 15},
-		{centerX + 120, overY, 15, 12},
-		{centerX + 115, overY + 25, 15, 15}
-	};
-	drawRects(overRects);
-	
-	// Score display placeholder
-	setRenderColor(customWhite);
-	int scoreY = centerY + 70;
-	for (int i = 0; i < 25; i++) {
-		SDL_Rect dot = {centerX - 100 + (i * 8), scoreY, 5, 5};
-		SDL_RenderFillRect(renderer, &dot);
-	}
-	
-	// Enter to restart placeholder
-	int textY = centerY + 100;
-	for (int i = 0; i < 40; i++) {
-		SDL_Rect dot = {centerX - 160 + (i * 8), textY, 5, 5};
-		SDL_RenderFillRect(renderer, &dot);
-	}
+	titleHandler->renderGameOver(centerX, centerY, square, sep, customWhite);
+	drawRetryText(state, centerX, centerY);
 	
 	SDL_RenderPresent(renderer);
 }

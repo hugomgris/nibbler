@@ -1,7 +1,9 @@
 #include "../incs/Snake.hpp"
 #include <iostream>
 
-Snake::Snake(int width, int height): _length(4) {
+Snake::Snake(int width, int height): _length(4), _maxLength((width * height) - 2) {
+	_segments = new Vec2[_maxLength];
+	
 	switch (Utils::getRandomInt(3))
 	{
 		case 0:
@@ -51,25 +53,37 @@ Snake::Snake(int width, int height): _length(4) {
 	}
 }
 
-Snake::Snake(const Snake &other)
-{
-	*this = other;
+Snake::Snake(const Snake &other) : _length(other._length), _maxLength(other._maxLength) {
+	_segments = new Vec2[_maxLength];
+	_direction = other._direction;
+	for (int i = 0; i < _length; ++i) {
+		_segments[i] = other._segments[i];
+	}
 }
 
 Snake &Snake::operator=(const Snake &other) {
 	if (this != &other)
 	{
+		delete[] _segments;
+		
 		this->_length = other._length;
+		this->_maxLength = other._maxLength;
 		this->_direction = other._direction;
+		this->_segments = new Vec2[_maxLength];
+		
 		for (int i = 0; i < this->_length; ++i)
 			this->_segments[i] = other._segments[i];
 	}
 	return *this;
 }
 
+Snake::~Snake() {
+	delete[] _segments;
+}
+
 int Snake::getLength() const { return _length; }
 
-const Vec2 *Snake::getSegments() const { return _segments.data(); }
+const Vec2 *Snake::getSegments() const { return _segments; }
 
 void Snake::move(){
 	auto head = _segments[0];
@@ -121,7 +135,10 @@ void Snake::changeDirection(Direction dir) {
 };
 
 void Snake::grow() {
-	// TODO: take into consideration the limit, or make the limit itself the endgame condition
+	if (_length >= _maxLength) {
+		// Snake has filled the entire arena - this is a win condition!
+		return;
+	}
 	_segments[_length] = Vec2{ _segments[_length - 1].x, _segments[_length - 1].y };
 	_length++;
 }

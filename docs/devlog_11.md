@@ -15,7 +15,7 @@ A considerable chunk of today's working time has gone towards job applications, 
 
 > *As I wrote this devlog, it seems that I fully adopted a snake + apple = garden of eden theme. By day 11, one must find ways to keep things joyful, right?*
 
-> *This log ended up being about more than one day: from the 11th to the 13th work session. I don't want to change too much stuff here, so I'll just make the 12th devlog tart with *Day Fourtheen Plans*.
+> *This log ended up being about more than one day: from the 11th to the 14th work session. I don't want to change too much stuff here, so I'll just make the 12th devlog tart with *Day Fifteen Plans*.
 
 <br>
 <br>
@@ -78,7 +78,103 @@ BEAKING NEWS! I've been working on the game's title/logo/whateveryouwantocallit.
 
 <br>
 
-Anyway, working in `SDL2` is been somewhat of a (small) challenge. I decided to draw by hand the logo, before moving into researching how to render text. I learned that a new sub-library needed to be handled, `SDL_ttf`, so I had to add the process of its fetching to `Makefile`. After that, the basic flow of text rendering was easy to get around (plenty of examples out there). A specific function dedicated to render text to serve as helper, and we're set:
+Anyway, working in `SDL2` is been somewhat of a (small) challenge. I decided to draw by hand the logo, before moving into researching how to render text. I learned that a new sub-library needed to be handled, `SDL_ttf`, so I had to add the process of its fetching to `Makefile`. After that, the basic flow of text rendering was easy to get around (plenty of examples out there). I tackled this by writing an specific function dedicated to render text to serve as helper, but because things grew too much, I ended up dettaching the logic from `SDLGraphic` into it's own class (did the same for the particle System):
+
+```cpp
+#ifndef TEXTRENDERER_HPP
+#define TEXTRENDERER_HPP
+
+#include <SDL2/SDL.h>
+#include <SDL_ttf.h>
+#include <string>
+#include <iostream>
+#include "colors.h"
+
+static constexpr SDL_Color customWhite{255, 248, 227, 255};  // Off-white
+static constexpr SDL_Color customGray{136, 136, 136, 255};   // Gray
+
+class TextRenderer {
+private:
+	SDL_Renderer* renderer;
+	TTF_Font* mainFont;
+	TTF_Font* smallFont;
+	bool initialized;
+
+public:
+	TextRenderer(SDL_Renderer* renderer);
+	~TextRenderer();
+
+	bool init(int windowWidth);
+
+	bool renderText(const std::string& text, int x, int y, int offset, 
+	                TTF_Font* fontToUse, SDL_Color color, bool centered = false);
+
+	void renderInstruction(int centerX, int centerY, int& offset,
+	                       const std::string& labelText, const std::string& dotText,
+	                       bool smallMode, TTF_Font* currentFont);
+
+	void renderScore(int centerX, int centerY, int score, bool smallMode);
+	void renderRetryPrompt(int centerX, int centerY, bool smallMode);
+
+	TTF_Font* getMainFont() const { return mainFont; }
+	TTF_Font* getSmallFont() const { return smallFont; }
+	bool isInitialized() const { return initialized; }
+};
+
+#endif
+```
+
+The core of the text rendering pipeline is this function:
+```cpp
+bool TextRenderer::renderText(const std::string& text, int x, int y, int offset, 
+								TTF_Font* fontToUse, SDL_Color color, bool centered) {
+	if (!fontToUse || !initialized) return false;
+
+	SDL_Surface* surface = TTF_RenderUTF8_Blended(fontToUse, text.c_str(), color);
+	if (!surface) {
+		std::cerr << "Text render error: " << TTF_GetError() << std::endl;
+		return false;
+	}
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	if (!texture) {
+		SDL_FreeSurface(surface);
+		return false;
+	}
+
+	SDL_Rect destRect;
+	if (centered) {
+		destRect = {
+			x - (surface->w / 2),
+			y - (surface->h / 2) + offset,
+			surface->w,
+			surface->h
+		};
+	} else {
+		destRect = { x, y + offset, surface->w, surface->h };
+	}
+
+	SDL_RenderCopy(renderer, texture, nullptr, &destRect);
+
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+
+	return true;
+}
+```
+
+Moving forward, I decided to draw both the title and the gameover of the SDL2 realm by hand, using geometry functions. Two reasons for this: 1) absolute control of the looks across game sizes and resolutions, 2) couldn't find a font that satisfied my needs, and making one by myself would take too much time. The general idea with the typography for these is to write words with snake-like squiggles, i.e., letters that could be written by moving the snake. I arrived at a point which is satisfactory enough, but might still evolve during development:
+
+<p float="left">
+  <img src="SDL_title_big.png" alt="SDL intro screen in its big format" height=500>
+  <img src="SDL_gameover_big.png" alt="SDL gameover screen in its big format" height=500 hspace="40">
+</p>
+
+There's no need to change typographies here because the words are, as I said, geometry based, so I can tweak the size of them by just changing the building block's size (`square` and `separator`). In `NCurses` I had to design two different ASCII based options because dynamically writting them char by char would literally end me. Aside from this, the title and gameover drawing functions in SDL were too big and, again, were cluttering my class code, so I made a secondary class `TitleHandler` to, you guessed it, handle the title renderings.
+
+> I think I should/could make this helper classes be cross-plataform, i.e. work for every library, but I'll leave that for later. If I end up animating NCurses, the same goes for `ParticleSystem` (maybe even a future, upper-layered `AnimationSystem`, who's to say).
+
+> I also made a slight tweak in the snake size handling. I had a hardcoded max size of 100 up until now, but that limit should be, at least for a basic `snake` recreation, equal to the game arena area - 2 area units. So I did that :D
 
 <br>
 <br>
