@@ -121,10 +121,8 @@ if (has_colors()) {
 	loadAsciiArtFile("logos/ncurses_title_big_B.txt", titleBigB);
 	loadAsciiArtFile("logos/ncurses_title_big_C.txt", titleBigC);
 	loadAsciiArtFile("logos/ncurses_title_big_D.txt", titleBigD);
-	loadAsciiArtFile("logos/ncurses_gameover_small_A.txt", gameoverSmallA);
-	loadAsciiArtFile("logos/ncurses_gameover_small_B.txt", gameoverSmallB);
-	loadAsciiArtFile("logos/ncurses_gameover_big_A.txt", gameoverBigA);
-	loadAsciiArtFile("logos/ncurses_gameover_big_B.txt", gameoverBigB);
+	loadAsciiArtFile("logos/ncurses_gameover_small.txt", gameoverSmall);
+	loadAsciiArtFile("logos/ncurses_gameover_big.txt", gameoverBig);
 	
 	isInitialized = true;
 }
@@ -153,11 +151,11 @@ void NCursesGraphic::render(const GameState& state, float deltaTime) {
 
 void NCursesGraphic::drawTitle(int win_height, int win_width)
 {
-	if (win_width / 2 < 38)
+	if (win_width / 2 < 42)
 	{
 		// Small version
 		int anchorX = (win_width - titleSmallD.width) / 2;
-		int anchorY = (win_height - titleSmallD.height) / 2;
+		int anchorY = (win_height - titleSmallD.height) / 2 - 1;
 		
 		// Draw "bbler"
 		for (size_t i = 0; i < titleSmallD.lines.size(); ++i) {
@@ -168,7 +166,7 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 		
 		// Draw "i base"
 		anchorX = (win_width - titleSmallC.width) / 2;
-		anchorY = (win_height - titleSmallC.height) / 2;
+		anchorY = (win_height - titleSmallC.height) / 2 - 1;
 		for (size_t i = 0; i < titleSmallC.lines.size(); ++i) {
 			wattron(gameWindow, COLOR_PAIR(1));
 			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallC.lines[i].c_str());
@@ -177,7 +175,7 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 		
 		// Draw "i dot"
 		anchorX = (win_width - titleSmallB.width) / 2;
-		anchorY = (win_height - titleSmallB.height) / 2;
+		anchorY = (win_height - titleSmallB.height) / 2 - 1;
 		for (size_t i = 0; i < titleSmallB.lines.size(); ++i) {
 			wattron(gameWindow, COLOR_PAIR(2));
 			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallB.lines[i].c_str());
@@ -186,7 +184,7 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 		
 		// Draw "n"
 		anchorX = (win_width - titleSmallA.width) / 2;
-		anchorY = (win_height - titleSmallA.height) / 2;
+		anchorY = (win_height - titleSmallA.height) / 2 - 1;
 		for (size_t i = 0; i < titleSmallA.lines.size(); ++i) {
 			wattron(gameWindow, COLOR_PAIR(4));
 			mvwaddstr(gameWindow, anchorY + i, anchorX, titleSmallA.lines[i].c_str());
@@ -235,7 +233,7 @@ void NCursesGraphic::drawTitle(int win_height, int win_width)
 }
 
 void NCursesGraphic::drawInstructions(int win_height, int win_width) {
-	int anchorY = ((win_width / 2) < 38) ? win_height / 2 + 1 : (win_height / 2) + 5;
+	int anchorY = ((win_width / 2) < 42) ? win_height / 2 : (win_height / 2) + 5;
 
 	wattron(gameWindow, COLOR_PAIR(4));
 	const char *instructions = "[ENTER]·······START";
@@ -324,46 +322,27 @@ void NCursesGraphic::renderMenu(const GameState &state, float deltaTime) {
 
 void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
 {
-	if (win_width / 2 < 38)
+	if (win_width / 2 < 42)
 	{
 		// Small version
-		int anchorX = (win_width - gameoverSmallB.width) / 2;
-		int anchorY = ((win_height - gameoverSmallB.height) / 2 - 2);
-		
-		// Draw "OVER"
-		for (size_t i = 0; i < gameoverSmallB.lines.size(); ++i) {
-			wattron(gameWindow, COLOR_PAIR(2));
-			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverSmallB.lines[i].c_str());
-			wattroff(gameWindow, COLOR_PAIR(2));
-		}
-		
-		// Draw "GAME"
-		anchorX = (win_width - gameoverSmallA.width) / 2;
-		anchorY = ((win_height - gameoverSmallA.height) / 2 - 2);
-		for (size_t i = 0; i < gameoverSmallA.lines.size(); ++i) {
-			wattron(gameWindow, COLOR_PAIR(1));
-			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverSmallA.lines[i].c_str());
-			wattroff(gameWindow, COLOR_PAIR(1));
+		int anchorX = (win_width - gameoverSmall.width) / 2;
+		int anchorY = ((win_height - gameoverSmall.height) / 2 - 2);
+		for (size_t i = 0; i < gameoverSmall.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(4));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverSmall.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(4));
 		}
 	} else {
 		// Big version
-		int anchorX = (win_width - gameoverBigB.width) / 2;
-		int anchorY = ((win_height - gameoverBigB.height) / 2 - 2);
+		int anchorX = (win_width - gameoverBig.width) / 2;
+		int anchorY = ((win_height - gameoverBig.height) / 2 - 2);
 		
-		// Draw "OVER"
-		for (size_t i = 0; i < gameoverBigB.lines.size(); ++i) {
-			wattron(gameWindow, COLOR_PAIR(2));
-			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverBigB.lines[i].c_str());
-			wattroff(gameWindow, COLOR_PAIR(2));
-		}
-		
-		// Draw "GAME"
-		anchorX = (win_width - gameoverBigA.width) / 2;
+		anchorX = (win_width - gameoverBig.width) / 2;
 		anchorY += 2.0f;
-		for (size_t i = 0; i < gameoverBigA.lines.size(); ++i) {
-			wattron(gameWindow, COLOR_PAIR(1));
-			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverBigA.lines[i].c_str());
-			wattroff(gameWindow, COLOR_PAIR(1));
+		for (size_t i = 0; i < gameoverBig.lines.size(); ++i) {
+			wattron(gameWindow, COLOR_PAIR(4));
+			mvwaddstr(gameWindow, anchorY + i, anchorX, gameoverBig.lines[i].c_str());
+			wattroff(gameWindow, COLOR_PAIR(4));
 		}
 	}
 }
@@ -371,12 +350,12 @@ void NCursesGraphic::drawGameOverTitle(int win_height, int win_width)
 void NCursesGraphic::drawGameOverScreen(const GameState &state, int win_height, int win_width)
 {
 	(void)state;
-	int anchorY = ((win_width / 2) < 38) ? win_height / 2 : (win_height / 2) + 5;
+	int anchorY = ((win_width / 2) < 42) ? win_height / 2 : (win_height / 2) + 5;
 
 	drawGameOverTitle(win_height, win_width);
 
 	
-	int scoreY = ((win_width / 2) < 38) ? anchorY + 2.5 : anchorY + 4.5;
+	int scoreY = ((win_width / 2) < 42) ? anchorY + 2.5 : anchorY + 4.5;
 	wattron(gameWindow, COLOR_PAIR(1));
 	mvwaddstr(gameWindow, scoreY, (win_width / 2) - 9, "YOU ");
 	wattroff(gameWindow, COLOR_PAIR(1));
@@ -406,15 +385,32 @@ void NCursesGraphic::drawGameOverScreen(const GameState &state, int win_height, 
 			(win_width / 2) - 1, scoreString.c_str());
 	wattroff(gameWindow, COLOR_PAIR(2));
 
-	wattron(gameWindow, COLOR_PAIR(5));
+	// Retry instruction
+	wattron(gameWindow, COLOR_PAIR(4));
 	const char *replay = "[ENTER]·······RETRY";
 	int controlsY = scoreY + 2;
 	mvwaddstr(gameWindow, controlsY,
 			(win_width / 2) - 10, replay);
+	wattroff(gameWindow, COLOR_PAIR(4));
+	
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *retryDots = "·······";
+	mvwaddstr(gameWindow, controlsY, 
+			(win_width / 2) - 3, retryDots);
+	wattroff(gameWindow, COLOR_PAIR(5));
+	
+	// Quit instruction
+	wattron(gameWindow, COLOR_PAIR(4));
 	const char *libs = "[Q/ESC]········QUIT";
 	int libsY = controlsY + 1;
 	mvwaddstr(gameWindow, libsY,
 			(win_width / 2) - 10, libs);
+	wattroff(gameWindow, COLOR_PAIR(4));
+	
+	wattron(gameWindow, COLOR_PAIR(5));
+	const char *quitDots = "········";
+	mvwaddstr(gameWindow, libsY, 
+			(win_width / 2) - 3, quitDots);
 	wattroff(gameWindow, COLOR_PAIR(5));
 }
 

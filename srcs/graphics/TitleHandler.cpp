@@ -26,7 +26,7 @@ void TitleHandler::renderTitle(int centerX, int centerY, int square, int sep, SD
 	// i base
 	std::vector<SDL_Rect> iBaseRects = {
 		{startX + (square * 5) + sep, centerY - (square * 4), square, square * 7},
-		{startX + (square * 5) + sep, centerY + (square * 3), square * 23, square},
+		{startX + (square * 5) + sep, centerY + (square * 3), square * 27, square},
 	};
 	drawRects(iBaseRects, blue);
 
@@ -63,7 +63,8 @@ void TitleHandler::renderTitle(int centerX, int centerY, int square, int sep, SD
 
 		// 'r'
 		{bStartX + (square * 16) + (sep * 4), centerY - (square * 3), square, square * 5},
-		{bStartX + (square * 17) + (sep * 4), centerY - (square * 3), square * 3, square},
+		{bStartX + (square * 17) + (sep * 4), centerY - (square * 3), square * 4, square},
+		{bStartX + (square * 20) + (sep * 4), centerY - (square * 2), square * 1, square},
 	};
 	drawRects(bblerRects, white);
 }

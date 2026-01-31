@@ -176,6 +176,18 @@ There's no need to change typographies here because the words are, as I said, ge
 
 > I also made a slight tweak in the snake size handling. I had a hardcoded max size of 100 up until now, but that limit should be, at least for a basic `snake` recreation, equal to the game arena area - 2 area units. So I did that :D
 
+At this point, I had to go back to `NCurses` to redesign the titles and logos there to look the same as the ones in `SDL` (saturday, 14:44, please, god, just smite me):
+
+<p float="left">
+  <img src="NCurses_logo3_big.png" alt="NCurses nibbler logo in big format" height=500>
+  <img src="NCurses_logo3_small.png" alt="NCurses nibbler logo in small format" height=500 hspace="40">
+</p>
+
+<p float="left">
+  <img src="NCurses_gameover3_big.png" alt="NCurses game over screen in big format" height=500>
+  <img src="NCurses_gameover3_small.png" alt="NCurses game over screen in small format" height=500 hspace="40">
+</p>
+
 <br>
 <br>
 
