@@ -29,8 +29,8 @@ private:
 	// Logo Cache
 	AsciiArtFile titleSmallA, titleSmallB, titleSmallC, titleSmallD;
 	AsciiArtFile titleBigA, titleBigB, titleBigC, titleBigD;
-	AsciiArtFile gameoverSmallA, gameoverSmallB;
-	AsciiArtFile gameoverBigA, gameoverBigB;
+	AsciiArtFile gameoverSmall;
+	AsciiArtFile gameoverBig;
 
 	// Drawing functions
 	void drawStartScreen(int win_height, int win_width);
