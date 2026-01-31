@@ -9,6 +9,8 @@
 
 static constexpr SDL_Color customWhite{255, 248, 227, 255};  // Off-white
 static constexpr SDL_Color customGray{136, 136, 136, 255};   // Gray
+static constexpr SDL_Color lightRed{254, 74, 81, 255};		 // light red - food
+static constexpr SDL_Color lightBlue{70, 130, 180, 255};	// light blue - snake
 
 class TextRenderer {
 private:
@@ -29,9 +31,11 @@ public:
 	void renderInstruction(int centerX, int centerY, int& offset,
 	                       const std::string& labelText, const std::string& dotText,
 	                       bool smallMode, TTF_Font* currentFont);
+	
+	void renderInstructions(int centerX, int centerY, bool smallMode, int square);
 
-	void renderScore(int centerX, int centerY, int score, bool smallMode);
-	void renderRetryPrompt(int centerX, int centerY, bool smallMode);
+	void renderScore(int centerX, int centerY, int score, bool smallMode, int square);
+	void renderRetryPrompt(int centerX, int centerY, bool smallMode, int square);
 
 	TTF_Font* getMainFont() const { return mainFont; }
 	TTF_Font* getSmallFont() const { return smallFont; }

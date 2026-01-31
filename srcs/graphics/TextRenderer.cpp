@@ -16,7 +16,7 @@ TextRenderer::~TextRenderer() {
 }
 
 bool TextRenderer::init(int windowWidth) {
-	int mainSize = (windowWidth < 1800) ? 40 : 40;
+	int mainSize = (windowWidth < 1800) ? 34 : 34;
 	int smallSize = (windowWidth < 1800) ? 24 : 24;
 
 	// Load main font
@@ -98,35 +98,135 @@ void TextRenderer::renderInstruction(int centerX, int centerY, int& offset,
 	offset += (smallMode ? 40 : 90);  // isntructions line offset
 }
 
-void TextRenderer::renderScore(int centerX, int centerY, int score, bool smallMode) {
+void TextRenderer::renderInstructions(int centerX, int centerY, bool smallMode, int square) {
 	if (!initialized) return;
 
 	TTF_Font* currentFont = smallMode ? smallFont : mainFont;
+	int offset = square * 7;
 	
-	// TODO: manage different outputs (0 apples, 1 apple, >1 Appels)
-	std::string scoreText = "YOU ATE " + std::to_string(score) + " APPLES";
-	int offset = 150;
+	// Enter instruction
+	std::string instructionTextA = smallMode ?
+		"[ ENTER ]          START" :
+		"[ ENTER ]             START";
+	std::string instructionTextB = smallMode ?
+		"          ········      " :
+		"          ···········     ";
+	renderInstruction(centerX, centerY, offset, 
+	                  instructionTextA, instructionTextB, 
+	                  smallMode, currentFont);
 	
-	renderText(scoreText, centerX, centerY, offset, currentFont, customWhite, true);
+	// Move instruction
+	instructionTextA = smallMode ?
+		"[ ↑ ↓ ← → ]         MOVE" :
+		"[ ↑ ↓ ← → ]            MOVE";
+	instructionTextB = smallMode ?
+		"            ·······     " :
+		"            ··········     ";
+	renderInstruction(centerX, centerY, offset, 
+	                  instructionTextA, instructionTextB, 
+	                  smallMode, currentFont);
+
+	// Travel instruction
+	instructionTextA = smallMode ?
+		"[ 1   2   3 ]     TRAVEL" :
+		"[ 1   2   3 ]        TRAVEL";
+	instructionTextB = smallMode ?
+		"    /   /     ···       " :
+		"    /   /     ······       ";
+	renderInstruction(centerX, centerY, offset, 
+	                  instructionTextA, instructionTextB, 
+	                  smallMode, currentFont);
+
+	// Quit instruction
+	instructionTextA = smallMode ?
+		"[ Q   ESC ]         QUIT" :
+		"[ Q   ESC ]            QUIT";
+	instructionTextB = smallMode ?
+		"    /       ·······     " :
+		"    /       ··········    ";
+	renderInstruction(centerX, centerY, offset, 
+	                  instructionTextA, instructionTextB, 
+	                  smallMode, currentFont);
 }
 
-void TextRenderer::renderRetryPrompt(int centerX, int centerY, bool smallMode) {
+void TextRenderer::renderScore(int centerX, int centerY, int score, bool smallMode, int square) {
 	if (!initialized) return;
 
 	TTF_Font* currentFont = smallMode ? smallFont : mainFont;
+	int offset = square * 8;
 	
-	std::string promptTextA = smallMode ?
+	std::string scoreNum = std::to_string(score);
+	std::string appleWord = (score == 1) ? "APPLE" : "APPLES";
+	
+	int spacing = 10;
+	
+	// "YOU" - blue
+	SDL_Surface* youSurface = TTF_RenderUTF8_Blended(currentFont, "YOU", lightBlue);
+
+	if (youSurface) {
+		int youWidth = youSurface->w;
+		SDL_FreeSurface(youSurface);
+		
+		// "ATE" - white
+		SDL_Surface* ateSurface = TTF_RenderUTF8_Blended(currentFont, "ATE", customWhite);
+		int ateWidth = ateSurface ? ateSurface->w : 0;
+		if (ateSurface) SDL_FreeSurface(ateSurface);
+		
+		// Score number - red
+		SDL_Surface* scoreSurface = TTF_RenderUTF8_Blended(currentFont, scoreNum.c_str(), lightRed);
+		int scoreWidth = scoreSurface ? scoreSurface->w : 0;
+		if (scoreSurface) SDL_FreeSurface(scoreSurface);
+		
+		// Apple word - white
+		SDL_Surface* appleSurface = TTF_RenderUTF8_Blended(currentFont, appleWord.c_str(), customWhite);
+		int appleWidth = appleSurface ? appleSurface->w : 0;
+		if (appleSurface) SDL_FreeSurface(appleSurface);
+		
+		int totalWidth = youWidth + spacing + ateWidth + spacing + scoreWidth + spacing + appleWidth;
+		
+		int startX = centerX - (totalWidth / 2);
+		
+		renderText("YOU", startX, centerY, offset, currentFont, lightBlue, false);
+		startX += youWidth + spacing;
+		
+		renderText("ATE", startX, centerY, offset, currentFont, customWhite, false);
+		startX += ateWidth + spacing;
+		
+		renderText(scoreNum, startX, centerY, offset, currentFont, lightRed, false);
+		startX += scoreWidth + spacing;
+		
+		renderText(appleWord, startX, centerY, offset, currentFont, customWhite, false);
+	}
+}
+
+void TextRenderer::renderRetryPrompt(int centerX, int centerY, bool smallMode, int square) {
+	if (!initialized) return;
+
+	TTF_Font* currentFont = smallMode ? smallFont : mainFont;
+
+	int offset = square * 11;
+	
+	// Retry instructions
+	std::string gameoverTextA = smallMode ?
 		"[ ENTER ]          RETRY" :
 		"[ ENTER ]             RETRY";
-	std::string promptTextB = smallMode ?
+	std::string gameoverTextB = smallMode ?
 		"          ·······      " :
 		"          ··········     ";
 	
-	int offset = 170;
+	renderInstruction(centerX, centerY, offset, 
+	                  gameoverTextA, gameoverTextB, 
+	                  smallMode, currentFont);
+
+	// Quit instruction
+	gameoverTextA = smallMode ?
+		"[ Q   ESC ]         QUIT" :
+		"[ Q   ESC ]            QUIT";
+	gameoverTextB = smallMode ?
+		"    /       ·······     " :
+		"    /       ··········    ";
 	
-	// Render label
-	renderText(promptTextA, centerX, centerY, offset, currentFont, customWhite, true);
-	
-	// Render dots
-	renderText(promptTextB, centerX, centerY, offset, currentFont, customGray, true);
+	renderInstruction(centerX, centerY, offset, 
+	                  gameoverTextA, gameoverTextB, 
+	                  smallMode, currentFont);
 }
