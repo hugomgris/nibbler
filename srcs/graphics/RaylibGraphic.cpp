@@ -408,6 +408,18 @@ void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
         accumulatedTime += deltaTime;
     }
 	
+	// Frame counter for logo snake trail particle spawning
+	static int frameCounter = 0;
+	if (frameCounter % 111 == 0) {
+		// Spawn trail particle at rear of logo snake (the 'i' underline)
+		int square = 10;
+		float trailX = screenWidth / 2.0f + (square * 17.2f);
+		float trailY = screenHeight / 2.0f + (square * 3.2f);
+		Color lightBlue = {70, 130, 180, 255};
+		particleSystem->spawnSnakeTrail(trailX, trailY, 1, 0, lightBlue);
+	}
+	frameCounter++;
+	
 	// Update film grain pattern at regular intervals
 	grainFrameTimer += deltaTime;
 	if (grainFrameTimer >= grainFrameInterval) {
