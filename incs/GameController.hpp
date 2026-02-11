@@ -9,7 +9,7 @@
 #include <chrono>
 #include <queue>
 
-class GameManager {
+class GameController {
 	private:
 		GameState*			_state;
 		std::queue<Input>	inputBuffer_A;
@@ -24,12 +24,12 @@ class GameManager {
 		void processNextInput();
 
 	public:
-		GameManager();
-		GameManager(GameState *state);
-		GameManager(const GameManager &other) = delete;
-		GameManager &operator=(const GameManager &other) = delete;
+		GameController();
+		GameController(GameState *state);
+		GameController(const GameController &other) = delete;
+		GameController &operator=(const GameController &other) = delete;
 
-		~GameManager() = default;
+		~GameController() = default;
 
 		void update();
 

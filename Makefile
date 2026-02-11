@@ -20,12 +20,11 @@ INCDIR          := incs
 
 # -=-=-=-=-    SOURCE FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-CORE_SRC        := main.cpp GameManager.cpp Snake.cpp Food.cpp Utils.cpp
+CORE_SRC        := main.cpp GameController.cpp Snake.cpp Food.cpp Utils.cpp
 AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
-GRAPHICS_SRC    := graphics/RaylibGraphic.cpp graphics/RaylibTextRenderer.cpp graphics/RaylibTitleHandler.cpp
-PARTICLE_SRC    := graphics/SDLParticleSystem.cpp
+GRAPHICS_SRC    := graphics/RaylibGraphic.cpp graphics/RaylibTextRenderer.cpp graphics/RaylibTitleHandler.cpp graphics/RaylibParticleSystem.cpp
 
-ALL_SRC         := $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC) $(PARTICLE_SRC)
+ALL_SRC         := $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC)
 
 SRCS            := $(addprefix $(SRCDIR)/, $(ALL_SRC))
 OBJS            := $(addprefix $(OBJDIR)/, $(ALL_SRC:.cpp=.o))
@@ -53,12 +52,8 @@ RAYLIB_VERSION  := 5.0
 RAYLIB_INCLUDES := -I$(RAYLIB_SRC_DIR) -Wno-missing-field-initializers
 RAYLIB_LIBS     := -L$(RAYLIB_SRC_DIR) -lraylib -lm -lpthread -ldl -lrt -lX11
 
-# SDL2 flags (for particle system - will remove after porting)
-SDL_INCLUDES    := $(shell pkg-config --cflags sdl2 2>/dev/null || echo "")
-SDL_LIBS        := $(shell pkg-config --libs sdl2 2>/dev/null || echo "-lSDL2")
-
-ALL_INCLUDES    := $(INCLUDES) $(RAYLIB_INCLUDES) $(SDL_INCLUDES)
-ALL_LIBS        := $(RAYLIB_LIBS) $(SDL_LIBS)
+ALL_INCLUDES    := $(INCLUDES) $(RAYLIB_INCLUDES)
+ALL_LIBS        := $(RAYLIB_LIBS)
 
 # -=-=-=-=-    GOOGLE TEST -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 

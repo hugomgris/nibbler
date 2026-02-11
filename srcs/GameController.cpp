@@ -1,8 +1,8 @@
-#include "../incs/GameManager.hpp"
+#include "../incs/GameController.hpp"
 
-GameManager::GameManager(GameState *state) : _state(state) {}
+GameController::GameController(GameState *state) : _state(state) {}
 
-void GameManager::update()  {
+void GameController::update()  {
 	// If AI mode → generate AI decision each frame
 	if (_state->config.mode == GameMode::AI && aiController && _state->snake_B) {
 		Input aiMove = aiController->decideNextMove(*_state);
@@ -21,7 +21,7 @@ void GameManager::update()  {
 	checkHeadFoodCollision();
 }
 
-void GameManager::bufferInput(Input input) {
+void GameController::bufferInput(Input input) {
 	// Player A (Arrows)
 	if (input >= Input::Up_A && input <= Input::Right_A) {
 		if (inputBuffer_A.size() < MAX_BUFFER_SIZE) {
@@ -39,7 +39,7 @@ void GameManager::bufferInput(Input input) {
 	}
 }
 
-void GameManager::processNextInput() {
+void GameController::processNextInput() {
 	// Process Snake A inpu
 	if (!inputBuffer_A.empty()) {
 		Input input = inputBuffer_A.front();
@@ -95,7 +95,7 @@ void GameManager::processNextInput() {
 	}
 }
 
-void GameManager::checkHeadFoodCollision() {
+void GameController::checkHeadFoodCollision() {
 	Vec2	head_A = _state->snake_A.getSegments()[0];
 	//
 	Vec2	foodPos = _state->food.getPosition();
@@ -132,7 +132,7 @@ void GameManager::checkHeadFoodCollision() {
 	}
 }
 
-bool GameManager::checkGameOverCollision()
+bool GameController::checkGameOverCollision()
 {
 	Vec2	head_A = _state->snake_A.getSegments()[0];
 
@@ -194,7 +194,7 @@ bool GameManager::checkGameOverCollision()
 	return true;
 }
 
-void GameManager::clearInputBuffer() {
+void GameController::clearInputBuffer() {
 	while (!inputBuffer_A.empty()) {
 		inputBuffer_A.pop();
 	}
@@ -203,6 +203,6 @@ void GameManager::clearInputBuffer() {
 	}
 }
 
-void GameManager::setAIController(SnakeAI *ai) {
+void GameController::setAIController(SnakeAI *ai) {
 	aiController = ai;
 }

@@ -41,6 +41,12 @@ void RaylibGraphic::init(int width, int height) {
 	
 	setupCamera();
 	
+	// Setup 2D camera for UI rendering
+	camera2D.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
+	camera2D.target = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
+	camera2D.rotation = 0.0f;
+	camera2D.zoom = 1.0f;
+	
 	// noise pattern generation
 	for (int i = 0; i < GRAIN_TEXTURE_COUNT; i++) {
 		// Unique seeding for varaition
@@ -313,12 +319,12 @@ void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
 	BeginDrawing();
 	ClearBackground(customBlack);
 
-	BeginMode3D(camera);
+	BeginMode2D(camera2D);
 	
 	titleHandler->drawTitle();
 	textRenderer->drawInstructions(state);
 
-	EndMode3D();
+	EndMode2D();
 
 	drawNoiseGrain();
 	
@@ -337,7 +343,7 @@ void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	BeginDrawing();
 	ClearBackground(customBlack);
 
-	BeginMode3D(camera);
+	BeginMode2D(camera2D);
 	
 	titleHandler->drawGameover();
 	
@@ -347,7 +353,7 @@ void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	
 	textRenderer->drawRetry(state);
 
-	EndMode3D();
+	EndMode2D();
 
 	drawNoiseGrain();
 	

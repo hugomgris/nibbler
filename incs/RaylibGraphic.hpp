@@ -6,6 +6,7 @@
 #include "colors.h"
 #include "RaylibTitleHandler.hpp"
 #include "RaylibTextRenderer.hpp"
+#include "RaylibParticleSystem.hpp"
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
@@ -28,9 +29,11 @@ private:
 	float	accumulatedTime;
 
 	Camera3D	camera;
+	Camera2D	camera2D;
 	
 	std::unique_ptr<RaylibTitleHandler> titleHandler;
 	std::unique_ptr<RaylibTextRenderer>	textRenderer;
+	std::unique_ptr<RaylibParticleSystem> particleSystem;
 
 	// Postprocessing noise system
 	static const int							GRAIN_TEXTURE_COUNT = 8;

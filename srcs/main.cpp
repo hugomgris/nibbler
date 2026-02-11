@@ -3,7 +3,7 @@
 #include "../incs/SnakeAI.hpp"
 #include "../incs/Food.hpp"
 #include "../incs/DataStructs.hpp"
-#include "../incs/GameManager.hpp"
+#include "../incs/GameController.hpp"
 #include "../incs/Utils.hpp"
 #include "../incs/colors.h"
 #include <thread>
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 	
 	food.replaceInFreeSpace(&state);
 
-	GameManager gameManager(&state);
+	GameController gameController(&state);
 
 	const double TARGET_FPS = 10.0;					// Snake moves 10 times per second
 	const double FRAME_TIME = 1.0 / TARGET_FPS; 	// 0.1 seconds per update
@@ -115,13 +115,13 @@ int main(int argc, char **argv) {
 			case GameStateType::Menu:
 				if (input == Input::Enter) {
 					if (aiController) {
-						gameManager.setAIController(nullptr);
+						gameController.setAIController(nullptr);
 						aiController.reset();
 					}
 					
 					if (state.config.mode == GameMode::AI) {
 						aiController = std::make_unique<SnakeAI>(AIConfig::medium());
-						gameManager.setAIController(aiController.get());
+						gameController.setAIController(aiController.get());
 					}
 					
 					state.currentState = GameStateType::Playing;
@@ -141,10 +141,10 @@ int main(int argc, char **argv) {
 				}
 				
 				accumulator += deltaTime;
-				gameManager.bufferInput(input);
+				gameController.bufferInput(input);
 				
 				while (accumulator >= FRAME_TIME) {
-					gameManager.update();
+					gameController.update();
 					accumulator -= FRAME_TIME;
 					
 					if (!state.isRunning) {
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
 					state.gameOver = false;
 					state.isPaused = false;
 					accumulator = 0.0;
-					gameManager.clearInputBuffer();
+					gameController.clearInputBuffer();
 					state.currentState = GameStateType::Menu;
 
 					renderer.renderMenu(state, deltaTime);
