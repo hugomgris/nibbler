@@ -1,13 +1,12 @@
 #pragma once
-#include <raylib.h>
+
 #include "DataStructs.hpp"
+#include "Renderer.hpp"
+#include <raylib.h>
 
-// Forward declaration to avoid circular dependency
-class RaylibGraphic;
-
-class RaylibTextRenderer {
+class TextRenderer {
 	private:
-		RaylibGraphic&	graphic;
+		Renderer&		renderer;
 		Font			customFont;
 		int				fontSize;
 		int				smallFontSize;
@@ -19,12 +18,12 @@ class RaylibTextRenderer {
 		void drawMode(const GameState &state, int centerX, int centerY, int& offset);
 
 	public:
-		RaylibTextRenderer() = delete;
-		RaylibTextRenderer(RaylibGraphic& parent);
-		RaylibTextRenderer(const RaylibTextRenderer &other) = delete;
-		RaylibTextRenderer &operator=(const RaylibTextRenderer &other) = delete;
+		TextRenderer() = delete;
+		TextRenderer(Renderer& parent);
+		TextRenderer(const TextRenderer &other) = delete;
+		TextRenderer &operator=(const TextRenderer &other) = delete;
 
-		~RaylibTextRenderer();
+		~TextRenderer();
 		
 		Font& getFont();
 		

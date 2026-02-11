@@ -4,9 +4,6 @@
 #include "DataStructs.hpp"
 #include "Input.hpp"
 #include "colors.h"
-#include "RaylibTitleHandler.hpp"
-#include "RaylibTextRenderer.hpp"
-#include "RaylibParticleSystem.hpp"
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
@@ -16,6 +13,11 @@
 #include <vector>
 #include <chrono>
 
+// Forward declarations
+class TitleHandler;
+class TextRenderer;
+class ParticleSystem;
+
 struct BorderLine {
 	float progress;        // 0 = at center, 1 = at edge
 	float age;
@@ -23,7 +25,7 @@ struct BorderLine {
 	BorderLine() : progress(0.0f), age(0.0f) {}
 };
 
-class RaylibGraphic {
+class Renderer {
 private:
 	float	cubeSize;
 	float	cameraSize;
@@ -40,9 +42,9 @@ private:
 	Camera3D	camera;
 	Camera2D	camera2D;
 	
-	std::unique_ptr<RaylibTitleHandler> titleHandler;
-	std::unique_ptr<RaylibTextRenderer>	textRenderer;
-	std::unique_ptr<RaylibParticleSystem> particleSystem;
+	std::unique_ptr<TitleHandler> titleHandler;
+	std::unique_ptr<TextRenderer>	textRenderer;
+	std::unique_ptr<ParticleSystem> particleSystem;
 
 	// Postprocessing noise system
 	static const int							GRAIN_TEXTURE_COUNT = 8;
@@ -131,13 +133,13 @@ private:
 	Color foodHidden = customBlack; 
 	
 public:
-	RaylibGraphic();
-	RaylibGraphic(const RaylibGraphic &other) = delete;
-	RaylibGraphic &operator=(const RaylibGraphic &other) = delete;
-	~RaylibGraphic();
+	Renderer();
+	Renderer(const Renderer &other) = delete;
+	Renderer &operator=(const Renderer &other) = delete;
+	~Renderer();
 
-	friend class RaylibTitleHandler;
-	friend class RaylibTextRenderer;
+	friend class TitleHandler;
+	friend class TextRenderer;
 
 	float getCubeSize() const;
     float getSeparator() const;

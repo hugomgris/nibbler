@@ -1,20 +1,20 @@
-#include "../../incs/RaylibTextRenderer.hpp"
-#include "../../incs/RaylibGraphic.hpp"
+#include "../../incs/TextRenderer.hpp"
+#include "../../incs/Renderer.hpp"
 #include <raymath.h>
 
-RaylibTextRenderer::RaylibTextRenderer(RaylibGraphic& parent) 
-	: graphic(parent), fontSize(34), smallFontSize(24), smallMode(false) {
+TextRenderer::TextRenderer(Renderer& parent) 
+	: renderer(parent), fontSize(34), smallFontSize(24), smallMode(false) {
 	loadFont();
 	
 	int screenWidth = GetScreenWidth();
 	smallMode = ((screenWidth / 2) < 900);
 }
 
-RaylibTextRenderer::~RaylibTextRenderer() {
+TextRenderer::~TextRenderer() {
 	UnloadFont(customFont);
 }
 
-void RaylibTextRenderer::loadFont() {
+void TextRenderer::loadFont() {
 	int codepointCount = 256 - 32 + 8;
 	int *codepoints = new int[codepointCount];
 	
@@ -35,11 +35,11 @@ void RaylibTextRenderer::loadFont() {
 	delete[] codepoints;
 }
 
-Font& RaylibTextRenderer::getFont() {
+Font& TextRenderer::getFont() {
 	return customFont;
 }
 
-void RaylibTextRenderer::drawText(const std::string& text, int x, int y, int fontSize, Color color, bool centered) {
+void TextRenderer::drawText(const std::string& text, int x, int y, int fontSize, Color color, bool centered) {
 	Vector2 textSize = MeasureTextEx(customFont, text.c_str(), fontSize, 1.0f);
 	
 	int drawX = centered ? x - (textSize.x / 2) : x;
@@ -48,20 +48,20 @@ void RaylibTextRenderer::drawText(const std::string& text, int x, int y, int fon
 	DrawTextEx(customFont, text.c_str(), (Vector2){(float)drawX, (float)drawY}, fontSize, 1.0f, color);
 }
 
-void RaylibTextRenderer::drawInstruction(int centerX, int centerY, int& offset, 
+void TextRenderer::drawInstruction(int centerX, int centerY, int& offset, 
 										const std::string& labelText, const std::string& dotText) {
 	int currentFontSize = smallMode ? smallFontSize : fontSize;
 	
 	// Draw label in white
-	drawText(labelText, centerX, centerY + offset, currentFontSize, graphic.customWhite, true);
+	drawText(labelText, centerX, centerY + offset, currentFontSize, renderer.customWhite, true);
 	
 	// Draw dots in gray
-	drawText(dotText, centerX, centerY + offset, currentFontSize, graphic.customGray, true);
+	drawText(dotText, centerX, centerY + offset, currentFontSize, renderer.customGray, true);
 	
 	offset += (smallMode ? 40 : 60);
 }
 
-void RaylibTextRenderer::drawMode(const GameState &state, int centerX, int centerY, int& offset) {
+void TextRenderer::drawMode(const GameState &state, int centerX, int centerY, int& offset) {
 	int currentFontSize = smallMode ? smallFontSize : fontSize;
 	
 	std::string stateA;
@@ -87,12 +87,12 @@ void RaylibTextRenderer::drawMode(const GameState &state, int centerX, int cente
 	}
 	
 	drawText(stateA, centerX, centerY + offset, currentFontSize, textColor, true);
-	drawText(stateB, centerX, centerY + offset, currentFontSize, graphic.customGray, true);
+	drawText(stateB, centerX, centerY + offset, currentFontSize, renderer.customGray, true);
 	
 	offset += (smallMode ? 40 : 60);
 }
 
-void RaylibTextRenderer::drawInstructions(const GameState &state) {
+void TextRenderer::drawInstructions(const GameState &state) {
 	int screenWidth = GetScreenWidth();
 	int screenHeight = GetScreenHeight();
 	int centerX = screenWidth / 2;
@@ -151,7 +151,7 @@ void RaylibTextRenderer::drawInstructions(const GameState &state) {
 	drawInstruction(centerX, centerY, offset, instructionTextA, instructionTextB);
 }
 
-void RaylibTextRenderer::drawScore(const GameState& state) {
+void TextRenderer::drawScore(const GameState& state) {
 	int screenWidth = GetScreenWidth();
 	int screenHeight = GetScreenHeight();
 	int centerX = screenWidth / 2;
@@ -188,11 +188,11 @@ void RaylibTextRenderer::drawScore(const GameState& state) {
 		
 		DrawTextEx(customFont, player1Text.c_str(), (Vector2){(float)currentX1, (float)y1}, currentFontSize, 1.0f, blueColor);
 		currentX1 += p1Size.x + wordSpacing;
-		DrawTextEx(customFont, ateText.c_str(), (Vector2){(float)currentX1, (float)y1}, currentFontSize, 1.0f, graphic.customWhite);
+		DrawTextEx(customFont, ateText.c_str(), (Vector2){(float)currentX1, (float)y1}, currentFontSize, 1.0f, renderer.customWhite);
 		currentX1 += ateSize.x + wordSpacing;
 		DrawTextEx(customFont, score1.c_str(), (Vector2){(float)currentX1, (float)y1}, currentFontSize, 1.0f, redColor);
 		currentX1 += score1Size.x + wordSpacing;
-		DrawTextEx(customFont, apples1.c_str(), (Vector2){(float)currentX1, (float)y1}, currentFontSize, 1.0f, graphic.customWhite);
+		DrawTextEx(customFont, apples1.c_str(), (Vector2){(float)currentX1, (float)y1}, currentFontSize, 1.0f, renderer.customWhite);
 		
 		// Player 2
 		std::string player2Text = (state.config.mode == GameMode::MULTI) ? "PLAYER 2" : "AI";
@@ -215,11 +215,11 @@ void RaylibTextRenderer::drawScore(const GameState& state) {
 		
 		DrawTextEx(customFont, player2Text.c_str(), (Vector2){(float)currentX2, (float)y2}, currentFontSize, 1.0f, player2Color);
 		currentX2 += p2Size.x + wordSpacing;
-		DrawTextEx(customFont, ateText.c_str(), (Vector2){(float)currentX2, (float)y2}, currentFontSize, 1.0f, graphic.customWhite);
+		DrawTextEx(customFont, ateText.c_str(), (Vector2){(float)currentX2, (float)y2}, currentFontSize, 1.0f, renderer.customWhite);
 		currentX2 += ateSize.x + wordSpacing;
 		DrawTextEx(customFont, score2.c_str(), (Vector2){(float)currentX2, (float)y2}, currentFontSize, 1.0f, redColor);
 		currentX2 += score2Size.x + wordSpacing;
-		DrawTextEx(customFont, apples2.c_str(), (Vector2){(float)currentX2, (float)y2}, currentFontSize, 1.0f, graphic.customWhite);
+		DrawTextEx(customFont, apples2.c_str(), (Vector2){(float)currentX2, (float)y2}, currentFontSize, 1.0f, renderer.customWhite);
 	} else {
 		// Single player
 		std::string youText = "YOU";
@@ -243,15 +243,15 @@ void RaylibTextRenderer::drawScore(const GameState& state) {
 		
 		DrawTextEx(customFont, youText.c_str(), (Vector2){(float)currentX, (float)y}, currentFontSize, 1.0f, blueColor);
 		currentX += youSize.x + wordSpacing;
-		DrawTextEx(customFont, ateText.c_str(), (Vector2){(float)currentX, (float)y}, currentFontSize, 1.0f, graphic.customWhite);
+		DrawTextEx(customFont, ateText.c_str(), (Vector2){(float)currentX, (float)y}, currentFontSize, 1.0f, renderer.customWhite);
 		currentX += ateSize.x + wordSpacing;
 		DrawTextEx(customFont, score.c_str(), (Vector2){(float)currentX, (float)y}, currentFontSize, 1.0f, redColor);
 		currentX += scoreSize.x + wordSpacing;
-		DrawTextEx(customFont, apples.c_str(), (Vector2){(float)currentX, (float)y}, currentFontSize, 1.0f, graphic.customWhite);
+		DrawTextEx(customFont, apples.c_str(), (Vector2){(float)currentX, (float)y}, currentFontSize, 1.0f, renderer.customWhite);
 	}
 }
 
-void RaylibTextRenderer::drawWinner(const GameState& state) {
+void TextRenderer::drawWinner(const GameState& state) {
 	int screenWidth = GetScreenWidth();
 	int screenHeight = GetScreenHeight();
 	int centerX = screenWidth / 2;
@@ -277,7 +277,7 @@ void RaylibTextRenderer::drawWinner(const GameState& state) {
 			winnerColor = {255, 215, 0, 255};  // yellow
 		} else {
 			winnerText = "IT'S A TIE!";
-			winnerColor = graphic.customWhite;
+			winnerColor = renderer.customWhite;
 		}
 	} else if (state.config.mode == GameMode::AI) {
 		if (state.score > state.scoreB) {
@@ -288,14 +288,14 @@ void RaylibTextRenderer::drawWinner(const GameState& state) {
 			winnerColor = {144, 238, 144, 255};  // green
 		} else {
 			winnerText = "IT'S A TIE!";
-			winnerColor = graphic.customWhite;
+			winnerColor = renderer.customWhite;
 		}
 	}
 	
 	drawText(winnerText, centerX, centerY + yOffset, currentFontSize, winnerColor, true);
 }
 
-void RaylibTextRenderer::drawRetry(const GameState& /*state*/) {
+void TextRenderer::drawRetry(const GameState& /*state*/) {
 	int screenWidth = GetScreenWidth();
 	int screenHeight = GetScreenHeight();
 	int centerX = screenWidth / 2;
@@ -310,5 +310,5 @@ void RaylibTextRenderer::drawRetry(const GameState& /*state*/) {
 	}
 	
 	std::string retryText = "PRESS ENTER TO PLAY AGAIN";
-	drawText(retryText, centerX, centerY + yOffset, currentFontSize, graphic.customWhite, true);
+	drawText(retryText, centerX, centerY + yOffset, currentFontSize, renderer.customWhite, true);
 }

@@ -1,10 +1,13 @@
-#include "../../incs/RaylibGraphic.hpp"
+#include "../../incs/Renderer.hpp"
 #include "../../incs/Snake.hpp"
 #include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
+#include "../../incs/TitleHandler.hpp"
+#include "../../incs/TextRenderer.hpp"
+#include "../../incs/ParticleSystem.hpp"
 #include <rlgl.h>  // For low-level drawing functions (rlPushMatrix, rlBegin, etc.)
 
-RaylibGraphic::RaylibGraphic() :
+Renderer::Renderer() :
 	cubeSize(2.0f),
 	menuFov(50.0f),
 	gridWidth(0),
@@ -22,7 +25,7 @@ RaylibGraphic::RaylibGraphic() :
 		lastSpawnTime = std::chrono::high_resolution_clock::now();
 	}
 
-RaylibGraphic::~RaylibGraphic() {
+Renderer::~Renderer() {
 	// Explicitly destroy helper classes before closing window
 	// This ensures fonts/textures are unloaded while raylib context is still valid
 	textRenderer.reset();
@@ -36,7 +39,7 @@ RaylibGraphic::~RaylibGraphic() {
 	std::cout << BYEL << "[Raylib 3D] Destroyed" << RESET << std::endl;
 }
 
-void RaylibGraphic::init(int width, int height) {
+void Renderer::init(int width, int height) {
 	gridWidth = width;
 	gridHeight = height;
 	
@@ -61,16 +64,16 @@ void RaylibGraphic::init(int width, int height) {
 		UnloadImage(grainImage);
 	}
 
-	titleHandler = std::make_unique<RaylibTitleHandler>(*this);
-	textRenderer = std::make_unique<RaylibTextRenderer>(*this);
-	particleSystem = std::make_unique<RaylibParticleSystem>(screenWidth, screenHeight, 10, 0);
+	titleHandler = std::make_unique<TitleHandler>(*this);
+	textRenderer = std::make_unique<TextRenderer>(*this);
+	particleSystem = std::make_unique<ParticleSystem>(screenWidth, screenHeight, 10, 0);
 	particleSystem->setMaxDustDensity(30);
 	particleSystem->setDustSpawnInterval(0.15f);
 	
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
 
-void RaylibGraphic::drawCubeCustomFaces(Vector3 position, float width, float height, float length,
+void Renderer::drawCubeCustomFaces(Vector3 position, float width, float height, float length,
                                          Color front, Color back, Color top, Color bottom, Color right, Color left) {
 	float x = position.x;
 	float y = position.y;
@@ -128,7 +131,7 @@ void RaylibGraphic::drawCubeCustomFaces(Vector3 position, float width, float hei
 	rlPopMatrix();
 }
 
-void RaylibGraphic::setupCamera() {
+void Renderer::setupCamera() {
 	// Grid is now centered at origin (0, 0, 0)
 	float centerX = 0.0f;
 	float centerZ = 0.0f;
@@ -155,7 +158,7 @@ void RaylibGraphic::setupCamera() {
 	camera.projection = CAMERA_ORTHOGRAPHIC;
 }
 
-void RaylibGraphic::drawGroundPlane() {
+void Renderer::drawGroundPlane() {
 	float offsetX = (gridWidth * cubeSize) / 2.0f;
 	float offsetZ = (gridHeight * cubeSize) / 2.0f;
 	
@@ -179,7 +182,7 @@ void RaylibGraphic::drawGroundPlane() {
 	}
 }
 
-void RaylibGraphic::drawWalls() {
+void Renderer::drawWalls() {
 	for (int level = 0; level < 3; level++) {
 		float yPos = (level) * cubeSize;
 		
@@ -205,7 +208,7 @@ void RaylibGraphic::drawWalls() {
 	}
 }
 
-void RaylibGraphic::drawSnake(const Snake* snake, Color hidden,
+void Renderer::drawSnake(const Snake* snake, Color hidden,
 	Color lightFront,  Color lightTop, Color lightSide,
 	Color darkFront, Color darkTop, Color darkSide) {
 	float yPos = cubeSize;
@@ -238,7 +241,7 @@ void RaylibGraphic::drawSnake(const Snake* snake, Color hidden,
 	}
 }
 
-void RaylibGraphic::drawFood(const Food* food) {
+void Renderer::drawFood(const Food* food) {
 	float yPos = cubeSize;
 	
 	// Calculate offset to match grid centering
@@ -259,11 +262,11 @@ void RaylibGraphic::drawFood(const Food* food) {
 						foodFront, foodHidden, foodTop, foodHidden, foodSide, foodHidden);
 }
 
-void RaylibGraphic::drawNoiseGrain() {
+void Renderer::drawNoiseGrain() {
 	DrawTextureEx(grainTextures[currentGrainFrame], (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, (Color){ 255, 255, 255, 20 });
 }
 
-void RaylibGraphic::drawBorder(int thickness) {
+void Renderer::drawBorder(int thickness) {
 	// Draw border at screen edges
 	// Top border
 	DrawRectangle(0, 0, screenWidth, thickness, customWhite);
@@ -275,11 +278,11 @@ void RaylibGraphic::drawBorder(int thickness) {
 	DrawRectangle(screenWidth - thickness, 0, thickness, screenHeight, customWhite);
 }
 
-float RaylibGraphic::easeInQuad(float t) {
+float Renderer::easeInQuad(float t) {
 	return t * t;
 }
 
-void RaylibGraphic::updateTunnelEffect(float deltaTime) {
+void Renderer::updateTunnelEffect(float deltaTime) {
 	if (!enableTunnelEffect) return;
 
 	for (auto& line : borderLines) {
@@ -302,7 +305,7 @@ void RaylibGraphic::updateTunnelEffect(float deltaTime) {
 	}
 }
 
-void RaylibGraphic::renderTunnelEffect() {
+void Renderer::renderTunnelEffect() {
 	if (!enableTunnelEffect || borderLines.empty()) return;
 
 	// Border is now at screen edges with 25px thickness
@@ -353,7 +356,7 @@ void RaylibGraphic::renderTunnelEffect() {
 }
 
 
-void RaylibGraphic::render(const GameState& state, float deltaTime){
+void Renderer::render(const GameState& state, float deltaTime){
 	camera.fovy = customFov;
 	
 	if (!state.isPaused) {
@@ -401,7 +404,7 @@ void RaylibGraphic::render(const GameState& state, float deltaTime){
 	EndDrawing();
 }
 
-void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
+void Renderer::renderMenu(const GameState& state, float deltaTime) {
 	getCamera().fovy = menuFov;
 
 	if (!state.isPaused) {
@@ -457,7 +460,7 @@ void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
 	EndDrawing();
 }
 
-void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
+void Renderer::renderGameOver(const GameState& state, float deltaTime) {
 	getCamera().fovy = menuFov;
 
 	grainFrameTimer += deltaTime;
@@ -502,7 +505,7 @@ void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
 	EndDrawing();
 }
 
-Input RaylibGraphic::pollInput() {
+Input Renderer::pollInput() {
 	if (IsKeyPressed(KEY_UP))		return Input::Up_A;
 	if (IsKeyPressed(KEY_DOWN))		return Input::Down_A;
 	if (IsKeyPressed(KEY_LEFT))		return Input::Left_A;
@@ -522,7 +525,7 @@ Input RaylibGraphic::pollInput() {
 	return Input::None;
 }
 
-float RaylibGraphic::getCubeSize() const { return cubeSize; }
-float RaylibGraphic::getSeparator() const { return separator; }
-Camera3D& RaylibGraphic::getCamera() { return camera; }
-float& RaylibGraphic::getAccumulatedTime() { return accumulatedTime; }
+float Renderer::getCubeSize() const { return cubeSize; }
+float Renderer::getSeparator() const { return separator; }
+Camera3D& Renderer::getCamera() { return camera; }
+float& Renderer::getAccumulatedTime() { return accumulatedTime; }

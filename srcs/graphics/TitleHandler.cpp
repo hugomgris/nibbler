@@ -1,15 +1,15 @@
-#include "../../incs/RaylibTitleHandler.hpp"
-#include "../../incs/RaylibGraphic.hpp"
+#include "../../incs/TitleHandler.hpp"
+#include "../../incs/Renderer.hpp"
 
-RaylibTitleHandler::RaylibTitleHandler(RaylibGraphic& parent) : graphic(parent) {}
+TitleHandler::TitleHandler(Renderer& parent) : renderer(parent) {}
 
-void RaylibTitleHandler::drawRects(const std::vector<Rectangle>& rects, Color color) {
+void TitleHandler::drawRects(const std::vector<Rectangle>& rects, Color color) {
 	for (const auto& rect : rects) {
 		DrawRectangleRec(rect, color);
 	}
 }
 
-void RaylibTitleHandler::renderTitle(int centerX, int centerY, int square, int sep, Color white, Color blue, Color red) {
+void TitleHandler::renderTitle(int centerX, int centerY, int square, int sep, Color white, Color blue, Color red) {
 	int totalWidth = (26 * square) + (6 * sep);
 	int startX = centerX - (totalWidth / 2);
 	
@@ -68,7 +68,7 @@ void RaylibTitleHandler::renderTitle(int centerX, int centerY, int square, int s
 	drawRects(bblerRects, white);
 }
 
-void RaylibTitleHandler::renderGameOver(int centerX, int centerY, int square, int sep, Color white, Color gray) {
+void TitleHandler::renderGameOver(int centerX, int centerY, int square, int sep, Color white, Color gray) {
 	int totalWidth = (26 * square) + (3 * sep);
 	int startX = centerX - (totalWidth / 2);
 	centerY = centerY - (square * 3.5);
@@ -163,7 +163,7 @@ void RaylibTitleHandler::renderGameOver(int centerX, int centerY, int square, in
 }
 
 // 2D Wrapper methods
-void RaylibTitleHandler::drawTitle() {
+void TitleHandler::drawTitle() {
 	int screenWidth = GetScreenWidth();
 	int screenHeight = GetScreenHeight();
 	int square = 10;
@@ -176,7 +176,7 @@ void RaylibTitleHandler::drawTitle() {
 	renderTitle(screenWidth / 2, screenHeight / 2, square, sep, white, blue, red);
 }
 
-void RaylibTitleHandler::drawGameover() {
+void TitleHandler::drawGameover() {
 	int screenWidth = GetScreenWidth();
 	int screenHeight = GetScreenHeight();
 	int square = 10;

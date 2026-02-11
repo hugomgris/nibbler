@@ -20,11 +20,12 @@ INCDIR          := incs
 
 # -=-=-=-=-    SOURCE FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-CORE_SRC        := main.cpp GameController.cpp Snake.cpp Food.cpp Utils.cpp
+MAIN_SRC        := main.cpp
+CORE_SRC        := core/GameController.cpp core/Snake.cpp core/Food.cpp core/Utils.cpp
 AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
-GRAPHICS_SRC    := graphics/RaylibGraphic.cpp graphics/RaylibTextRenderer.cpp graphics/RaylibTitleHandler.cpp graphics/RaylibParticleSystem.cpp
+GRAPHICS_SRC    := graphics/Renderer.cpp graphics/TextRenderer.cpp graphics/TitleHandler.cpp graphics/ParticleSystem.cpp
 
-ALL_SRC         := $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC)
+ALL_SRC         := $(MAIN_SRC) $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC)
 
 SRCS            := $(addprefix $(SRCDIR)/, $(ALL_SRC))
 OBJS            := $(addprefix $(OBJDIR)/, $(ALL_SRC:.cpp=.o))
@@ -78,8 +79,8 @@ TEST_DEPS		:= $(patsubst $(TEST_DIR)/%.cpp,$(TEST_DEPDIR)/%.d,$(TEST_SRCS))
 TESTABLE_SRCS	:= $(filter-out $(SRCDIR)/main.cpp, $(SRCS))
 TESTABLE_OBJS	:= $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(TESTABLE_SRCS))
 
-TEST_CFLAGS		:= $(CFLAGS) $(GTEST_INCLUDES)
-TEST_LDFLAGS	:= $(LDFLAGS) -lpthread
+TEST_CFLAGS		:= $(CFLAGS) $(GTEST_INCLUDES) $(RAYLIB_INCLUDES)
+TEST_LDFLAGS	:= -lpthread $(ALL_LIBS)
 
 # -=-=-=-=-    RULES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
@@ -126,13 +127,14 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 # -=-=-=-=-    TEST TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-test: check_gtest $(TEST_BINARY)
+test: check_gtest $(RAYLIB_SRC_DIR)/libraylib.a $(TEST_BINARY)
 	@echo "$(CYAN)Running tests...$(DEF_COLOR)"
 	./$(TEST_BINARY)
 
 $(TEST_BINARY): $(TESTABLE_OBJS) $(TEST_OBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB)
 	@echo "$(YELLOW)Linking test binary...$(DEF_COLOR)"
 	$(CC) -o $@ $(TESTABLE_OBJS) $(TEST_OBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB) $(TEST_LDFLAGS)
+	@chmod +x $@
 	@echo "$(GREEN)Test binary created: $(TEST_BINARY)$(DEF_COLOR)"
 
 # Compile test object files

@@ -30,7 +30,7 @@ struct Particle {
 			float velocityX, float velocityY, Color particleColor);
 };
 
-class RaylibParticleSystem {
+class ParticleSystem {
 	private:
 		std::vector<Particle>	particles;
 		
@@ -57,12 +57,12 @@ class RaylibParticleSystem {
 		void drawRotatedSquare(float cx, float cy, float size, float rotation, Color color, unsigned char alpha);
 
 	public:
-		RaylibParticleSystem();
-		RaylibParticleSystem(int gridW, int gridH, int cell, int border);
-		RaylibParticleSystem(const RaylibParticleSystem &other) = delete;
-		RaylibParticleSystem &operator=(const RaylibParticleSystem &other) = delete;
+		ParticleSystem ();
+		ParticleSystem (int gridW, int gridH, int cell, int border);
+		ParticleSystem (const ParticleSystem &other) = delete;
+		ParticleSystem &operator=(const ParticleSystem &other) = delete;
 
-		~RaylibParticleSystem();
+		~ParticleSystem ();
 		
 		// Update and render
 		void update(float deltaTime);

@@ -2,7 +2,7 @@
 #include "../../incs/Snake.hpp"
 #include "../../incs/DataStructs.hpp"
 #include "../fixtures/TestHelpers.hpp"
-#include "../../incs/GameManager.hpp"
+#include "../../incs/GameController.hpp"
 
 class SnakeCollisionTest : public ::testing::Test {
 	protected:
@@ -10,7 +10,7 @@ class SnakeCollisionTest : public ::testing::Test {
 		std::unique_ptr<Food> food;
 		std::unique_ptr<GameConfig> config;
 		std::unique_ptr<GameState> state;
-		std::unique_ptr<GameManager> manager;
+		std::unique_ptr<GameController> manager;
 		
 		void SetUp() override {
 			snake = std::make_unique<Snake>(20, 20);
@@ -25,7 +25,7 @@ class SnakeCollisionTest : public ::testing::Test {
 				0, 0,
 				*config
 			});
-			manager = std::make_unique<GameManager>(state.get());
+			manager = std::make_unique<GameController>(state.get());
 		}
 		
 		void TearDown() override {}

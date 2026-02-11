@@ -1,4 +1,4 @@
-#include "../incs/RaylibGraphic.hpp"
+#include "../incs/Renderer.hpp"
 #include "../incs/Snake.hpp"
 #include "../incs/SnakeAI.hpp"
 #include "../incs/Food.hpp"
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 	GameConfig config { GameMode::SINGLE };
 
 	// Initialize Raylib graphics
-	RaylibGraphic renderer;
+	Renderer renderer;
 	renderer.init(width, height);
 
 	// Initialize game entities

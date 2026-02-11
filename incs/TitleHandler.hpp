@@ -1,24 +1,25 @@
 #pragma once
+
+#include "Renderer.hpp"
 #include <raylib.h>
 #include <vector>
 
 // Forward declaration to avoid circular dependency
-class RaylibGraphic;
-
-class RaylibTitleHandler {
+class Renderer;
+class TitleHandler {
 	private:
-		RaylibGraphic& graphic;
+		Renderer& renderer;
 		
 		// Helper to draw multiple rectangles at once
 		void drawRects(const std::vector<Rectangle>& rects, Color color);
 
 	public:
-		RaylibTitleHandler() = delete;
-		RaylibTitleHandler(RaylibGraphic& parent);
-		RaylibTitleHandler(const RaylibTitleHandler &other) = delete;
-		RaylibTitleHandler &operator=(const RaylibTitleHandler &other) = delete;
+		TitleHandler() = delete;
+		TitleHandler(Renderer& parent);
+		TitleHandler(const TitleHandler &other) = delete;
+		TitleHandler &operator=(const TitleHandler &other) = delete;
 
-		~RaylibTitleHandler() = default;
+		~TitleHandler() = default;
 		
 		void drawTitle();
 		void drawGameover();
