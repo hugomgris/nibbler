@@ -46,7 +46,7 @@ int TextSystem::measureText(const std::string& text, int fontSize) {
 	return static_cast<int>(textSize.x);
 }
 
-// ===== PIXEL ART RENDERING =====
+// Custom rectangle drawing based text
 
 void TextSystem::drawRects(const std::vector<Rectangle>& rects, Color color) {
 	for (const auto& rect : rects) {
@@ -209,7 +209,7 @@ void TextSystem::drawGameOverLogo(int centerX, int centerY, int square, int sep,
 	drawRects(rRects, grayColor);
 }
 
-// ===== FONT-BASED TEXT RENDERING =====
+// Font-based text rendering
 
 void TextSystem::drawText(const std::string& text, int x, int y, int fontSize, 
                           Color color, bool centered) {
