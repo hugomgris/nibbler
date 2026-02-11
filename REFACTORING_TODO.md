@@ -2,12 +2,13 @@
 
 ## Week 1: Foundation ✓
 ### Day 1-2: Cleanup & Port
-- [ ] Remove NCurses/SDL source files
-- [ ] Remove libs/ directory  
-- [ ] Remove IGraphic, IAudio, LibraryManager
+- [x] Remove NCurses/SDL source files
+- [x] Remove libs/ directory  
+- [x] Remove IGraphic, IAudio, LibraryManager
 - [ ] Port SDL menu to Raylib (1:1)
 - [ ] Update GameState (use std::optional<Snake>)
 - [ ] Get Raylib-only build working
+- [ ] Update Makefile for single-library build
 
 ### Day 3-4: Particle & Polish
 - [ ] Port SDL ParticleSystem to Raylib
