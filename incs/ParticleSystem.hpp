@@ -58,7 +58,7 @@ class ParticleSystem {
 
 	public:
 		ParticleSystem ();
-		ParticleSystem (int gridW, int gridH, int cell, int border);
+		ParticleSystem (int gridW, int gridH, int cell, int border, int maxDust = 30, float dustInterval = 0.15f);
 		ParticleSystem (const ParticleSystem &other) = delete;
 		ParticleSystem &operator=(const ParticleSystem &other) = delete;
 

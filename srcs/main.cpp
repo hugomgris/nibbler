@@ -1,4 +1,6 @@
 #include "../incs/Renderer.hpp"
+#include "../incs/ParticleSystem.hpp"
+#include "../incs/TextSystem.hpp"
 #include "../incs/Snake.hpp"
 #include "../incs/SnakeAI.hpp"
 #include "../incs/Food.hpp"
@@ -62,16 +64,25 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	GameConfig config { GameMode::SINGLE };
 
+	// SYSTEMS
 	Renderer renderer;
 	renderer.init(width, height);
+	
+	ParticleSystem particles(1920, 1080, 10, 0, 30, 0.15f);
+	
+	TextSystem textSystem;
+	textSystem.init();
 
+	// ENTITIES
 	Snake snake_A(width, height);
 	Snake snake_B(snake_A, width, height);
 	std::unique_ptr<SnakeAI> aiController = nullptr;
 
 	Food food(Vec2{0, 0}, width, height);
+
+	// CONFIGURATION AND STATE
+	GameConfig config { GameMode::SINGLE };
 	
 	GameState state {
 		width, height, snake_A, &snake_B, food,
@@ -128,7 +139,7 @@ int main(int argc, char **argv) {
 				switchConfigMode(state.config);
 			}
     
-			renderer.renderMenu(state, deltaTime);
+			renderer.renderMenu(state, deltaTime, particles, textSystem);
 			break;
 				
 			case GameStateType::Playing:
@@ -179,9 +190,9 @@ int main(int argc, char **argv) {
 					gameController.clearInputBuffer();
 					state.currentState = GameStateType::Menu;
 
-					renderer.renderMenu(state, deltaTime);
+					renderer.renderMenu(state, deltaTime, particles, textSystem);
 				} else {
-					renderer.renderGameOver(state, deltaTime);
+					renderer.renderGameOver(state, deltaTime, particles, textSystem);
 				}
 				break;
 		}

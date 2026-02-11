@@ -25,9 +25,9 @@ Particle::Particle(float px, float py, float minSize, float maxSize, float minLi
 }
 
 // system implementation
-ParticleSystem::ParticleSystem(int gridW, int gridH, int cell, int border)
+ParticleSystem::ParticleSystem(int gridW, int gridH, int cell, int border, int maxDust, float dustInterval)
 	: gridWidth(gridW), gridHeight(gridH), cellSize(cell), borderOffset(border),
-		maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
+		maxDustDensity(maxDust), dustSpawnInterval(dustInterval), dustSpawnTimer(0.0f),
 		dustMinSize(4.0f), dustMaxSize(20.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f),  // Increased sizes
 		explosionMinSize(1.0f), explosionMaxSize(50.0f) {
 	particles.reserve(maxDustDensity);

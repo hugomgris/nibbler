@@ -1,0 +1,33 @@
+#pragma once
+
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
+#include <iostream>
+#include <functional>
+
+struct Button {
+    Rectangle bounds;
+    std::string Text;
+
+    Color normalColor;
+    Color hoverColor;
+    Color textColor;
+
+    std::function<void()> onClick;
+
+    bool isHovered(Vector2 mousePos) const {
+        return CheckCollisionPointRec(mousePos, bounds);
+    }
+
+    void render(bool hovered) const {
+        Color currentColor = hovered ? hoverColor : normalColor;
+        DrawRectangleRec(bounds, currentColor);
+        Vector2 textSize = MeasureTextEx(GetFontDefault(), Text.c_str(), 20, 1.0f);
+        Vector2 textPos = {
+            bounds.x + (bounds.width - textSize.x) / 2,
+            bounds.y + (bounds.height - textSize.y) / 2
+        };
+        DrawTextEx(GetFontDefault(), Text.c_str(), textPos, 20, 1.0f, textColor);
+    }
+};

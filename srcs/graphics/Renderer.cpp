@@ -2,9 +2,8 @@
 #include "../../incs/Snake.hpp"
 #include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
-#include "../../incs/TitleHandler.hpp"
-#include "../../incs/TextRenderer.hpp"
 #include "../../incs/ParticleSystem.hpp"
+#include "../../incs/TextSystem.hpp"
 #include <rlgl.h>  // For low-level drawing functions (rlPushMatrix, rlBegin, etc.)
 
 Renderer::Renderer() :
@@ -26,10 +25,6 @@ Renderer::Renderer() :
 	}
 
 Renderer::~Renderer() {
-	// Explicitly destroy helper classes before closing window, i.e. while raylib context is still valid
-	textRenderer.reset();
-	titleHandler.reset();
-	
 	// Unload all grain textures
 	for (int i = 0; i < GRAIN_TEXTURE_COUNT; i++) {
 		UnloadTexture(grainTextures[i]);
@@ -62,12 +57,6 @@ void Renderer::init(int width, int height) {
 		grainTextures[i] = LoadTextureFromImage(grainImage);
 		UnloadImage(grainImage);
 	}
-
-	titleHandler = std::make_unique<TitleHandler>(*this);
-	textRenderer = std::make_unique<TextRenderer>(*this);
-	particleSystem = std::make_unique<ParticleSystem>(screenWidth, screenHeight, 10, 0);
-	particleSystem->setMaxDustDensity(30);
-	particleSystem->setDustSpawnInterval(0.15f);
 	
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
@@ -398,7 +387,8 @@ void Renderer::render(const GameState& state, float deltaTime){
 	EndDrawing();
 }
 
-void Renderer::renderMenu(const GameState& state, float deltaTime) {
+void Renderer::renderMenu(const GameState& state, float deltaTime, ParticleSystem& particles,
+                          TextSystem& textSystem) {
 	getCamera().fovy = menuFov;
 
 	if (!state.isPaused) {
@@ -412,7 +402,7 @@ void Renderer::renderMenu(const GameState& state, float deltaTime) {
 		float trailX = screenWidth / 2.0f + (square * 17.2f);
 		float trailY = screenHeight / 2.0f + (square * 3.2f);
 		Color lightBlue = {70, 130, 180, 255};
-		particleSystem->spawnSnakeTrail(trailX, trailY, 1, 0, lightBlue);
+		particles.spawnSnakeTrail(trailX, trailY, 1, 0, lightBlue);
 	}
 	frameCounter++;
 	
@@ -424,7 +414,7 @@ void Renderer::renderMenu(const GameState& state, float deltaTime) {
 	}
 	
 	// Update particles
-	particleSystem->update(deltaTime);
+	particles.update(deltaTime);
 	
 	// Update tunnel effect
 	updateTunnelEffect(deltaTime);
@@ -434,10 +424,16 @@ void Renderer::renderMenu(const GameState& state, float deltaTime) {
 
 	BeginMode2D(camera2D);
 	
-	titleHandler->drawTitle();
-	textRenderer->drawInstructions(state);
+	int screenCenterX = screenWidth / 2;
+	int screenCenterY = screenHeight / 2;
+	int square = 10;
+	int sep = 15;
 	
-	particleSystem->render();
+	textSystem.drawLogo(screenCenterX, screenCenterY, square, sep, customWhite, 
+	                    Color{70, 130, 180, 255}, Color{254, 74, 81, 255});
+	textSystem.drawInstructions(state, screenCenterX, screenCenterY, customWhite, customGray);
+	
+	particles.render();
 
 	renderTunnelEffect();
 
@@ -450,7 +446,8 @@ void Renderer::renderMenu(const GameState& state, float deltaTime) {
 	EndDrawing();
 }
 
-void Renderer::renderGameOver(const GameState& state, float deltaTime) {
+void Renderer::renderGameOver(const GameState& state, float deltaTime, ParticleSystem& particles,
+                              TextSystem& textSystem) {
 	getCamera().fovy = menuFov;
 
 	grainFrameTimer += deltaTime;
@@ -460,7 +457,7 @@ void Renderer::renderGameOver(const GameState& state, float deltaTime) {
 	}
 	
 	// Update particles
-	particleSystem->update(deltaTime);
+	particles.update(deltaTime);
 	
 	// Update tunnel effect
 	updateTunnelEffect(deltaTime);
@@ -471,16 +468,21 @@ void Renderer::renderGameOver(const GameState& state, float deltaTime) {
 	BeginMode2D(camera2D);
 	
 	// Render particles
-	particleSystem->render();
+	particles.render();
 	
-	titleHandler->drawGameover();
+	int screenCenterX = screenWidth / 2;
+	int screenCenterY = screenHeight / 2;
+	int square = 10;
+	int sep = 15;
+	
+	textSystem.drawGameOverLogo(screenCenterX, screenCenterY, square, sep, customWhite, customGray);
 	
 	if (state.config.mode != GameMode::SINGLE) {
-		textRenderer->drawWinner(state);
+		textSystem.drawWinner(state, screenCenterX, screenCenterY, customWhite);
 	}
 	
-	textRenderer->drawScore(state);
-	textRenderer->drawRetry(state);
+	textSystem.drawScore(state, screenCenterX, screenCenterY, customWhite);
+	textSystem.drawRetryPrompt(screenCenterX, screenCenterY, customWhite);
 	
 	// Render tunnel effect
 	renderTunnelEffect();

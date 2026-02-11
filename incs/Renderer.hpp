@@ -14,8 +14,6 @@
 #include <chrono>
 
 // Forward declarations
-class TitleHandler;
-class TextRenderer;
 class ParticleSystem;
 
 struct BorderLine {
@@ -41,10 +39,6 @@ private:
 
 	Camera3D	camera;
 	Camera2D	camera2D;
-	
-	std::unique_ptr<TitleHandler> titleHandler;
-	std::unique_ptr<TextRenderer>	textRenderer;
-	std::unique_ptr<ParticleSystem> particleSystem;
 
 	// Postprocessing noise system
 	static const int							GRAIN_TEXTURE_COUNT = 8;
@@ -138,9 +132,6 @@ public:
 	Renderer &operator=(const Renderer &other) = delete;
 	~Renderer();
 
-	friend class TitleHandler;
-	friend class TextRenderer;
-
 	float getCubeSize() const;
     float getSeparator() const;
     Camera3D& getCamera();
@@ -166,7 +157,9 @@ public:
 public:
 	void init(int width, int height);
 	void render(const GameState& state, float deltaTime);
-	void renderMenu(const GameState &state, float deltaTime);
-	void renderGameOver(const GameState &state, float deltaTime);
+	void renderMenu(const GameState &state, float deltaTime, ParticleSystem& particles, 
+	                class TextSystem& textSystem);
+	void renderGameOver(const GameState &state, float deltaTime, ParticleSystem& particles,
+	                    class TextSystem& textSystem);
 	Input pollInput();
 };

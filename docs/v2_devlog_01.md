@@ -3,6 +3,8 @@
 ## Table of Contents
 1. [It Was Just a Phase](#11---it-was-just-a-phase)
 2. [Back to the Cocoon (Which Would Make More Sense if the Main Entity of the Game Was a Worm Instead of a Snake, But You Get the Idea)](#12-back-to-the-cocoon-which-would-make-more-sense-if-the-main-entity-of-the-game-was-a-worm-instead-of-a-snake-but-you-get-the-idea)
+3. [The Snake and the Mouse](#13-the-snake-and-the-mouse)
+
 
 <br>
 <br>
@@ -34,4 +36,24 @@ All of this with the consequential changes each removal has in the code. Once do
 The more tricky part is what comes next, the porting of some `SDL` stuff into Raylib. We'll need a couple of things:
 - A 2D-camera based rendering pipeline
 - A rewriting of the `ParticleSystem` and the `menu`/`gameover` renderings into `Raylib`
+- A general reorganization of the directory structure, some renaming, that kind of managing work...
 
+After some work, I've arrived to a new base build for `V2`, a combination of what was already in place for the `Raylib` version in `V1` with the menuing of `SDL`. Making this work was a hustle, but the byproduct is that I now have implemented a `2D` rendering pipeline alongisde the existing `3D` one, which is nice progress. I've also divided the `srcs` directory intro `AI`, `core` and `graphics`, and will move on from here with a system-based approach in mind. This might mean some more refactorization, as the current division between `Renderer`, `TextRenderer` and `TitleHandler` feels a little bit wonky, but we'll see. 
+
+Be what it may, what I'd like to do with the rest of the day, now that a lot of porting and refactoring is behind me, is work in some new implementations (the **I R K***). Some things in my immediate list:
+- A clickable button system for menuing
+- A general menu system that handles start, pause and gameover screens
+- A systematized pipeline to write stuff in the likes of the current game logo
+
+BUT as I lay out plans, I realize something: I need a deep re-structuring process. The current build is quite messy: there are nested systems that are general-purpose, subsystems that need to be decoupled, uncertainty regardin ownership... So the priority shifts that way. Before we move on, there needs to be a refactoring so that **`Main` owns all systems and calls their update methods in the game loop depending on the state of the game**. And the initial system configuration is comprised of:
+
+- [x] Renderer
+- [x] Game controller
+- [x] Particle system
+- [x] Text system
+- [ ] Menu system
+
+Inter-system communication will be laid out by passing references. If things get too complicated down the line, which I doubt but who am I to say, I'll transition into an event system with connecting lambda functions. I'll get into system rebuild mode. Wish me luck.
+
+## 1.3 The Snake and the Mouse
+Let's implement buttons. 
