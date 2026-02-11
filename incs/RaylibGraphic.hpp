@@ -1,7 +1,8 @@
 #pragma once
-#include "IGraphic.hpp"
 #include "Snake.hpp"
 #include "Food.hpp"
+#include "DataStructs.hpp"
+#include "Input.hpp"
 #include "colors.h"
 #include "RaylibTitleHandler.hpp"
 #include "RaylibTextRenderer.hpp"
@@ -12,7 +13,7 @@
 #include <array>
 #include <memory>
 
-class RaylibGraphic : public IGraphic {
+class RaylibGraphic {
 private:
 	float	cubeSize;
 	float	cameraSize;
@@ -135,9 +136,10 @@ public:
 	                         Color front, Color back, Color top, Color bottom, Color right, Color left);
 	void drawNoiseGrain();  // Post Processing
 
-	void init(int width, int height) override;
-	void render(const GameState& state, float deltaTime) override;
-	void renderMenu(const GameState &state, float deltaTime) override;
-	void renderGameOver(const GameState &state, float deltaTime) override;
-	Input pollInput() override;
+public:
+	void init(int width, int height);
+	void render(const GameState& state, float deltaTime);
+	void renderMenu(const GameState &state, float deltaTime);
+	void renderGameOver(const GameState &state, float deltaTime);
+	Input pollInput();
 };

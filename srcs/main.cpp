@@ -1,27 +1,14 @@
-#include "../incs/IGraphic.hpp"
-#include "../incs/IAudio.hpp"
+#include "../incs/RaylibGraphic.hpp"
 #include "../incs/Snake.hpp"
 #include "../incs/SnakeAI.hpp"
 #include "../incs/Food.hpp"
 #include "../incs/DataStructs.hpp"
 #include "../incs/GameManager.hpp"
-#include "../incs/LibraryManager.hpp"
 #include "../incs/Utils.hpp"
 #include "../incs/colors.h"
 #include <thread>
-#include <fcntl.h>
 #include <iostream>
-#include <ncurses.h>
-#include <array>
-#include <string_view>
-
-// Cleanup handler for ncurses when program exits
-void cleanupNCurses() {
-	if (isendwin() == FALSE) {
-		endwin();
-		std::cout << BYEL << "[Main] Called endwin() on exit" << RESET << std::endl;
-	}
-}
+#include <memory>
 
 bool parseArguments(int argc, char **argv)
 {
@@ -56,8 +43,6 @@ void switchConfigMode(GameConfig &config)
 }
 
 int main(int argc, char **argv) {
-	std::atexit(cleanupNCurses); // This might not be necessary after switching to an external, dynamically linked Ncurses, but we'll leave it just in case (legacy!)
-	
 	if (argc != 3)
 	{
 		std::cerr << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;
@@ -80,26 +65,11 @@ int main(int argc, char **argv) {
 
 	GameConfig config { GameMode::SINGLE };
 
-	constexpr std::array<std::string_view, 3> graphicLibs = {
-		"./nibbler_ncurses.so",
-		"./nibbler_sdl.so",
-		"./nibbler_raylib.so"
-	};
+	// Initialize Raylib graphics
+	RaylibGraphic renderer;
+	renderer.init(width, height);
 
-	const std::string audioLib = "./nibbler_sdl_mix.so";
-
-	int currentLib = 0;
-
-	LibraryManager libManager;
-	if (!libManager.loadGraphicLib(graphicLibs[currentLib].data()) || !libManager.loadAudioLib(audioLib.c_str()))
-		return 1;
-
-	// init graphics
-	libManager.getGraphicLib()->init(width, height);
-
-	//init audio
-	libManager.getAudioLib()->init();
-
+	// Initialize game entities
 	Snake snake_A(width, height);
 	Snake snake_B(snake_A, width, height);
 	std::unique_ptr<SnakeAI> aiController = nullptr;
@@ -114,7 +84,6 @@ int main(int argc, char **argv) {
 		GameStateType::Menu,
 		0,
 		0,
-		libManager.getAudioLib(),
 		config
 	};
 	
@@ -135,21 +104,11 @@ int main(int argc, char **argv) {
 		float deltaTime = frameTime.count();
 		lastTime = currentTime;
 		
-		Input input = libManager.getGraphicLib()->pollInput();
+		Input input = renderer.pollInput();
 		
 		if (input == Input::Quit) {
 			state.isRunning = false;
 			break;
-		}
-		
-		if (input >= Input::SwitchLib1 && input <= Input::SwitchLib3) {
-			int newLib = (int)input - 1;
-			if (newLib != currentLib) {
-				libManager.unloadGraphicLib();
-				if (!libManager.loadGraphicLib(graphicLibs[newLib].data())) return 1;
-				libManager.getGraphicLib()->init(width, height);
-				currentLib = newLib;
-			}
 		}
 		
 		// STATE MACHINE
@@ -172,8 +131,8 @@ int main(int argc, char **argv) {
 				switchConfigMode(state.config);
 			}
     
-    libManager.getGraphicLib()->renderMenu(state, deltaTime);
-    break;
+			renderer.renderMenu(state, deltaTime);
+			break;
 				
 			case GameStateType::Playing:
 				if (input == Input::Pause) {
@@ -196,7 +155,7 @@ int main(int argc, char **argv) {
 					}
 				}
 				
-				libManager.getGraphicLib()->render(state, deltaTime);
+				renderer.render(state, deltaTime);
 				break;
 				
 			case GameStateType::Paused:
@@ -204,7 +163,7 @@ int main(int argc, char **argv) {
 					state.isPaused = false;
 					state.currentState = GameStateType::Playing;
 				}
-				libManager.getGraphicLib()->render(state, 0.0f);
+				renderer.render(state, 0.0f);
 				break;
 				
 			case GameStateType::GameOver:
@@ -223,9 +182,9 @@ int main(int argc, char **argv) {
 					gameManager.clearInputBuffer();
 					state.currentState = GameStateType::Menu;
 
-					libManager.getGraphicLib()->renderMenu(state, deltaTime); // I have to go straight into menu here to avoid weird behaviours in the raylib version
+					renderer.renderMenu(state, deltaTime);
 				} else {
-					libManager.getGraphicLib()->renderGameOver(state, deltaTime);
+					renderer.renderGameOver(state, deltaTime);
 				}
 				break;
 		}

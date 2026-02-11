@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <memory>
+#include <optional>
 
 struct Vec2 {
 	int	x;
@@ -9,7 +10,6 @@ struct Vec2 {
 
 class Snake;
 class Food;
-class IAudio;
 
 enum class GameStateType {
     Menu,
@@ -32,7 +32,7 @@ struct GameState {
 	int				width;
 	int				height;
 	Snake&			snake_A;
-	Snake*			snake_B; // this needs to be a pointer because there is no snake_B in SINGLE player
+	Snake*			snake_B; // Pointer for optional second snake (nullptr in SINGLE mode)
 	Food&			food;
 	bool			gameOver;
 	bool			isRunning;
@@ -40,7 +40,6 @@ struct GameState {
 	GameStateType	currentState;
 	int				score;		// for single player or player A in multiplayer
 	int				scoreB;		// for player B/AI in multiplayer
-	IAudio*			audio;
 	GameConfig&		config;
 };
 

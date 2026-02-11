@@ -1,8 +1,7 @@
-#include "../../incs/IGraphic.hpp"
+#include "../../incs/RaylibGraphic.hpp"
 #include "../../incs/Snake.hpp"
 #include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
-#include "../../incs/RaylibGraphic.hpp"
 #include <rlgl.h>  // For low-level drawing functions (rlPushMatrix, rlBegin, etc.)
 
 RaylibGraphic::RaylibGraphic() :
@@ -366,9 +365,6 @@ Input RaylibGraphic::pollInput() {
 	if (IsKeyPressed(KEY_D))		return Input::Right_B;
 	if (IsKeyPressed(KEY_Q))		return Input::Quit;
 	if (IsKeyPressed(KEY_ESCAPE))	return Input::Quit;
-	if (IsKeyPressed(KEY_ONE))		return Input::SwitchLib1;
-	if (IsKeyPressed(KEY_TWO))		return Input::SwitchLib2;
-	if (IsKeyPressed(KEY_THREE))	return Input::SwitchLib3;
 	if (IsKeyPressed(KEY_SPACE))	return Input::Pause;
 	if (IsKeyPressed(KEY_ENTER))	return Input::Enter;
 	if (IsKeyPressed(KEY_KP_ENTER))	return Input::Enter;
@@ -382,11 +378,3 @@ float RaylibGraphic::getCubeSize() const { return cubeSize; }
 float RaylibGraphic::getSeparator() const { return separator; }
 Camera3D& RaylibGraphic::getCamera() { return camera; }
 float& RaylibGraphic::getAccumulatedTime() { return accumulatedTime; }
-
-extern "C" IGraphic* createGraphic() {
-	return new RaylibGraphic();
-}
-
-extern "C" void destroyGraphic(IGraphic* g) {
-	delete g;
-}
