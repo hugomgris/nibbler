@@ -44,7 +44,7 @@ void switchConfigMode(GameConfig &config)
 int main(int argc, char **argv) {
 	if (argc != 3)
 	{
-		std::cerr << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;
+		std::cerr << BYEL << "Usage: ./rosario <width> <height>" << RESET << std::endl;
 		return 1;
 	}
 
@@ -64,11 +64,9 @@ int main(int argc, char **argv) {
 
 	GameConfig config { GameMode::SINGLE };
 
-	// Initialize Raylib graphics
 	Renderer renderer;
 	renderer.init(width, height);
 
-	// Initialize game entities
 	Snake snake_A(width, height);
 	Snake snake_B(snake_A, width, height);
 	std::unique_ptr<SnakeAI> aiController = nullptr;

@@ -26,8 +26,7 @@ Renderer::Renderer() :
 	}
 
 Renderer::~Renderer() {
-	// Explicitly destroy helper classes before closing window
-	// This ensures fonts/textures are unloaded while raylib context is still valid
+	// Explicitly destroy helper classes before closing window, i.e. while raylib context is still valid
 	textRenderer.reset();
 	titleHandler.reset();
 	
@@ -58,7 +57,7 @@ void Renderer::init(int width, int height) {
 	
 	// noise pattern generation
 	for (int i = 0; i < GRAIN_TEXTURE_COUNT; i++) {
-		// Unique seeding for varaition
+		// seeding for varaition
 		Image grainImage = GenImageWhiteNoise(screenWidth, screenHeight, 0.75f);
 		grainTextures[i] = LoadTextureFromImage(grainImage);
 		UnloadImage(grainImage);
@@ -182,6 +181,7 @@ void Renderer::drawGroundPlane() {
 	}
 }
 
+// not used right now, but not sure if deprecated yet either, so keeping it here for now
 void Renderer::drawWalls() {
 	for (int level = 0; level < 3; level++) {
 		float yPos = (level) * cubeSize;
@@ -255,7 +255,7 @@ void Renderer::drawFood(const Food* food) {
 		foodPos.y * cubeSize - offsetZ
 	};
 	
-	// Pulsing effect using controlled time (freezes when paused)
+	// Pulsing effect
 	float pulse = 1.0f + sinf(accumulatedTime * 3.0f) * 0.1f;
 
 	drawCubeCustomFaces(position, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse, cubeSize * 0.7f * pulse,
@@ -267,14 +267,13 @@ void Renderer::drawNoiseGrain() {
 }
 
 void Renderer::drawBorder(int thickness) {
-	// Draw border at screen edges
-	// Top border
+	// Top
 	DrawRectangle(0, 0, screenWidth, thickness, customWhite);
-	// Bottom border
+	// Bottom
 	DrawRectangle(0, screenHeight - thickness, screenWidth, thickness, customWhite);
-	// Left border
+	// Left
 	DrawRectangle(0, 0, thickness, screenHeight, customWhite);
-	// Right border
+	// Right
 	DrawRectangle(screenWidth - thickness, 0, thickness, screenHeight, customWhite);
 }
 
@@ -308,26 +307,23 @@ void Renderer::updateTunnelEffect(float deltaTime) {
 void Renderer::renderTunnelEffect() {
 	if (!enableTunnelEffect || borderLines.empty()) return;
 
-	// Border is now at screen edges with 25px thickness
 	int borderThickness = 25;
 	
-	// Define starting rectangle - inset from border inner edge
-	int contentInset = 60;  // Additional inset from border inner edge
+	int contentInset = 60;
 	int startLeft = borderThickness + contentInset;
 	int startTop = borderThickness + contentInset;
 	int startRight = screenWidth - borderThickness - contentInset;
 	int startBottom = screenHeight - borderThickness - contentInset;
-	
-	// Maximum travel distance (from start position to border inner edge)
+
 	int maxTravelX = contentInset;
 	int maxTravelY = contentInset;
 
 	for (const auto& line : borderLines) {
-		// Calculate current offset from start rectangle
+		// current offset from start rectangle
 		int offsetX = static_cast<int>(line.progress * maxTravelX);
 		int offsetY = static_cast<int>(line.progress * maxTravelY);
 		
-		// Current rectangle coordinates
+		// current rectangle coordinates
 		int left = startLeft - offsetX;
 		int top = startTop - offsetY;
 		int right = startRight + offsetX;
@@ -340,17 +336,16 @@ void Renderer::renderTunnelEffect() {
 
 		int lineWidth = 2;
 
-		// Draw expanding rectangle borders maintaining screen aspect ratio
-		// Top border
+		// Top
 		DrawRectangle(left, top, width, lineWidth, lineColor);
 		
-		// Bottom border
+		// Bottom
 		DrawRectangle(left, bottom - lineWidth, width, lineWidth, lineColor);
 		
-		// Left border
+		// Left
 		DrawRectangle(left, top, lineWidth, height, lineColor);
 		
-		// Right border
+		// Right
 		DrawRectangle(right - lineWidth, top, lineWidth, height, lineColor);
 	}
 }
@@ -394,8 +389,7 @@ void Renderer::render(const GameState& state, float deltaTime){
 	DrawFPS(screenWidth - 95, 10);
 
 	if (state.isPaused) {
-        //DrawOutlinedText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customWhite, 1, customBlack);
-		DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
+		DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack); // this is horribly functional, need to design a proper pause menu system
     }
 	
 	// Post Processing
@@ -413,8 +407,7 @@ void Renderer::renderMenu(const GameState& state, float deltaTime) {
 	
 	// Frame counter for logo snake trail particle spawning
 	static int frameCounter = 0;
-	if (frameCounter % 111 == 0) {
-		// Spawn trail particle at rear of logo snake (the 'i' underline)
+	if (frameCounter % 5 == 0) {
 		int square = 10;
 		float trailX = screenWidth / 2.0f + (square * 17.2f);
 		float trailY = screenHeight / 2.0f + (square * 3.2f);
@@ -444,18 +437,15 @@ void Renderer::renderMenu(const GameState& state, float deltaTime) {
 	titleHandler->drawTitle();
 	textRenderer->drawInstructions(state);
 	
-	// Render particles ON TOP of UI elements so they're visible
 	particleSystem->render();
-	
-	// Render tunnel effect
+
 	renderTunnelEffect();
-	
-	// Draw border on top
+
 	drawBorder(25);
 
 	EndMode2D();
 
-	// drawNoiseGrain();  // Temporarily disabled to test particle visibility
+	// drawNoiseGrain();  // not sure about the whole noise stuff, so switching it off for now
 	
 	EndDrawing();
 }
@@ -500,7 +490,7 @@ void Renderer::renderGameOver(const GameState& state, float deltaTime) {
 
 	EndMode2D();
 
-	drawNoiseGrain();
+	drawNoiseGrain(); // keeping noise here for contrast
 	
 	EndDrawing();
 }

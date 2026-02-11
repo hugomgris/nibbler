@@ -24,7 +24,7 @@ Particle::Particle(float px, float py, float minSize, float maxSize, float minLi
 	rotationSpeed = -50.0f + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 100.0f;  // -50 to +50 deg/s for explosions
 }
 
-// ParticleSystem implementation
+// system implementation
 ParticleSystem::ParticleSystem(int gridW, int gridH, int cell, int border)
 	: gridWidth(gridW), gridHeight(gridH), cellSize(cell), borderOffset(border),
 		maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
@@ -38,14 +38,14 @@ ParticleSystem::~ParticleSystem() {
 }
 
 void ParticleSystem::update(float deltaTime) {
-	// Handle dust particle spawning
+	// dust particle spawning
 	dustSpawnTimer += deltaTime;
 	if (dustSpawnTimer >= dustSpawnInterval) {
 		spawnDustParticle();
 		dustSpawnTimer = 0.0f;
 	}
 	
-	// Update all particles
+	// update ALL particles
 	for (auto& particle : particles) {
 		particle.age += deltaTime;
 		particle.rotation += particle.rotationSpeed * deltaTime;
@@ -54,12 +54,12 @@ void ParticleSystem::update(float deltaTime) {
 		particle.x += particle.vx * deltaTime;
 		particle.y += particle.vy * deltaTime;
 		
-		// Shrinking effect
+		// shrinking 
 		float progress = particle.age / particle.lifetime;
 		particle.currentSize = particle.initialSize * (1.0f - progress) + 1.0f * progress;
 	}
 	
-	// Remove dead particles
+	// remove dead particles
 	particles.erase(
 		std::remove_if(particles.begin(), particles.end(),
 			[](const Particle& p) { return p.age >= p.lifetime; }),
@@ -82,14 +82,14 @@ void ParticleSystem::render() {
 	}
 	
 	for (const auto& particle : particles) {
-		// Fade out based on lifetime progress
+		// Fade out (lifetime progress)
 		float progress = particle.age / particle.lifetime;
 		unsigned char alpha;
 		
-		// Alpha handling based on particle type
+		// alpha handling 
 		if (particle.type == ParticleType::Dust) {
 			alpha = static_cast<unsigned char>((1.0f - progress) * 200);  // Increased from 120
-		} else {  // Explosion or Trail
+		} else {  // explosion or Trail
 			alpha = static_cast<unsigned char>((1.0f - progress) * 255);  // Increased from 200
 		}
 		
@@ -107,7 +107,7 @@ void ParticleSystem::spawnDustParticle() {
 	if (dustCount >= maxDustDensity) return;
 	
 	// Spawn across entire screen for menu effects
-	// gridWidth/gridHeight are the screen dimensions (1920x1080), not grid cells
+	// gridWidth/gridHeight are now in screen units (1920x1080)
 	int arenaX = 0;
 	int arenaY = 0;
 	int arenaW = gridWidth;
@@ -118,12 +118,12 @@ void ParticleSystem::spawnDustParticle() {
 	
 	particles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
 	
-	// Debug: Log first few particles to verify spawning
-	static int spawnCount = 0;
+	// DEBUG - Log first few particles to verify spawning
+	/* static int spawnCount = 0;
 	if (spawnCount < 5) {
 		std::cout << "Spawned dust particle #" << spawnCount << " at (" << x << ", " << y << ") in area " << arenaW << "x" << arenaH << std::endl;
 		spawnCount++;
-	}
+	} */
 }
 
 void ParticleSystem::spawnExplosion(float x, float y, int count) {
@@ -210,46 +210,13 @@ void ParticleSystem::spawnSnakeTrail(float x, float y, int count, float directio
 }
 
 void ParticleSystem::drawRotatedSquare(float cx, float cy, float size, float rotation, Color color, unsigned char alpha) {
-	// Draw rotated rectangle using DrawRectanglePro
+	// Mainly for dust particles
 	Color colorWithAlpha = {color.r, color.g, color.b, alpha};
 	
 	Rectangle rect = {cx, cy, size, size};
 	Vector2 origin = {size / 2.0f, size / 2.0f};
 	
 	DrawRectanglePro(rect, origin, rotation, colorWithAlpha);
-	
-	/* Original rotated version - not working
-	// Rotation -> Radians
-	float rad = rotation * DEG2RAD;
-	float halfSize = size / 2.0f;
-	
-	// 4 corners of the square (centered at origin)
-	Vector2 corners[4] = {
-		{-halfSize, -halfSize},  // Top-left
-		{ halfSize, -halfSize},  // Top-right
-		{ halfSize,  halfSize},  // Bottom-right
-		{-halfSize,  halfSize}   // Bottom-left
-	};
-	
-	// Rotate and translate corners
-	Vector2 vertices[4];
-	for (int i = 0; i < 4; i++) {
-		float x = corners[i].x;
-		float y = corners[i].y;
-		
-		float rotatedX = x * cosf(rad) - y * sinf(rad);
-		float rotatedY = x * sinf(rad) + y * cosf(rad);
-		
-		vertices[i].x = cx + rotatedX;
-		vertices[i].y = cy + rotatedY;
-	}
-	
-	// Draw as two triangles to form the quad with alpha blending
-	Color colorWithAlpha = {color.r, color.g, color.b, alpha};
-	rlSetBlendMode(BLEND_ALPHA);  // Enable alpha blending
-	DrawTriangle(vertices[0], vertices[1], vertices[2], colorWithAlpha);
-	DrawTriangle(vertices[0], vertices[2], vertices[3], colorWithAlpha);
-	*/
 }
 
 // Configuration
