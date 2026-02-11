@@ -27,7 +27,6 @@ void switchConfigMode(GameConfig &config)
 {
 	switch (config.mode)
 	{
-		// if implemented handle cycling with AI
 		case GameMode::SINGLE:
 			config.mode = GameMode::MULTI;
 			break;

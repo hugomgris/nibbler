@@ -23,7 +23,6 @@ class ScoreTest : public ::testing::Test {
 				false, true, false,
 				GameStateType::Playing,
 				0, 0,
-				nullptr,
 				*config
 			});
 			manager = std::make_unique<GameManager>(state.get());

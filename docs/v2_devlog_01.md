@@ -1,89 +1,37 @@
-# Rosario V2 - Devlog 01
+# Rosario - Devlog - 1
 
-**Date**: February 11, 2026  
-**Focus**: V2 Initialization & Cleanup
+## Table of Contents
+1. [It Was Just a Phase](#11---it-was-just-a-phase)
+2. [Back to the Cocoon (Which Would Make More Sense if the Main Entity of the Game Was a Worm Instead of a Snake, But You Get the Idea)](#12-back-to-the-cocoon-which-would-make-more-sense-if-the-main-entity-of-the-game-was-a-worm-instead-of-a-snake-but-you-get-the-idea)
 
-## Overview
-Today marks the transition from Nibbler (academic multi-library project) to Rosario (Raylib-unified showcase game). This is a strategic pivot focused on creating a polished prototype for the Larian Studios networking opportunity.
+<br>
+<br>
 
-## Goals
-- **Week 1**: Clean foundation - Raylib-only build with ported SDL features
-- **Week 2**: Innovation - Unique mechanics (rosario/bead system, dimension switching)
-- **End Goal**: Compelling 2-week prototype showcasing game design & polish skills
+# 1.1 - It Was Just a Phase
+Here we are, on the other side of what has been tagged as `V1`. Today the two week sprint towards a more mechanically complex, raylib-unified, *snake* based game start, which means that we're having **R E F A C T O R I N G**  for breakfast, lunch and dinner. I've been in this position before, having to plan and layout carefully thought steps to scale *down* a build so that a new development process can start anew from a compact, controlled state of things. Personally, I still find this situations a bit overwhelming, mostly because after spending so much time writing a game that builds and launches and works and doesn't break and explode into pieces, taking it appart feels like playing a risky game of *Jenga*. Or maybe the analogy is not quite precise, because once you take out one piece the whole thing collapses and the next hours are comprised of a mixture of "might as well keep getting all the stuff I think should be out of the new starting point" and "how can I make this compile again for the love of everything sacred". I've being a little overdramatic, I know (must say that if you've arrived to this log after going through all the development journaling done for `V1`, you already know the extent of my dramatism), but it can get tyring. Theres a counterpoint, of course, the same one that's always looming in any programming journey: nothing works until it works, and when it works life becomes wonderful. So, yeah:
+- today's first task is **scaling down and stripping the project of what has become dead weight under the banner of `V2`**
+- then, a new build pipeline and some refactoring in the surviving code needs to be done so that a raylib-based game persists
+- after which, some porting needs to be done, specially regarding `SDL` stuff
+    - for now, I want what was the `SDL` menu in `V1` to be the main menu in `V2`, which entrails adding a `2D` rendering mode/pipeline
+    - this means that the particle system, which was tied exclusively to `SDL`, needs to be ported to `Raylib`
+- we'll end with a general check, a test suite reconfigration to adapt it in the new `Makefile` and a new, fresh starting point.
 
-## Day 1: Repository & Architecture Decisions
+If everything goes right, at the end of today there will be a **raylib-exclusive *nibbler* build with the SDL starting menu and gameover and a recovered gtest suite**. If not... doesn't matter, because we will **S U C C E E D**.
 
-### Key Decisions Made
-1. **Repository Strategy**: Same repo, tagged V1, created `v2-rosario` branch
-   - Preserves development history
-   - Allows cherry-picking from V1
-   - Clean separation via tags
+> *The good news is that scaling down means also simplifying, which brings solace to the soul. Soulace, if you will.*
 
-2. **Architecture**: Refined OOP (NOT ECS)
-   - ECS deemed overkill for snake game scope
-   - Focus on game design over architectural patterns
-   - Larian values innovation & polish over tech complexity
+<br>
+<br>
 
-3. **What's Preserved from V1**:
-   - ✅ Full AI system (SnakeAI, Pathfinder, FloodFill)
-   - ✅ Multi-mode gameplay (Single, Multi, VsAI)
-   - ✅ Core game logic (Snake, Food, GameManager)
-   - ✅ Raylib 3D isometric renderer
-   - ✅ SDL particle system concept (to be ported)
-   - ✅ SDL menu design (to be ported 1:1 to Raylib)
+# 1.2. Back to the Cocoon (Which Would Make More Sense if the Main Entity of the Game Was a Worm Instead of a Snake, But You Get the Idea)
+On second thought, it wouldn't even make that much sense if it was a worm. If it was a butterfly, going *back* to the cocoon would totally make sense, but worm would go *foward* to a cocoon. Uhm, anyway, here's a list of things that we're going to lose along the way:
+- Anything `SDL` and `NCurses` related
+- The graphic interfacing (no longer needed in the new monolibrary approach)
+- Any audio related stuff (will rebuild audio inside `Raylib`)
 
-4. **What's Removed**:
-   - ❌ NCurses implementation
-   - ❌ SDL implementation (after porting needed features)
-   - ❌ Multi-library abstractions (IGraphic, IAudio, LibraryManager)
-   - ❌ External library builds (libs/ directory)
+All of this with the consequential changes each removal has in the code. Once done, a new `Makefile` will be written, and we *should* be good... And we are!! If you go through the codebase, you'll see that we're now `Raylib` exclusive and that the game builds and runs smoothly. Yay!
 
-### Cleanup Tasks Completed
-- [x] Removed NCurses graphics files
-- [x] Removed SDL graphics files (source preserved in git history for porting)
-- [x] Removed audio abstraction (IAudio)
-- [x] Removed library management layer
-- [x] Removed external libs directory
-- [x] Archived V1 documentation
-- [x] Created V2 devlog structure
-- [x] Created simplified Makefile (Raylib-only)
-- [x] Backup V1 Makefile for reference
+The more tricky part is what comes next, the porting of some `SDL` stuff into Raylib. We'll need a couple of things:
+- A 2D-camera based rendering pipeline
+- A rewriting of the `ParticleSystem` and the `menu`/`gameover` renderings into `Raylib`
 
-### Next Steps (Tomorrow)
-- [ ] Fix main.cpp - remove LibraryManager, direct Raylib init
-- [ ] Fix GameState - remove IAudio pointer
-- [ ] Update DataStructs.hpp (use std::optional<Snake> for snake_B)
-- [ ] Get clean compilation
-- [ ] Test basic game loop works
-- [ ] Start SDL menu port planning
-
-## Technical Notes
-
-### GameState Refactoring
-Current `Snake* snake_B` needs to become `std::optional<Snake>` for:
-- Modern C++ style
-- Clear intent (may or may not exist)
-- Safer null handling
-
-### SDL Features to Port
-Priority porting list:
-1. **Menu System**: 2D text, particle effects, tunnel background
-2. **Particle System**: Reusable feedback system
-3. **Text Rendering**: Square-based aesthetic
-
-### Architecture for V2
-```
-Core: Snake, Food, GameManager (mostly unchanged)
-Rendering: RaylibRenderer with Style3D/2D/ASCII modules
-Game Feel: ParticleSystem, ScreenEffects, FeedbackSystem
-Innovation: BeadSystem, DimensionSwitching
-```
-
-## Reflections
-The strategic decision to skip ECS and focus on game feel is confidence-inspiring. Two weeks is tight, but achievable if we stay disciplined about scope. The Larian context clarifies priorities: demonstrate game design instincts, not engineering dogma.
-
-**Cleanup went smoothly**: Removed 2,555 lines of multi-library code in one clean commit. Makefile is simplified and ready. Tomorrow's focus is fixing main.cpp to work without abstraction layers - should be straightforward.
-
----
-
-**Tomorrow**: Fix main.cpp, DataStructs.hpp, get clean build, verify basic gameplay works.

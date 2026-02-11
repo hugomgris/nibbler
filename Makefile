@@ -1,8 +1,3 @@
-# ═══════════════════════════════════════════════════════════════════════════ #
-#                              ROSARIO V2 MAKEFILE                              #
-#                         Raylib-Unified Snake Game Build                       #
-# ═══════════════════════════════════════════════════════════════════════════ #
-
 # -=-=-=-=-    COLOURS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-════=-=-=-=-=-=-=-=- #
 
 DEF_COLOR   = \033[0;39m
@@ -14,7 +9,7 @@ RED         = \033[0;91m
 
 # -=-=-=-=-    NAMES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-NAME                := nibbler
+NAME                := rosario
 
 # -=-=-=-=-    DIRECTORIES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
@@ -25,19 +20,11 @@ INCDIR          := incs
 
 # -=-=-=-=-    SOURCE FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-# Core game files
 CORE_SRC        := main.cpp GameManager.cpp Snake.cpp Food.cpp Utils.cpp
-
-# AI system files
 AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
-
-# Raylib graphics files
 GRAPHICS_SRC    := graphics/RaylibGraphic.cpp graphics/RaylibTextRenderer.cpp graphics/RaylibTitleHandler.cpp
-
-# SDL Particle system (to be ported)
 PARTICLE_SRC    := graphics/SDLParticleSystem.cpp
 
-# All sources combined
 ALL_SRC         := $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC) $(PARTICLE_SRC)
 
 SRCS            := $(addprefix $(SRCDIR)/, $(ALL_SRC))
@@ -73,13 +60,52 @@ SDL_LIBS        := $(shell pkg-config --libs sdl2 2>/dev/null || echo "-lSDL2")
 ALL_INCLUDES    := $(INCLUDES) $(RAYLIB_INCLUDES) $(SDL_INCLUDES)
 ALL_LIBS        := $(RAYLIB_LIBS) $(SDL_LIBS)
 
-# -=-=-=-=-    RULES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
+# -=-=-=-=-    GOOGLE TEST -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-.PHONY: all clean fclean re
+GTEST_DIR		:= $(LIB_DIR)/googletest
+GTEST_REPO		:= https://github.com/google/googletest.git
+GTEST_LIB		:= $(GTEST_DIR)/build/lib/libgtest.a
+GTEST_MAIN_LIB	:= $(GTEST_DIR)/build/lib/libgtest_main.a
+GTEST_INCLUDES	:= -I$(GTEST_DIR)/googletest/include
+
+# -=-=-=-=-    TEST CONFIGURATION -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
+
+TEST_DIR		:= tests
+TEST_OBJDIR		:= .test_obj
+TEST_DEPDIR		:= .test_dep
+TEST_BINARY		:= run_tests
+
+TEST_SRCS		:= $(wildcard $(TEST_DIR)/unit/*.cpp) \
+					$(wildcard $(TEST_DIR)/integration/*.cpp)
+TEST_OBJS		:= $(patsubst $(TEST_DIR)/%.cpp,$(TEST_OBJDIR)/%.o,$(TEST_SRCS))
+TEST_DEPS		:= $(patsubst $(TEST_DIR)/%.cpp,$(TEST_DEPDIR)/%.d,$(TEST_SRCS))
+
+TESTABLE_SRCS	:= $(filter-out $(SRCDIR)/main.cpp, $(SRCS))
+TESTABLE_OBJS	:= $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(TESTABLE_SRCS))
+
+TEST_CFLAGS		:= $(CFLAGS) $(GTEST_INCLUDES)
+TEST_LDFLAGS	:= $(LDFLAGS) -lpthread
+
+# -=-=-=-=-    RULES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 all: $(RAYLIB_SRC_DIR)/libraylib.a $(NAME)
 
-# Raylib build rule
+game: re
+	./rosario 16 16
+
+check_gtest:
+	@if [ ! -f "$(GTEST_LIB)" ]; then \
+		echo "$(YELLOW)Google Test not found. Cloning and building...$(DEF_COLOR)"; \
+		mkdir -p $(LIB_DIR); \
+		git clone --depth 1 --branch v1.14.0 $(GTEST_REPO) $(GTEST_DIR); \
+		cd $(GTEST_DIR) && mkdir -p build && cd build && \
+		cmake -DCMAKE_CXX_STANDARD=20 .. && \
+		make -j4; \
+		echo "$(GREEN)Google Test built successfully$(DEF_COLOR)"; \
+	else \
+		echo "$(GREEN)Google Test already built$(DEF_COLOR)"; \
+	fi
+
 $(RAYLIB_SRC_DIR)/libraylib.a:
 	@echo "$(YELLOW)Raylib not found. Cloning and building...$(DEF_COLOR)"
 	@mkdir -p $(LIB_DIR)
@@ -93,43 +119,57 @@ $(RAYLIB_SRC_DIR)/libraylib.a:
 $(NAME): $(OBJS)
 	@echo "$(CYAN)Linking $(NAME)...$(DEF_COLOR)"
 	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(ALL_LIBS)
-	@echo "$(GREEN)✓ Built $(NAME)$(DEF_COLOR)"
+	@echo "$(GREEN)Snakeboarding is not a crime!$(DEF_COLOR)"
 
-# Object file compilation
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(DEPDIR)/$*.d)
 	@echo "$(YELLOW)Compiling $<...$(DEF_COLOR)"
 	@$(CC) $(CFLAGS) $(ALL_INCLUDES) $(DEPFLAGS) -c $< -o $@ -MF $(DEPDIR)/$*.d
 
-# Include dependencies
 -include $(DEPS)
+
+# -=-=-=-=-    TEST TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
+
+test: check_gtest $(TEST_BINARY)
+	@echo "$(CYAN)Running tests...$(DEF_COLOR)"
+	./$(TEST_BINARY)
+
+$(TEST_BINARY): $(TESTABLE_OBJS) $(TEST_OBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB)
+	@echo "$(YELLOW)Linking test binary...$(DEF_COLOR)"
+	$(CC) -o $@ $(TESTABLE_OBJS) $(TEST_OBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB) $(TEST_LDFLAGS)
+	@echo "$(GREEN)Test binary created: $(TEST_BINARY)$(DEF_COLOR)"
+
+# Compile test object files
+$(TEST_OBJDIR)/%.o: $(TEST_DIR)/%.cpp | $(TEST_OBJDIR) $(TEST_DEPDIR)
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(TEST_DEPDIR)/$*.d)
+	$(CC) $(TEST_CFLAGS) -MMD -MF $(TEST_DEPDIR)/$*.d -c $< -o $@
+	@echo "$(BLUE)Compiled test: $<$(DEF_COLOR)"
+
+# Create test directories
+$(TEST_OBJDIR):
+	@mkdir -p $(TEST_OBJDIR)/unit $(TEST_OBJDIR)/integration
+
+$(TEST_DEPDIR):
+	@mkdir -p $(TEST_DEPDIR)/unit $(TEST_DEPDIR)/integration
 
 # -=-=-=-=-    CLEANING -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 clean:
 	@echo "$(RED)Cleaning object files...$(DEF_COLOR)"
-	@rm -rf $(OBJDIR) $(DEPDIR)
+	@rm -rf $(OBJDIR) $(DEPDIR) $(TEST_DEPDIR)
 
 fclean: clean
 	@echo "$(RED)Cleaning $(NAME)...$(DEF_COLOR)"
-	@rm -f $(NAME)
+	@rm -f $(NAME) $(TEST_BINARY)
+	@rm -rf $(TEST_OBJDIR)
 
 cleanlibs:
 	@echo "$(RED)Cleaning Raylib...$(DEF_COLOR)"
 	@rm -rf $(LIB_DIR)
 
 re: fclean all
-
-# -=-=-=-=-    TESTING -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
-
-test: all
-	@echo "$(BLUE)Running tests...$(DEF_COLOR)"
-	@if [ -d "tests" ]; then \
-		cd tests && cmake -B build && cmake --build build && cd build && ctest --output-on-failure; \
-	else \
-		echo "$(YELLOW)No tests directory found$(DEF_COLOR)"; \
-	fi
 
 # -=-=-=-=-    DEBUG INFO -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
@@ -141,3 +181,5 @@ info:
 	@echo "Flags:    $(CFLAGS)"
 	@echo "Raylib:   $(RAYLIB_LIBS)"
 	@echo "SDL2:     $(SDL_LIBS)"
+
+.PHONY: all clean fclean re test check_gtest

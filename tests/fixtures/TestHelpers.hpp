@@ -22,7 +22,6 @@ namespace TestHelpers {
 			GameStateType::Playing,
 			0,						// score
 			0,						// scoreB
-			nullptr,				// audio (not needed for tests right now)
 			config
 		};
 	}

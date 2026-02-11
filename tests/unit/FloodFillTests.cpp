@@ -23,7 +23,6 @@ protected:
             false, true, false,
             GameStateType::Playing,
             0, 0,
-            nullptr,
             *config
         });
         floodFill = std::make_unique<FloodFill>();
