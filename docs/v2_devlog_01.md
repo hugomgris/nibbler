@@ -46,13 +46,16 @@ Today marks the transition from Nibbler (academic multi-library project) to Rosa
 - [x] Removed external libs directory
 - [x] Archived V1 documentation
 - [x] Created V2 devlog structure
+- [x] Created simplified Makefile (Raylib-only)
+- [x] Backup V1 Makefile for reference
 
-### Next Steps
+### Next Steps (Tomorrow)
+- [ ] Fix main.cpp - remove LibraryManager, direct Raylib init
+- [ ] Fix GameState - remove IAudio pointer
 - [ ] Update DataStructs.hpp (use std::optional<Snake> for snake_B)
-- [ ] Update Makefile for Raylib-only build
-- [ ] Fix compilation errors
-- [ ] Port SDL menu to Raylib
-- [ ] Port SDL particle system to Raylib
+- [ ] Get clean compilation
+- [ ] Test basic game loop works
+- [ ] Start SDL menu port planning
 
 ## Technical Notes
 
@@ -79,6 +82,8 @@ Innovation: BeadSystem, DimensionSwitching
 ## Reflections
 The strategic decision to skip ECS and focus on game feel is confidence-inspiring. Two weeks is tight, but achievable if we stay disciplined about scope. The Larian context clarifies priorities: demonstrate game design instincts, not engineering dogma.
 
+**Cleanup went smoothly**: Removed 2,555 lines of multi-library code in one clean commit. Makefile is simplified and ready. Tomorrow's focus is fixing main.cpp to work without abstraction layers - should be straightforward.
+
 ---
 
-**Tomorrow**: Complete cleanup, get Raylib-only build compiling, begin SDL menu port.
+**Tomorrow**: Fix main.cpp, DataStructs.hpp, get clean build, verify basic gameplay works.
