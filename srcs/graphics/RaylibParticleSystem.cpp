@@ -1,6 +1,8 @@
 #include "../../incs/RaylibParticleSystem.hpp"
 #include <raymath.h>
+#include <rlgl.h>
 #include <cstdlib>
+#include <iostream>
 
 // Particle constructors
 Particle::Particle(float px, float py, float minSize, float maxSize, float minLifetime, float maxLifetime)
@@ -26,7 +28,7 @@ Particle::Particle(float px, float py, float minSize, float maxSize, float minLi
 RaylibParticleSystem::RaylibParticleSystem(int gridW, int gridH, int cell, int border)
 	: gridWidth(gridW), gridHeight(gridH), cellSize(cell), borderOffset(border),
 		maxDustDensity(50), dustSpawnInterval(0.1f), dustSpawnTimer(0.0f),
-		dustMinSize(2.0f), dustMaxSize(15.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f),
+		dustMinSize(4.0f), dustMaxSize(20.0f), dustMinLifetime(3.0f), dustMaxLifetime(5.0f),  // Increased sizes
 		explosionMinSize(1.0f), explosionMaxSize(50.0f) {
 	particles.reserve(maxDustDensity);
 }
@@ -66,6 +68,19 @@ void RaylibParticleSystem::update(float deltaTime) {
 }
 
 void RaylibParticleSystem::render() {
+	static int renderCount = 0;
+	if (renderCount < 3 && particles.size() > 0) {
+		std::cout << "Render #" << renderCount << ": " << particles.size() << " particles" << std::endl;
+		if (particles.size() > 0) {
+			const auto& p = particles[0];
+			float progress = p.age / p.lifetime;
+			unsigned char alpha = static_cast<unsigned char>((1.0f - progress) * 200);
+			std::cout << "  First particle: pos=(" << p.x << "," << p.y << ") size=" << p.currentSize 
+			          << " alpha=" << (int)alpha << " age=" << p.age << "/" << p.lifetime << std::endl;
+		}
+		renderCount++;
+	}
+	
 	for (const auto& particle : particles) {
 		// Fade out based on lifetime progress
 		float progress = particle.age / particle.lifetime;
@@ -73,9 +88,9 @@ void RaylibParticleSystem::render() {
 		
 		// Alpha handling based on particle type
 		if (particle.type == ParticleType::Dust) {
-			alpha = static_cast<unsigned char>((1.0f - progress) * 120);
+			alpha = static_cast<unsigned char>((1.0f - progress) * 200);  // Increased from 120
 		} else {  // Explosion or Trail
-			alpha = static_cast<unsigned char>((1.0f - progress) * 200);
+			alpha = static_cast<unsigned char>((1.0f - progress) * 255);  // Increased from 200
 		}
 		
 		drawRotatedSquare(particle.x, particle.y, particle.currentSize, 
@@ -91,16 +106,24 @@ void RaylibParticleSystem::spawnDustParticle() {
 	}
 	if (dustCount >= maxDustDensity) return;
 	
-	// Control the spawning area -> i.e., spawn inside the border boundaries
-	int arenaX = borderOffset;
-	int arenaY = borderOffset;
-	int arenaW = gridWidth * cellSize;
-	int arenaH = gridHeight * cellSize;
+	// Spawn across entire screen for menu effects
+	// gridWidth/gridHeight are the screen dimensions (1920x1080), not grid cells
+	int arenaX = 0;
+	int arenaY = 0;
+	int arenaW = gridWidth;
+	int arenaH = gridHeight;
 	
 	float x = arenaX + static_cast<float>(rand() % arenaW);
 	float y = arenaY + static_cast<float>(rand() % arenaH);
 	
 	particles.emplace_back(x, y, dustMinSize, dustMaxSize, dustMinLifetime, dustMaxLifetime);
+	
+	// Debug: Log first few particles to verify spawning
+	static int spawnCount = 0;
+	if (spawnCount < 5) {
+		std::cout << "Spawned dust particle #" << spawnCount << " at (" << x << ", " << y << ") in area " << arenaW << "x" << arenaH << std::endl;
+		spawnCount++;
+	}
 }
 
 void RaylibParticleSystem::spawnExplosion(float x, float y, int count) {
@@ -187,6 +210,15 @@ void RaylibParticleSystem::spawnSnakeTrail(float x, float y, int count, float di
 }
 
 void RaylibParticleSystem::drawRotatedSquare(float cx, float cy, float size, float rotation, Color color, unsigned char alpha) {
+	// Draw rotated rectangle using DrawRectanglePro
+	Color colorWithAlpha = {color.r, color.g, color.b, alpha};
+	
+	Rectangle rect = {cx, cy, size, size};
+	Vector2 origin = {size / 2.0f, size / 2.0f};
+	
+	DrawRectanglePro(rect, origin, rotation, colorWithAlpha);
+	
+	/* Original rotated version - not working
 	// Rotation -> Radians
 	float rad = rotation * DEG2RAD;
 	float halfSize = size / 2.0f;
@@ -212,10 +244,12 @@ void RaylibParticleSystem::drawRotatedSquare(float cx, float cy, float size, flo
 		vertices[i].y = cy + rotatedY;
 	}
 	
-	// Draw as two triangles to form the quad
+	// Draw as two triangles to form the quad with alpha blending
 	Color colorWithAlpha = {color.r, color.g, color.b, alpha};
+	rlSetBlendMode(BLEND_ALPHA);  // Enable alpha blending
 	DrawTriangle(vertices[0], vertices[1], vertices[2], colorWithAlpha);
 	DrawTriangle(vertices[0], vertices[2], vertices[3], colorWithAlpha);
+	*/
 }
 
 // Configuration

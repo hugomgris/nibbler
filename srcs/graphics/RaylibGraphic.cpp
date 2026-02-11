@@ -14,8 +14,12 @@ RaylibGraphic::RaylibGraphic() :
 	accumulatedTime(0.0f),
 	currentGrainFrame(0),
 	grainFrameTimer(0.0f),
-	grainFrameInterval(0.05f) {
+	grainFrameInterval(0.05f),
+	spawnInterval(0.3f),
+	animationSpeed(0.5f),
+	enableTunnelEffect(true) {
 		separator = cubeSize * 2;
+		lastSpawnTime = std::chrono::high_resolution_clock::now();
 	}
 
 RaylibGraphic::~RaylibGraphic() {
@@ -37,13 +41,15 @@ void RaylibGraphic::init(int width, int height) {
 	gridHeight = height;
 	
 	InitWindow(screenWidth, screenHeight, "Nibbler 3D - Raylib");
+	ToggleFullscreen();
 	SetTargetFPS(60);
 	
 	setupCamera();
 	
 	// Setup 2D camera for UI rendering
-	camera2D.offset = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
-	camera2D.target = (Vector2){ screenWidth / 2.0f, screenHeight / 2.0f };
+	// Simple setup: no offset, target at origin, covers full screen in screen coordinates
+	camera2D.offset = (Vector2){ 0.0f, 0.0f };
+	camera2D.target = (Vector2){ 0.0f, 0.0f };
 	camera2D.rotation = 0.0f;
 	camera2D.zoom = 1.0f;
 	
@@ -57,6 +63,9 @@ void RaylibGraphic::init(int width, int height) {
 
 	titleHandler = std::make_unique<RaylibTitleHandler>(*this);
 	textRenderer = std::make_unique<RaylibTextRenderer>(*this);
+	particleSystem = std::make_unique<RaylibParticleSystem>(screenWidth, screenHeight, 10, 0);
+	particleSystem->setMaxDustDensity(30);
+	particleSystem->setDustSpawnInterval(0.15f);
 	
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
@@ -254,6 +263,96 @@ void RaylibGraphic::drawNoiseGrain() {
 	DrawTextureEx(grainTextures[currentGrainFrame], (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, (Color){ 255, 255, 255, 20 });
 }
 
+void RaylibGraphic::drawBorder(int thickness) {
+	// Draw border at screen edges
+	// Top border
+	DrawRectangle(0, 0, screenWidth, thickness, customWhite);
+	// Bottom border
+	DrawRectangle(0, screenHeight - thickness, screenWidth, thickness, customWhite);
+	// Left border
+	DrawRectangle(0, 0, thickness, screenHeight, customWhite);
+	// Right border
+	DrawRectangle(screenWidth - thickness, 0, thickness, screenHeight, customWhite);
+}
+
+float RaylibGraphic::easeInQuad(float t) {
+	return t * t;
+}
+
+void RaylibGraphic::updateTunnelEffect(float deltaTime) {
+	if (!enableTunnelEffect) return;
+
+	for (auto& line : borderLines) {
+		line.age += deltaTime * animationSpeed;
+		line.progress = easeInQuad(line.age);
+	}
+
+	borderLines.erase(
+		std::remove_if(borderLines.begin(), borderLines.end(),
+			[](const BorderLine& line) { return line.progress >= 1.0f; }),
+		borderLines.end()
+	);
+
+	auto now = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> elapsed = now - lastSpawnTime;
+	
+	if (elapsed.count() >= spawnInterval) {
+		borderLines.push_back(BorderLine());
+		lastSpawnTime = now;
+	}
+}
+
+void RaylibGraphic::renderTunnelEffect() {
+	if (!enableTunnelEffect || borderLines.empty()) return;
+
+	// Border is now at screen edges with 25px thickness
+	int borderThickness = 25;
+	
+	// Define starting rectangle - inset from border inner edge
+	int contentInset = 60;  // Additional inset from border inner edge
+	int startLeft = borderThickness + contentInset;
+	int startTop = borderThickness + contentInset;
+	int startRight = screenWidth - borderThickness - contentInset;
+	int startBottom = screenHeight - borderThickness - contentInset;
+	
+	// Maximum travel distance (from start position to border inner edge)
+	int maxTravelX = contentInset;
+	int maxTravelY = contentInset;
+
+	for (const auto& line : borderLines) {
+		// Calculate current offset from start rectangle
+		int offsetX = static_cast<int>(line.progress * maxTravelX);
+		int offsetY = static_cast<int>(line.progress * maxTravelY);
+		
+		// Current rectangle coordinates
+		int left = startLeft - offsetX;
+		int top = startTop - offsetY;
+		int right = startRight + offsetX;
+		int bottom = startBottom + offsetY;
+		int width = right - left;
+		int height = bottom - top;
+		
+		unsigned char alpha = static_cast<unsigned char>(line.progress * 255);
+		Color lineColor = {70, 130, 180, alpha};  // Light blue with fade
+
+		int lineWidth = 2;
+
+		// Draw expanding rectangle borders maintaining screen aspect ratio
+		// Top border
+		DrawRectangle(left, top, width, lineWidth, lineColor);
+		
+		// Bottom border
+		DrawRectangle(left, bottom - lineWidth, width, lineWidth, lineColor);
+		
+		// Left border
+		DrawRectangle(left, top, lineWidth, height, lineColor);
+		
+		// Right border
+		DrawRectangle(right - lineWidth, top, lineWidth, height, lineColor);
+	}
+}
+
+
 void RaylibGraphic::render(const GameState& state, float deltaTime){
 	camera.fovy = customFov;
 	
@@ -316,6 +415,12 @@ void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
 		currentGrainFrame = GetRandomValue(0, GRAIN_TEXTURE_COUNT - 1);
 	}
 	
+	// Update particles
+	particleSystem->update(deltaTime);
+	
+	// Update tunnel effect
+	updateTunnelEffect(deltaTime);
+	
 	BeginDrawing();
 	ClearBackground(customBlack);
 
@@ -323,10 +428,19 @@ void RaylibGraphic::renderMenu(const GameState& state, float deltaTime) {
 	
 	titleHandler->drawTitle();
 	textRenderer->drawInstructions(state);
+	
+	// Render particles ON TOP of UI elements so they're visible
+	particleSystem->render();
+	
+	// Render tunnel effect
+	renderTunnelEffect();
+	
+	// Draw border on top
+	drawBorder(25);
 
 	EndMode2D();
 
-	drawNoiseGrain();
+	// drawNoiseGrain();  // Temporarily disabled to test particle visibility
 	
 	EndDrawing();
 }
@@ -340,10 +454,19 @@ void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
 		currentGrainFrame = GetRandomValue(0, GRAIN_TEXTURE_COUNT - 1);
 	}
 	
+	// Update particles
+	particleSystem->update(deltaTime);
+	
+	// Update tunnel effect
+	updateTunnelEffect(deltaTime);
+	
 	BeginDrawing();
 	ClearBackground(customBlack);
 
 	BeginMode2D(camera2D);
+	
+	// Render particles
+	particleSystem->render();
 	
 	titleHandler->drawGameover();
 	
@@ -351,7 +474,14 @@ void RaylibGraphic::renderGameOver(const GameState& state, float deltaTime) {
 		textRenderer->drawWinner(state);
 	}
 	
+	textRenderer->drawScore(state);
 	textRenderer->drawRetry(state);
+	
+	// Render tunnel effect
+	renderTunnelEffect();
+	
+	// Draw border on top
+	drawBorder(25);
 
 	EndMode2D();
 

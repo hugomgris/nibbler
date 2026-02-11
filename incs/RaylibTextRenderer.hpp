@@ -9,8 +9,14 @@ class RaylibTextRenderer {
 	private:
 		RaylibGraphic&	graphic;
 		Font			customFont;
+		int				fontSize;
+		int				smallFontSize;
+		bool			smallMode;
 		
 		void loadFont();
+		void drawText(const std::string& text, int x, int y, int fontSize, Color color, bool centered = true);
+		void drawInstruction(int centerX, int centerY, int& offset, const std::string& labelText, const std::string& dotText);
+		void drawMode(const GameState &state, int centerX, int centerY, int& offset);
 
 	public:
 		RaylibTextRenderer() = delete;
@@ -22,11 +28,8 @@ class RaylibTextRenderer {
 		
 		Font& getFont();
 		
-		void drawModes(const GameState &state);
 		void drawInstructions(const GameState &state);
-		void DrawText3D(Font font, const char *text, Vector3 position, float fontSize, float fontSpacing, float lineSpacing, bool backface, Color tint, float YRotation, float YOffset, float XOffset);
-		void DrawTextCodepoint3D(Font font, int codepoint, Vector3 position, float fontSize, bool backface, Color tint);
-
 		void drawWinner(const GameState& state);
 		void drawRetry(const GameState& state);
+		void drawScore(const GameState& state);
 };

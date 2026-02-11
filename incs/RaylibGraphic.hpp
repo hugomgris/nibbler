@@ -13,6 +13,15 @@
 #include <iostream>
 #include <array>
 #include <memory>
+#include <vector>
+#include <chrono>
+
+struct BorderLine {
+	float progress;        // 0 = at center, 1 = at edge
+	float age;
+	
+	BorderLine() : progress(0.0f), age(0.0f) {}
+};
 
 class RaylibGraphic {
 private:
@@ -41,6 +50,13 @@ private:
 	int											currentGrainFrame;
 	float										grainFrameTimer;
 	float										grainFrameInterval;
+	
+	// Tunnel effect system
+	std::vector<BorderLine>						borderLines;
+	std::chrono::high_resolution_clock::time_point lastSpawnTime;
+	float										spawnInterval;
+	float										animationSpeed;
+	bool										enableTunnelEffect;
 	
 	// Colors
 	Color customWhite = { 255, 248, 227, 255};				// Warm off-white (cream)
@@ -138,6 +154,12 @@ public:
 	void drawCubeCustomFaces(Vector3 position, float width, float height, float length,
 	                         Color front, Color back, Color top, Color bottom, Color right, Color left);
 	void drawNoiseGrain();  // Post Processing
+	void drawBorder(int thickness);  // Menu/GameOver border
+	
+	// Tunnel effect
+	float easeInQuad(float t);
+	void updateTunnelEffect(float deltaTime);
+	void renderTunnelEffect();
 
 public:
 	void init(int width, int height);
