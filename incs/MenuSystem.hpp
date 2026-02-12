@@ -1,26 +1,58 @@
 #pragma once
 
 #include "Button.hpp"
+#include "DataStructs.hpp"
+#include <raylib.h>
 #include <vector>
 
+class Renderer;
+class ParticleSystem;
+class TextSystem;
+class AnimationSystem;
+
 enum class MenuState {
-    Start,
-    Paused,
-    GameOver,
-    Options
+	Start,
+	Paused,
+	GameOver,
+	Options
 };
 
 class MenuSystem {
-    private:
-        MenuState currentState;
-        std::vector<Button> buttons;
+	private:
+		MenuState currentState;
+		std::vector<Button> buttons;
 
-    public:
-        MenuSystem();
-        ~MenuSystem() = default;
-    
-        void setState(MenuState newState);
-        void update(const Vector2& mousePos, bool mouseClicked);
-        void render();
-        Button* getHoveredButton(const Vector2& mousePos) const;
+		// menu specific particle states
+		float particleSpawnTimer;
+		const float particleSpawnInterval = 0.15f;
+		int logoSnakeTrailCounter;
+
+		// cached screen dimensions
+		int screenWidth;
+		int screenHeight;
+
+		//helpers
+		void spawnMenuParticles(float deltatime, ParticleSystem& particles);
+		void initializeButtons();
+		void clearButtons();
+
+	
+	public:
+		MenuSystem();
+		~MenuSystem() = default;
+
+		void init(int width, int height);
+		void setState(MenuState newStat);
+		MenuState getstate() const { return currentState; }
+
+	// update and render for each menu state
+	void update(float deltaTime, ParticleSystem& particles, AnimationSystem& animations);
+	void render(Renderer &renderer, TextSystem& textSystem,
+				ParticleSystem& particles, AnimationSystem& animations,
+				const GameState& state);
+	void renderGameOver(Renderer &renderer, TextSystem& textSystem,
+						ParticleSystem& particles, AnimationSystem& animations,
+						const GameState& state);        // input handling
+	void handleInput(Vector2 mousePos, bool mouseClicked);
+	Button* getHoveredButton(Vector2 mousePos) const;
 };

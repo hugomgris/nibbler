@@ -1,6 +1,8 @@
 #include "../incs/Renderer.hpp"
 #include "../incs/ParticleSystem.hpp"
 #include "../incs/TextSystem.hpp"
+#include "../incs/AnimationSystem.hpp"
+#include "../incs/MenuSystem.hpp"
 #include "../incs/Snake.hpp"
 #include "../incs/SnakeAI.hpp"
 #include "../incs/Food.hpp"
@@ -74,6 +76,13 @@ int main(int argc, char **argv) {
 	TextSystem textSystem;
 	textSystem.init();
 
+	AnimationSystem animations;
+	animations.init(1920, 1080);
+	animations.enableTunnelEffect(true, TunnelConfig::menu());
+
+	MenuSystem menu;
+	menu.init(width, height);
+
 	// ENTITIES
 	Snake snake_A(width, height);
 	Snake snake_B(snake_A, width, height);
@@ -135,14 +144,19 @@ int main(int argc, char **argv) {
 					
 					state.currentState = GameStateType::Playing;
 					accumulator = 0.0;
-			} else if (input == Input::Pause) {
-				switchConfigMode(state.config);
-			}
-    
-			renderer.renderMenu(state, deltaTime, particles, textSystem);
-			break;
+				} else if (input == Input::Pause) {
+					switchConfigMode(state.config);
+				}
 				
-			case GameStateType::Playing:
+				menu.update(deltaTime, particles, animations);
+				
+				BeginDrawing();
+				ClearBackground(Color{23, 23, 23, 255});
+				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+				menu.render(renderer, textSystem, particles, animations, state);
+				EndMode2D();
+				EndDrawing();
+				break;			case GameStateType::Playing:
 				if (input == Input::Pause) {
 					state.isPaused = !state.isPaused;
 					state.currentState = state.isPaused ? 
@@ -190,9 +204,26 @@ int main(int argc, char **argv) {
 					gameController.clearInputBuffer();
 					state.currentState = GameStateType::Menu;
 
-					renderer.renderMenu(state, deltaTime, particles, textSystem);
+					// Update and render menu
+					menu.update(deltaTime, particles, animations);
+					BeginDrawing();
+					ClearBackground(Color{23, 23, 23, 255});
+					BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+					menu.render(renderer, textSystem, particles, animations, state);
+					EndMode2D();
+					EndDrawing();
 				} else {
-					renderer.renderGameOver(state, deltaTime, particles, textSystem);
+					// Update game over menu
+					particles.update(deltaTime);
+					animations.updateTunnelEffect(deltaTime);
+					
+					BeginDrawing();
+					ClearBackground(Color{23, 23, 23, 255});
+					BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+					menu.renderGameOver(renderer, textSystem, particles, animations, state);
+					EndMode2D();
+					// renderer.drawNoiseGrain(); // keeping noise for contrast in game over
+					EndDrawing();
 				}
 				break;
 		}

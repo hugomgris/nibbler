@@ -4,6 +4,8 @@
 #include "../../incs/colors.h"
 #include "../../incs/ParticleSystem.hpp"
 #include "../../incs/TextSystem.hpp"
+#include "../../incs/AnimationSystem.hpp"
+#include "../../incs/MenuSystem.hpp"
 #include <rlgl.h>  // For low-level drawing functions (rlPushMatrix, rlBegin, etc.)
 
 Renderer::Renderer() :
@@ -16,12 +18,8 @@ Renderer::Renderer() :
 	accumulatedTime(0.0f),
 	currentGrainFrame(0),
 	grainFrameTimer(0.0f),
-	grainFrameInterval(0.05f),
-	spawnInterval(0.3f),
-	animationSpeed(0.5f),
-	enableTunnelEffect(true) {
+	grainFrameInterval(0.05f) {
 		separator = cubeSize * 2;
-		lastSpawnTime = std::chrono::high_resolution_clock::now();
 	}
 
 Renderer::~Renderer() {
@@ -266,79 +264,6 @@ void Renderer::drawBorder(int thickness) {
 	DrawRectangle(screenWidth - thickness, 0, thickness, screenHeight, customWhite);
 }
 
-float Renderer::easeInQuad(float t) {
-	return t * t;
-}
-
-void Renderer::updateTunnelEffect(float deltaTime) {
-	if (!enableTunnelEffect) return;
-
-	for (auto& line : borderLines) {
-		line.age += deltaTime * animationSpeed;
-		line.progress = easeInQuad(line.age);
-	}
-
-	borderLines.erase(
-		std::remove_if(borderLines.begin(), borderLines.end(),
-			[](const BorderLine& line) { return line.progress >= 1.0f; }),
-		borderLines.end()
-	);
-
-	auto now = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float> elapsed = now - lastSpawnTime;
-	
-	if (elapsed.count() >= spawnInterval) {
-		borderLines.push_back(BorderLine());
-		lastSpawnTime = now;
-	}
-}
-
-void Renderer::renderTunnelEffect() {
-	if (!enableTunnelEffect || borderLines.empty()) return;
-
-	int borderThickness = 25;
-	
-	int contentInset = 60;
-	int startLeft = borderThickness + contentInset;
-	int startTop = borderThickness + contentInset;
-	int startRight = screenWidth - borderThickness - contentInset;
-	int startBottom = screenHeight - borderThickness - contentInset;
-
-	int maxTravelX = contentInset;
-	int maxTravelY = contentInset;
-
-	for (const auto& line : borderLines) {
-		// current offset from start rectangle
-		int offsetX = static_cast<int>(line.progress * maxTravelX);
-		int offsetY = static_cast<int>(line.progress * maxTravelY);
-		
-		// current rectangle coordinates
-		int left = startLeft - offsetX;
-		int top = startTop - offsetY;
-		int right = startRight + offsetX;
-		int bottom = startBottom + offsetY;
-		int width = right - left;
-		int height = bottom - top;
-		
-		unsigned char alpha = static_cast<unsigned char>(line.progress * 255);
-		Color lineColor = {70, 130, 180, alpha};  // Light blue with fade
-
-		int lineWidth = 2;
-
-		// Top
-		DrawRectangle(left, top, width, lineWidth, lineColor);
-		
-		// Bottom
-		DrawRectangle(left, bottom - lineWidth, width, lineWidth, lineColor);
-		
-		// Left
-		DrawRectangle(left, top, lineWidth, height, lineColor);
-		
-		// Right
-		DrawRectangle(right - lineWidth, top, lineWidth, height, lineColor);
-	}
-}
-
 
 void Renderer::render(const GameState& state, float deltaTime){
 	camera.fovy = customFov;
@@ -383,116 +308,6 @@ void Renderer::render(const GameState& state, float deltaTime){
 	
 	// Post Processing
 	drawNoiseGrain();
-	
-	EndDrawing();
-}
-
-void Renderer::renderMenu(const GameState& state, float deltaTime, ParticleSystem& particles,
-                          TextSystem& textSystem) {
-	getCamera().fovy = menuFov;
-
-	if (!state.isPaused) {
-        accumulatedTime += deltaTime;
-    }
-	
-	// Frame counter for logo snake trail particle spawning
-	static int frameCounter = 0;
-	if (frameCounter % 5 == 0) {
-		int square = 10;
-		float trailX = screenWidth / 2.0f + (square * 17.2f);
-		float trailY = screenHeight / 2.0f + (square * 3.2f);
-		Color lightBlue = {70, 130, 180, 255};
-		particles.spawnSnakeTrail(trailX, trailY, 1, 0, lightBlue);
-	}
-	frameCounter++;
-	
-	// Update film grain pattern at regular intervals
-	grainFrameTimer += deltaTime;
-	if (grainFrameTimer >= grainFrameInterval) {
-		grainFrameTimer = 0.0f;
-		currentGrainFrame = GetRandomValue(0, GRAIN_TEXTURE_COUNT - 1);
-	}
-	
-	// Update particles
-	particles.update(deltaTime);
-	
-	// Update tunnel effect
-	updateTunnelEffect(deltaTime);
-	
-	BeginDrawing();
-	ClearBackground(customBlack);
-
-	BeginMode2D(camera2D);
-	
-	int screenCenterX = screenWidth / 2;
-	int screenCenterY = screenHeight / 2;
-	int square = 10;
-	int sep = 15;
-	
-	textSystem.drawLogo(screenCenterX, screenCenterY, square, sep, customWhite, 
-	                    Color{70, 130, 180, 255}, Color{254, 74, 81, 255});
-	textSystem.drawInstructions(state, screenCenterX, screenCenterY, customWhite, customGray);
-	
-	particles.render();
-
-	renderTunnelEffect();
-
-	drawBorder(25);
-
-	EndMode2D();
-
-	// drawNoiseGrain();  // not sure about the whole noise stuff, so switching it off for now
-	
-	EndDrawing();
-}
-
-void Renderer::renderGameOver(const GameState& state, float deltaTime, ParticleSystem& particles,
-                              TextSystem& textSystem) {
-	getCamera().fovy = menuFov;
-
-	grainFrameTimer += deltaTime;
-	if (grainFrameTimer >= grainFrameInterval) {
-		grainFrameTimer = 0.0f;
-		currentGrainFrame = GetRandomValue(0, GRAIN_TEXTURE_COUNT - 1);
-	}
-	
-	// Update particles
-	particles.update(deltaTime);
-	
-	// Update tunnel effect
-	updateTunnelEffect(deltaTime);
-	
-	BeginDrawing();
-	ClearBackground(customBlack);
-
-	BeginMode2D(camera2D);
-	
-	// Render particles
-	particles.render();
-	
-	int screenCenterX = screenWidth / 2;
-	int screenCenterY = screenHeight / 2;
-	int square = 10;
-	int sep = 15;
-	
-	textSystem.drawGameOverLogo(screenCenterX, screenCenterY, square, sep, customWhite, customGray);
-	
-	if (state.config.mode != GameMode::SINGLE) {
-		textSystem.drawWinner(state, screenCenterX, screenCenterY, customWhite);
-	}
-	
-	textSystem.drawScore(state, screenCenterX, screenCenterY, customWhite);
-	textSystem.drawRetryPrompt(screenCenterX, screenCenterY, customWhite);
-	
-	// Render tunnel effect
-	renderTunnelEffect();
-	
-	// Draw border on top
-	drawBorder(25);
-
-	EndMode2D();
-
-	drawNoiseGrain(); // keeping noise here for contrast
 	
 	EndDrawing();
 }

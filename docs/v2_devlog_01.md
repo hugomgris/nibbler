@@ -51,8 +51,9 @@ BUT as I lay out plans, I realize something: I need a deep re-structuring proces
 - [x] Game controller
 - [x] Particle system
 - [x] Text system
-- [ ] Custom text system/pipeline/subsystem
+- [ ] Animation System
 - [ ] Menu system
+- [ ] Custom text system/pipeline/subsystem- [ ] Custom text system/pipeline/subsystem
 
 Inter-system communication will be laid out by passing references. If things get too complicated down the line, which I doubt but who am I to say, I'll transition into an event system with connecting lambda functions. I'll get into system rebuild mode. Wish me luck.
 
