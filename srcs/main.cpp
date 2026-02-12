@@ -72,6 +72,7 @@ int main(int argc, char **argv) {
 
 	// SYSTEMS
 	GameController gameController(&state);
+	gameController.setAIController(nullptr);
 
 	Renderer renderer;
 	renderer.init(width, height);

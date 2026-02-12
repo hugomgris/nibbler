@@ -31,9 +31,12 @@ void MenuSystem::initializeButtons() {
 
 	// Unified while coding the buttons, will design them properly later.
 	// Colors
-		Color buttonNormal = {70, 130, 180, 200};   // Semi-transparent blue
-		Color buttonHover = {100, 160, 210, 255};   // Brighter blue
-		Color textColor = {255, 248, 227, 255};     // White
+		Color buttonOutline = snakeALightSide;   // Semi-transparent blue
+		Color buttonBackground = customBlack;
+		Color textColor = customWhite;     // White
+		Color textHoverColor = customBlack;
+		Color buttonHover = customWhite;   // Brighter blue
+		Color outlineHoverColor = customWhite;
 		
 		// Button dimensions
 		float buttonWidth = 300;
@@ -49,9 +52,12 @@ void MenuSystem::initializeButtons() {
 		Button startButton;
 		startButton.bounds = {centerX, startY, buttonWidth, buttonHeight};
 		startButton.Text = "Start Game";
-		startButton.normalColor = buttonNormal;
+		startButton.outlineColor = buttonOutline;
+		startButton.backgroundColor = buttonBackground;
 		startButton.hoverColor = buttonHover;
 		startButton.textColor = textColor;
+		startButton.textHoverColor = textHoverColor;
+		startButton.outlineHoverColor = outlineHoverColor;
 		startButton.onClick = [this]() {
 			this->startGame();
 		};
@@ -62,27 +68,65 @@ void MenuSystem::initializeButtons() {
 		Button modeButton;
 		modeButton.bounds = {centerX, startY + buttonHeight + spacing, buttonWidth, buttonHeight};
 		modeButton.Text = "Change mode";
-		modeButton.normalColor = buttonNormal;
+		modeButton.outlineColor = buttonOutline;
+		modeButton.backgroundColor = buttonBackground;
 		modeButton.hoverColor = buttonHover;
 		modeButton.textColor = textColor;
+		modeButton.textHoverColor = textHoverColor;
+		modeButton.outlineHoverColor = outlineHoverColor;
 		modeButton.onClick = [this]() { 
 			this->switchConfigMode();
 		};
 		
 		buttons.push_back(modeButton);
+
+		// Quit button
+		Button quitButton;
+		quitButton.bounds = {centerX, startY + (buttonHeight * 2) + (spacing * 2), buttonWidth, buttonHeight};
+		quitButton.Text = "Quit";
+		quitButton.outlineColor = buttonOutline;
+		quitButton.backgroundColor = buttonBackground;
+		quitButton.hoverColor = buttonHover;
+		quitButton.textColor = textColor;
+		quitButton.textHoverColor = textHoverColor;
+		quitButton.outlineHoverColor = outlineHoverColor;
+		quitButton.onClick = [this]() { 
+			this->quitGame();
+		};
+		
+		buttons.push_back(quitButton);
 	} else if (currentState == MenuState::GameOver) {
 		// Restart button
 		Button restartButton;
-		restartButton.bounds = {centerX, startY + buttonHeight + spacing, buttonWidth, buttonHeight};
+		restartButton.bounds = {centerX, startY, buttonWidth, buttonHeight};
 		restartButton.Text = "Main Menu";
-		restartButton.normalColor = buttonNormal;
+		restartButton.outlineColor = buttonOutline;
+		restartButton.backgroundColor = buttonBackground;
 		restartButton.hoverColor = buttonHover;
 		restartButton.textColor = textColor;
+		restartButton.textHoverColor = textHoverColor;
+		restartButton.outlineHoverColor = outlineHoverColor;
 		restartButton.onClick = [this] () {
 			this->restartGame();
 		};
 
 		buttons.push_back(restartButton);
+
+		// Quit button
+		Button quitButton;
+		quitButton.bounds = {centerX, startY + buttonHeight + spacing, buttonWidth, buttonHeight};
+		quitButton.Text = "Quit";
+		quitButton.outlineColor = buttonOutline;
+		quitButton.backgroundColor = buttonBackground;
+		quitButton.hoverColor = buttonHover;
+		quitButton.textColor = textColor;
+		quitButton.textHoverColor = textHoverColor;
+		quitButton.outlineHoverColor = outlineHoverColor;
+		quitButton.onClick = [this]() { 
+			this->quitGame();
+		};
+		
+		buttons.push_back(quitButton);
 	} // Other menu states coming soon
 }
 
@@ -145,15 +189,15 @@ void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 	int modeTextWidth = MeasureText(modeText, 30);
 	DrawText(modeText, screenCenterX - modeTextWidth / 2, screenCenterY + 100, 30, Color{255, 248, 227, 255});
 	
+	// Render particles
+	particles.render();
+
 	// Render buttons
 	Vector2 mousePos = GetMousePosition();
 	for (const auto& button : buttons) {
 		bool hovered = button.isHovered(mousePos);
 		button.render(hovered);
 	}
-	
-	// Render particles
-	particles.render();
 	
 	// Render tunnel effect
 	animations.renderTunnelEffect();
@@ -227,21 +271,21 @@ Button* MenuSystem::getHoveredButton(Vector2 mousePos) const {
 void MenuSystem::startGame() {
 	GameState &state = gameController.getState();
 
+	// Reset timing
 	state.timing.accumulator = 0.0f;
 	state.timing.lastFrameTime = 0.0f;
 	
+	// Clear old AI (if any)
 	state.aiController.reset();
-
-	if (state.aiController) {
-		gameController.setAIController(nullptr);
-	}
-
-if (state.config.mode == GameMode::AI) {
+	gameController.setAIController(nullptr);
+	
+	// Create new AI if needed
+	if (state.config.mode == GameMode::AI) {
 		state.aiController = std::make_unique<SnakeAI>(AIConfig::medium());
+		gameController.setAIController(state.aiController.get()); 
 	}
 	
 	state.currentState = GameStateType::Playing;
-	
 }
 
 void MenuSystem::switchConfigMode()
@@ -283,4 +327,8 @@ void MenuSystem::restartGame() {
 	state.currentState = GameStateType::Menu;
 	setState(MenuState::Start);
 	// Note: gameOverStateSet flag in main.cpp will be reset on next state transition
+}
+
+void MenuSystem::quitGame() {
+	gameController.getState().isRunning = false;
 }

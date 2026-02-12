@@ -23,7 +23,7 @@ INCDIR          := incs
 MAIN_SRC        := main.cpp
 CORE_SRC        := core/GameController.cpp core/Snake.cpp core/Food.cpp core/Utils.cpp
 AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
-GRAPHICS_SRC    := graphics/Renderer.cpp graphics/TextSystem.cpp graphics/ParticleSystem.cpp graphics/AnimationSystem.cpp graphics/MenuSystem.cpp
+GRAPHICS_SRC    := graphics/Renderer.cpp graphics/TextSystem.cpp graphics/ParticleSystem.cpp graphics/AnimationSystem.cpp graphics/MenuSystem.cpp graphics/RaylibColors.cpp
 
 ALL_SRC         := $(MAIN_SRC) $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC)
 
@@ -38,7 +38,7 @@ INCLUDES        := -I$(INCDIR)
 # -=-=-=-=-    FLAGS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 CC              := c++
-CFLAGS          := -Wall -Wextra -Werror -std=c++20 -g3 -O0 $(INCLUDES)
+CFLAGS          := -Wall -Wextra -Werror -std=c++20 -g3 -O0 $(INCLUDES) #-fsanitize=address
 DEPFLAGS        := -MMD -MP
 
 # -=-=-=-=-    EXTERNAL LIBRARIES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #

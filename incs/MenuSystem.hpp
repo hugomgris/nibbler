@@ -62,4 +62,5 @@ class MenuSystem {
 		void startGame();
 		void switchConfigMode();
 		void restartGame();
+		void quitGame();
 };

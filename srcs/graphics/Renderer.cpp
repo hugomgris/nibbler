@@ -2,6 +2,7 @@
 #include "../../incs/Snake.hpp"
 #include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
+#include "../../incs/RaylibColors.hpp"
 #include "../../incs/ParticleSystem.hpp"
 #include "../../incs/TextSystem.hpp"
 #include "../../incs/AnimationSystem.hpp"
