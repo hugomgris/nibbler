@@ -2,7 +2,7 @@
 #include <raymath.h>
 
 TextSystem::TextSystem() 
-	: fontSize(34), smallFontSize(24), smallMode(false) {
+	: fontSize(30), smallFontSize(20), smallMode(false) {
 }
 
 TextSystem::~TextSystem() {

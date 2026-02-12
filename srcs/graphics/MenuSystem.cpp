@@ -140,8 +140,8 @@ void MenuSystem::spawnMenuParticles(float deltaTime, ParticleSystem& particles) 
 	logoSnakeTrailCounter++;
 	
 	if (logoSnakeTrailCounter % 5 == 0) {
-		int square = 10;
-		float trailX = screenWidth / 2.0f + (square * 17.2f);
+		int square = 30;
+		float trailX = screenWidth / 2.0f + (square * 18.2f);
 		float trailY = screenHeight / 2.0f + (square * 3.2f);
 		Color lightBlue = {70, 130, 180, 255};
 		particles.spawnSnakeTrail(trailX, trailY, 1, 0, lightBlue);
@@ -164,7 +164,7 @@ void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 						const GameState& state) {
 	int screenCenterX = screenWidth / 2;
 	int screenCenterY = screenHeight / 2;
-	int square = 10;
+	int square = 30;
 	int sep = 15;
 	
 	// Render logo
@@ -187,7 +187,7 @@ void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 			break;
 	}
 	int modeTextWidth = MeasureText(modeText, 30);
-	DrawText(modeText, screenCenterX - modeTextWidth / 2, screenCenterY + 100, 30, Color{255, 248, 227, 255});
+	DrawText(modeText, screenCenterX - modeTextWidth / 2, screenCenterY + 135, 30, Color{255, 248, 227, 255});
 	
 	// Render particles
 	particles.render();
@@ -211,7 +211,7 @@ void MenuSystem::renderGameOver(Renderer& renderer, TextSystem& textSystem,
 								const GameState& state) {
 	int screenCenterX = screenWidth / 2;
 	int screenCenterY = screenHeight / 2;
-	int square = 10;
+	int square = 30;
 	int sep = 15;
 	
 	// Render particles

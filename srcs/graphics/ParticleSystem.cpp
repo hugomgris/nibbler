@@ -192,12 +192,14 @@ void ParticleSystem::spawnSnakeTrail(float x, float y, int count, float directio
 		float spawnX = x + offsetX;
 		float spawnY = y + offsetY;
 		
-		float speed = 30.0f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 9.0f;
+		float speed = 50.0f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 9.0f;
 		float vx = cosf(angle) * speed;
 		float vy = sinf(angle) * speed;
 		
-		float minSize = (x <= 1135.0f) ? 10.0f : 20.0f;
-		float maxSize = (x <= 1135.0f) ? 15.0f : 25.0f;
+		/* float minSize = (x <= 1135.0f) ? 10.0f : 20.0f;
+		float maxSize = (x <= 1135.0f) ? 15.0f : 25.0f; */
+		float minSize = 10.0f;
+		float maxSize = 20.0f;
 		float lifetime = 0.2f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 1.5f;
 		
 		// here particles have no rotation because I want a straight trail
