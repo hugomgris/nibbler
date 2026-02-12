@@ -12,12 +12,13 @@ void GameController::update()  {
 	}
 	
 	processNextInput();
-	_state->snake_A.move();
+	_state->snake_A->move();
 	if (_state->config.mode == GameMode::MULTI && _state->snake_B)
 		_state->snake_B->move();
 	if (_state->config.mode == GameMode::AI && _state->snake_B)
 		_state->snake_B->move();
 	_state->isRunning = checkGameOverCollision();
+	if(!_state->isRunning) { _state->currentState = GameStateType::GameOver; }
 	checkHeadFoodCollision();
 }
 
@@ -47,16 +48,16 @@ void GameController::processNextInput() {
 		
 		switch (input) {
 			case Input::Up_A:
-				_state->snake_A.changeDirection(Direction::Up);
+				_state->snake_A->changeDirection(Direction::Up);
 				break;
 			case Input::Down_A:
-				_state->snake_A.changeDirection(Direction::Down);
+				_state->snake_A->changeDirection(Direction::Down);
 				break;
 			case Input::Left_A:
-				_state->snake_A.changeDirection(Direction::Left);
+				_state->snake_A->changeDirection(Direction::Left);
 				break;
 			case Input::Right_A:
-				_state->snake_A.changeDirection(Direction::Right);
+				_state->snake_A->changeDirection(Direction::Right);
 				break;
 			default:
 				break;
@@ -96,19 +97,19 @@ void GameController::processNextInput() {
 }
 
 void GameController::checkHeadFoodCollision() {
-	Vec2	head_A = _state->snake_A.getSegments()[0];
+	Vec2	head_A = _state->snake_A->getSegments()[0];
 	//
-	Vec2	foodPos = _state->food.getPosition();
+	Vec2	foodPos = _state->food->getPosition();
 
 	if (head_A.x == foodPos.x && head_A.y == foodPos.y)
 	{
 		/* if (_state->audio)
 			_state->audio->playSound("sound:ñomñomñomñom"); // TODO: real sound implementation */
 			
-		_state->snake_A.grow();
+		_state->snake_A->grow();
 		_state->score++;  // Increment score when food is eaten
 		
-		if (!_state->food.replaceInFreeSpace(_state)) {
+		if (!_state->food->replaceInFreeSpace(_state)) {
 			_state->isRunning = false;
 			std::cout << "YOU WIN" << std::endl;
 		}
@@ -124,7 +125,7 @@ void GameController::checkHeadFoodCollision() {
 			_state->snake_B->grow();
 			_state->scoreB++;  // Increment score when food is eaten
 			
-			if (!_state->food.replaceInFreeSpace(_state)) {
+			if (!_state->food->replaceInFreeSpace(_state)) {
 				_state->isRunning = false;
 				std::cout << "YOU WIN" << std::endl;
 			}
@@ -134,21 +135,21 @@ void GameController::checkHeadFoodCollision() {
 
 bool GameController::checkGameOverCollision()
 {
-	Vec2	head_A = _state->snake_A.getSegments()[0];
+	Vec2	head_A = _state->snake_A->getSegments()[0];
 
 	if (head_A.x < 0 || head_A.x > _state->width - 1)
-		_state->snake_A.setAsDead(true);
+		_state->snake_A->setAsDead(true);
 
 	if (head_A.y < 0 || head_A.y > _state->height - 1)
-		_state->snake_A.setAsDead(true);
+		_state->snake_A->setAsDead(true);
 
-	for (int i = 1; i < _state->snake_A.getLength(); i++)
+	for (int i = 1; i < _state->snake_A->getLength(); i++)
 	{
-		if (_state->snake_A.getSegments()[i].x == head_A.x && _state->snake_A.getSegments()[i].y == head_A.y)
-			_state->snake_A.setAsDead(true);
+		if (_state->snake_A->getSegments()[i].x == head_A.x && _state->snake_A->getSegments()[i].y == head_A.y)
+			_state->snake_A->setAsDead(true);
 	}
 
-	if (_state->snake_A.isDead()) {
+	if (_state->snake_A->isDead()) {
 		return false;
 	}
 
@@ -159,7 +160,7 @@ bool GameController::checkGameOverCollision()
 		for (int i = 0; i < _state->snake_B->getLength(); i++)
 		{
 			if (_state->snake_B->getSegments()[i].x == head_A.x && _state->snake_B->getSegments()[i].y == head_A.y)
-				_state->snake_A.setAsDead(true);
+				_state->snake_A->setAsDead(true);
 		}
 
 		if (head_B.x < 0 || head_B.x > _state->width - 1)
@@ -179,13 +180,13 @@ bool GameController::checkGameOverCollision()
 		}
 
 		// Check if snake_B's head collides with snake_A's body
-		for (int i = 0; i < _state->snake_A.getLength(); i++)
+		for (int i = 0; i < _state->snake_A->getLength(); i++)
 		{
-			if (_state->snake_A.getSegments()[i].x == head_B.x && _state->snake_A.getSegments()[i].y == head_B.y)
+			if (_state->snake_A->getSegments()[i].x == head_B.x && _state->snake_A->getSegments()[i].y == head_B.y)
 				_state->snake_B->setAsDead(true);
 		}
 
-		if (_state->snake_A.isDead()) {
+		if (_state->snake_A->isDead()) {
 			return false;
 		}
 

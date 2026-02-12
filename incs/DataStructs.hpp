@@ -8,8 +8,10 @@ struct Vec2 {
 	int	y;
 };
 
+// Forward declarations
 class Snake;
 class Food;
+class SnakeAI;
 
 enum class GameStateType {
     Menu,
@@ -28,19 +30,27 @@ struct GameConfig {
 	GameMode	mode;
 };
 
+struct GameTiming {
+	float accumulator = 0.0f;
+	float fixedTimestep = 1.0f / 10.0f;
+	float lastFrameTime = 0.0f;
+};
+
 struct GameState {
-	int				width;
-	int				height;
-	Snake&			snake_A;
-	Snake*			snake_B; // Pointer for optional second snake (nullptr in SINGLE mode)
-	Food&			food;
-	bool			gameOver;
-	bool			isRunning;
-	bool			isPaused;
-	GameStateType	currentState;
-	int				score;		// for single player or player A in multiplayer
-	int				scoreB;		// for player B/AI in multiplayer
-	GameConfig&		config;
+	int							width;
+	int							height;
+	Snake*						snake_A;
+	Snake*						snake_B;
+	Food*						food;
+	bool						gameOver;
+	bool						isRunning;
+	bool						isPaused;
+	GameStateType				currentState;
+	int							score;
+	int							scoreB;
+	GameConfig					config;
+	GameTiming					timing;
+	std::unique_ptr<SnakeAI>	aiController;
 };
 
 struct AIConfig {

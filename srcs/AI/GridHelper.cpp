@@ -20,8 +20,8 @@ bool GridHelper::isWalkable(const GameState& state, Vec2 pos,
 	}
 
 	// Check snake a collision
-	const Vec2* snakeA_body = state.snake_A.getSegments();
-	int snakeA_len = state.snake_A.getLength();
+	const Vec2* snakeA_body = state.snake_A->getSegments();
+	int snakeA_len = state.snake_A->getLength();
 	
 	for (int i = 0; i < snakeA_len; i++) {
 		if (snakeA_body[i].x == x && snakeA_body[i].y == y)

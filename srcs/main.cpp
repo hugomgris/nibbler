@@ -27,24 +27,6 @@ bool parseArguments(int argc, char **argv)
 	return true;
 }
 
-void switchConfigMode(GameConfig &config)
-{
-	switch (config.mode)
-	{
-		case GameMode::SINGLE:
-			config.mode = GameMode::MULTI;
-			break;
-		
-		case GameMode::MULTI:
-			config.mode = GameMode::AI;
-			break;
-
-		case GameMode::AI:
-			config.mode = GameMode::SINGLE;
-			break;
-	}
-}
-
 int main(int argc, char **argv) {
 	if (argc != 3)
 	{
@@ -66,8 +48,31 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	// ENTITIES
+	Snake snake_A(width, height);
+	Snake snake_B(snake_A, width, height);
+	Food food(Vec2{0, 0}, width, height);
+
+	// CONFIGURATION AND STATE
+	GameState state;
+	state.width = width;
+	state.height = height;
+	state.snake_A = &snake_A;
+	state.snake_B = &snake_B;
+	state.food = &food;
+	state.gameOver = false;
+	state.isRunning = true;
+	state.isPaused = false;
+	state.currentState = GameStateType::Menu;
+	state.score = 0;
+	state.scoreB = 0;
+	state.config.mode = GameMode::SINGLE;
+	state.timing.accumulator = 0.0f;
+	state.aiController = nullptr;
 
 	// SYSTEMS
+	GameController gameController(&state);
+
 	Renderer renderer;
 	renderer.init(width, height);
 	
@@ -80,41 +85,21 @@ int main(int argc, char **argv) {
 	animations.init(1920, 1080);
 	animations.enableTunnelEffect(true, TunnelConfig::menu());
 
-	MenuSystem menu;
+	MenuSystem menu(gameController);
 	menu.init(width, height);
+	menu.setState(MenuState::Start);
 
-	// ENTITIES
-	Snake snake_A(width, height);
-	Snake snake_B(snake_A, width, height);
-	std::unique_ptr<SnakeAI> aiController = nullptr;
-
-	Food food(Vec2{0, 0}, width, height);
-
-	// CONFIGURATION AND STATE
-	GameConfig config { GameMode::SINGLE };
-	
-	GameState state {
-		width, height, snake_A, &snake_B, food,
-		false,
-		true,
-		false,
-		GameStateType::Menu,
-		0,
-		0,
-		config
-	};
-	
+	// TIMING and preparations
 	food.replaceInFreeSpace(&state);
-
-	GameController gameController(&state);
 
 	const double TARGET_FPS = 10.0;					// Snake moves 10 times per second
 	const double FRAME_TIME = 1.0 / TARGET_FPS; 	// 0.1 seconds per update
 	
 	auto lastTime = std::chrono::high_resolution_clock::now();
-	double accumulator = 0.0;
 
 	// MAIN GAME LOOP
+	bool gameOverStateInitialized = false;
+	
 	while (state.isRunning) {
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float> frameTime = currentTime - lastTime;
@@ -130,23 +115,12 @@ int main(int argc, char **argv) {
 		
 		// STATE MACHINE
 		switch (state.currentState) {
-			case GameStateType::Menu:
-				if (input == Input::Enter) {
-					if (aiController) {
-						gameController.setAIController(nullptr);
-						aiController.reset();
-					}
-					
-					if (state.config.mode == GameMode::AI) {
-						aiController = std::make_unique<SnakeAI>(AIConfig::medium());
-						gameController.setAIController(aiController.get());
-					}
-					
-					state.currentState = GameStateType::Playing;
-					accumulator = 0.0;
-				} else if (input == Input::Pause) {
-					switchConfigMode(state.config);
-				}
+		case GameStateType::Menu: {
+			gameOverStateInitialized = false;  // Reset for next game over
+			
+			Vector2 mousePos = GetMousePosition();
+				bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+				menu.handleInput(mousePos, mouseClicked);
 				
 				menu.update(deltaTime, particles, animations);
 				
@@ -156,19 +130,22 @@ int main(int argc, char **argv) {
 				menu.render(renderer, textSystem, particles, animations, state);
 				EndMode2D();
 				EndDrawing();
-				break;			case GameStateType::Playing:
+				break;
+			}
+
+			case GameStateType::Playing:
 				if (input == Input::Pause) {
 					state.isPaused = !state.isPaused;
 					state.currentState = state.isPaused ? 
 						GameStateType::Paused : GameStateType::Playing;
 				}
 				
-				accumulator += deltaTime;
+				state.timing.accumulator += deltaTime;
 				gameController.bufferInput(input);
 				
-				while (accumulator >= FRAME_TIME) {
+				while (state.timing.accumulator >= FRAME_TIME) {
 					gameController.update();
-					accumulator -= FRAME_TIME;
+					state.timing.accumulator -= FRAME_TIME;
 					
 					if (!state.isRunning) {
 						state.currentState = GameStateType::GameOver;
@@ -188,34 +165,18 @@ int main(int argc, char **argv) {
 				renderer.render(state, 0.0f);
 				break;
 				
-			case GameStateType::GameOver:
-				if (input == Input::Enter) {
-					snake_A = Snake(width, height);
-					snake_B = Snake(snake_A, width, height);
-					food = Food(Vec2{0, 0}, width, height);
-					food.replaceInFreeSpace(&state);
-					state.score = 0;
-					state.scoreB = 0;
-					state.snake_A.setAsDead(false);
-					state.snake_B->setAsDead(false);
-					state.gameOver = false;
-					state.isPaused = false;
-					accumulator = 0.0;
-					gameController.clearInputBuffer();
-					state.currentState = GameStateType::Menu;
-
-					// Update and render menu
-					menu.update(deltaTime, particles, animations);
-					BeginDrawing();
-					ClearBackground(Color{23, 23, 23, 255});
-					BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-					menu.render(renderer, textSystem, particles, animations, state);
-					EndMode2D();
-					EndDrawing();
-				} else {
-					// Update game over menu
-					particles.update(deltaTime);
+			case GameStateType::GameOver: {
+				if (!gameOverStateInitialized) {
+					menu.setState(MenuState::GameOver);
+					gameOverStateInitialized = true;
+				}
+				
+				particles.update(deltaTime);
 					animations.updateTunnelEffect(deltaTime);
+
+					Vector2 mousePos = GetMousePosition();
+					bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+					menu.handleInput(mousePos, mouseClicked);
 					
 					BeginDrawing();
 					ClearBackground(Color{23, 23, 23, 255});
@@ -224,8 +185,8 @@ int main(int argc, char **argv) {
 					EndMode2D();
 					// renderer.drawNoiseGrain(); // keeping noise for contrast in game over
 					EndDrawing();
-				}
 				break;
+			}
 		}
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));

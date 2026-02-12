@@ -36,7 +36,13 @@ class Snake {
 		const Vec2 *getSegments() const;
 		Direction getDirection() const;  //for testing
 
-		void move();
-		void changeDirection(Direction dir);
-		void grow();
+	void move();
+	void changeDirection(Direction dir);
+	void grow();
+	void reset(int width, int height);  // Reinitialize snake at new position
+	void resetAsMirrored(const Snake& otherSnake, int width, int height);  // Reset as mirrored opponent
+
+private:
+	void initializeAtRandomPosition(int width, int height);  // Common spawn logic
+	void initializeAsMirrored(const Snake& otherSnake, int width, int height);  // Initialize as mirrored opponent
 };

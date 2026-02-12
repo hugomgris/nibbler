@@ -35,7 +35,7 @@ Input SnakeAI::goToFood(const GameState& state) {
 	if (!state.snake_B) return Input::None;
 	
 	Vec2 head = state.snake_B->getSegments()[0];
-	Vec2 foodPos = state.food.getPosition();
+	Vec2 foodPos = state.food->getPosition();
 	
 	// find food path
 	std::vector<Vec2> path = pathFinder.findPath(state, head, foodPos, config.maxSearchDepth);
@@ -124,8 +124,8 @@ bool SnakeAI::isSafeMove(const GameState& state, Vec2 nextPos) {
 	}
 	
 	// opponent collisions check
-	const Vec2* opponentSegs = state.snake_A.getSegments();
-	int opponentLen = state.snake_A.getLength();
+	const Vec2* opponentSegs = state.snake_A->getSegments();
+	int opponentLen = state.snake_A->getLength();
 	
 	for (int i = 0; i < opponentLen; i++) {
 		if (opponentSegs[i].x == nextPos.x && opponentSegs[i].y == nextPos.y) {

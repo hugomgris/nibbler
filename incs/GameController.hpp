@@ -33,6 +33,7 @@ class GameController {
 
 		void update();
 
+		GameState& getState() const { return *_state; }
 		void setAIController(SnakeAI *ai);
 
 		void bufferInput(Input input);

@@ -2,6 +2,7 @@
 
 #include "Button.hpp"
 #include "DataStructs.hpp"
+#include "GameController.hpp"
 #include <raylib.h>
 #include <vector>
 
@@ -19,6 +20,7 @@ enum class MenuState {
 
 class MenuSystem {
 	private:
+		GameController &gameController;
 		MenuState currentState;
 		std::vector<Button> buttons;
 
@@ -38,21 +40,26 @@ class MenuSystem {
 
 	
 	public:
-		MenuSystem();
+		MenuSystem(GameController &gameController);;
 		~MenuSystem() = default;
 
 		void init(int width, int height);
 		void setState(MenuState newStat);
 		MenuState getstate() const { return currentState; }
 
-	// update and render for each menu state
-	void update(float deltaTime, ParticleSystem& particles, AnimationSystem& animations);
-	void render(Renderer &renderer, TextSystem& textSystem,
-				ParticleSystem& particles, AnimationSystem& animations,
-				const GameState& state);
-	void renderGameOver(Renderer &renderer, TextSystem& textSystem,
-						ParticleSystem& particles, AnimationSystem& animations,
-						const GameState& state);        // input handling
-	void handleInput(Vector2 mousePos, bool mouseClicked);
-	Button* getHoveredButton(Vector2 mousePos) const;
+		// update and render for each menu state
+		void update(float deltaTime, ParticleSystem& particles, AnimationSystem& animations);
+		void render(Renderer &renderer, TextSystem& textSystem,
+					ParticleSystem& particles, AnimationSystem& animations,
+					const GameState& state);
+		void renderGameOver(Renderer &renderer, TextSystem& textSystem,
+							ParticleSystem& particles, AnimationSystem& animations,
+							const GameState& state);        // input handling
+		void handleInput(Vector2 mousePos, bool mouseClicked);
+		Button* getHoveredButton(Vector2 mousePos) const;
+
+		// button functions
+		void startGame();
+		void switchConfigMode();
+		void restartGame();
 };

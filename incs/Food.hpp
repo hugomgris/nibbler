@@ -15,8 +15,9 @@ class Food {
 		Food(const Food &other);
 		Food &operator=(const Food &other);
 
-		bool replaceInFreeSpace(GameState *gameState);
+	bool replaceInFreeSpace(GameState *gameState);
+	void reset(GameState *gameState);  // Reinitialize food at new position
 
-		Vec2 getPosition() const;
-		const char* getFoodChar() const;
+	Vec2 getPosition() const;
+	const char* getFoodChar() const;
 };

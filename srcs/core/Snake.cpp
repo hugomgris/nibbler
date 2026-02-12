@@ -3,6 +3,12 @@
 
 Snake::Snake(int width, int height): _length(4), _maxLength((width * height) - 2) {
 	_segments = new Vec2[_maxLength];
+	initializeAtRandomPosition(width, height);
+}
+
+void Snake::initializeAtRandomPosition(int width, int height) {
+	_length = 4;
+	_isDead = false;
 	
 	switch (Utils::getRandomInt(3))
 	{
@@ -55,7 +61,13 @@ Snake::Snake(int width, int height): _length(4), _maxLength((width * height) - 2
 
 Snake::Snake(const Snake &otherSnake, int width, int height) : _length(otherSnake._length), _maxLength(otherSnake._maxLength) {
 	_segments = new Vec2[_maxLength];
+	initializeAsMirrored(otherSnake, width, height);
+}
 
+void Snake::initializeAsMirrored(const Snake &otherSnake, int width, int height) {
+	_length = 4;
+	_isDead = false;
+	
 	switch (otherSnake._direction)
 	{
 		case Direction::Up:
@@ -80,11 +92,6 @@ Snake::Snake(const Snake &otherSnake, int width, int height) : _length(otherSnak
 	_segments[2].y = height - 1 - otherSnake._segments[2].y;
 	_segments[3].x = width - 1 - otherSnake._segments[3].x;
 	_segments[3].y = height - 1 - otherSnake._segments[3].y;
-
-	/* _direction = otherSnake._direction;
-	for (int i = 0; i < _length; ++i) {
-		_segments[i] = otherSnake._segments[i];
-	} */
 }
 
 Snake::Snake(Snake &&other) noexcept : _length(other._length), _maxLength(other._maxLength), _segments(other._segments), _direction(other._direction) {
@@ -200,5 +207,13 @@ void Snake::grow() {
 	}
 	_segments[_length] = Vec2{ _segments[_length - 1].x, _segments[_length - 1].y };
 	_length++;
+}
+
+void Snake::reset(int width, int height) {
+	initializeAtRandomPosition(width, height);
+}
+
+void Snake::resetAsMirrored(const Snake& otherSnake, int width, int height) {
+	initializeAsMirrored(otherSnake, width, height);
 }
 	

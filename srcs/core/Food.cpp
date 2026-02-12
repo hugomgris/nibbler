@@ -25,8 +25,8 @@ bool Food::replaceInFreeSpace(GameState *gameState)
 {
 	std::vector<Vec2> snakeASegments;
 	std::vector<Vec2> snakeBSegments;
-	for (int i = 0; i < gameState->snake_A.getLength(); i++) {
-		snakeASegments.push_back(gameState->snake_A.getSegments()[i]);
+	for (int i = 0; i < gameState->snake_A->getLength(); i++) {
+		snakeASegments.push_back(gameState->snake_A->getSegments()[i]);
 	}
 
 	if (gameState->config.mode != GameMode::SINGLE && gameState->snake_B) {
@@ -84,3 +84,7 @@ bool Food::replaceInFreeSpace(GameState *gameState)
 Vec2 Food::getPosition() const { return _position; }
 
 const char *Food::getFoodChar() const { return _foodChar; };
+
+void Food::reset(GameState *gameState) {
+	replaceInFreeSpace(gameState);
+}
