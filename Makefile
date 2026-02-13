@@ -21,7 +21,7 @@ INCDIR          := incs
 # -=-=-=-=-    SOURCE FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 MAIN_SRC        := main.cpp
-CORE_SRC        := core/GameController.cpp core/Snake.cpp core/Food.cpp core/Utils.cpp
+CORE_SRC        := core/GameController.cpp core/InputManager.cpp core/Snake.cpp core/Food.cpp core/Utils.cpp
 AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
 GRAPHICS_SRC    := graphics/Renderer.cpp graphics/TextSystem.cpp graphics/ParticleSystem.cpp graphics/AnimationSystem.cpp graphics/MenuSystem.cpp graphics/RaylibColors.cpp
 
@@ -159,6 +159,7 @@ clean:
 
 fclean: clean
 	@echo "$(RED)Cleaning $(NAME)...$(DEF_COLOR)"
+	@rm -rf $(LIB_DIR)
 	@rm -f $(NAME) $(TEST_BINARY)
 	@rm -rf $(TEST_OBJDIR)
 

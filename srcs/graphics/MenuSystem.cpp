@@ -166,6 +166,9 @@ void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 	int screenCenterY = screenHeight / 2;
 	int square = 30;
 	int sep = 15;
+
+	// Render particles
+	particles.render();
 	
 	// Render logo
 	textSystem.drawLogo(screenCenterX, screenCenterY, square, sep, 
@@ -188,15 +191,12 @@ void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 	}
 	int modeTextWidth = MeasureText(modeText, 30);
 	DrawText(modeText, screenCenterX - modeTextWidth / 2, screenCenterY + 135, 30, Color{255, 248, 227, 255});
-	
-	// Render particles
-	particles.render();
 
 	// Render buttons
 	Vector2 mousePos = GetMousePosition();
-	for (const auto& button : buttons) {
-		bool hovered = button.isHovered(mousePos);
-		button.render(hovered);
+	for (size_t i = 0; i < buttons.size(); i++) {
+		bool hovered = buttons[i].isHovered(mousePos) || (i == static_cast<size_t>(selectedButtonIndex));
+		buttons[i].render(hovered);
 	}
 	
 	// Render tunnel effect
@@ -231,11 +231,11 @@ void MenuSystem::renderGameOver(Renderer& renderer, TextSystem& textSystem,
 	//textSystem.drawScore(state, screenCenterX, screenCenterY, Color{255, 248, 227, 255});
 	//textSystem.drawRetryPrompt(screenCenterX, screenCenterY, Color{255, 248, 227, 255});
 
-	Vector2 mousePos = GetMousePosition();
-	for (const auto& button : buttons) {
-		bool hovered = button.isHovered(mousePos);
-		button.render(hovered);
-	}
+		Vector2 mousePos = GetMousePosition();
+		for (size_t i = 0; i < buttons.size(); i++) {
+			bool hovered = buttons[i].isHovered(mousePos) || (i == static_cast<size_t>(selectedButtonIndex));
+			buttons[i].render(hovered);
+		}
 	
 	// Render tunnel effect
 	animations.renderTunnelEffect();
@@ -244,19 +244,7 @@ void MenuSystem::renderGameOver(Renderer& renderer, TextSystem& textSystem,
 	renderer.drawBorder(25);
 }
 
-void MenuSystem::handleInput(Vector2 mousePos, bool mouseClicked) {
-	if (mouseClicked) {
-		for (auto& button : buttons) {
-			if (button.isHovered(mousePos)) {
-				if (button.onClick) {
-					button.onClick();
-				}
-				break;
-			}
-		}
-	}
-}
-
+// input related methods
 Button* MenuSystem::getHoveredButton(Vector2 mousePos) const {
 	for (const auto& button : buttons) {
 		if (button.isHovered(mousePos)) {
@@ -264,6 +252,68 @@ Button* MenuSystem::getHoveredButton(Vector2 mousePos) const {
 		}
 	}
 	return nullptr;
+}
+
+void MenuSystem::handleNavigation(NavigationAction action) {
+	switch (action) {
+		case NavigationAction::Up:
+			selectPreviousButton();
+			break;
+
+		case NavigationAction::Down:
+			selectNextButton();
+			break;
+
+		case NavigationAction::Confirm:
+			// Activate selected button
+			if (selectedButtonIndex >= 0 && static_cast<size_t>(selectedButtonIndex) < buttons.size()) {
+				if (buttons[selectedButtonIndex].onClick) {
+					buttons[selectedButtonIndex].onClick();
+				}
+			}
+			break;
+
+		case NavigationAction::Cancel:
+			// Go back / quite
+			if (currentState == MenuState::Start) {
+				quitGame();
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void MenuSystem::handleMouseInput(Vector2 mousePos, bool mouseClicked) {
+	for (size_t i = 0; i < buttons.size(); i++) {
+		if (buttons[i].isHovered(mousePos)) {
+			selectedButtonIndex =  i;
+
+			if (mouseClicked && buttons[i].onClick) {
+				buttons[i].onClick();
+			}
+			break;
+		}
+	}
+}
+
+void MenuSystem::selectNextButton() {
+	if (static_cast<size_t>(selectedButtonIndex) > buttons.size() - 1)
+		selectedButtonIndex = 0;
+	else
+		selectedButtonIndex = (selectedButtonIndex + 1) % buttons.size();
+}
+
+void MenuSystem::selectPreviousButton() {
+	if (static_cast<size_t>(selectedButtonIndex) > buttons.size() - 1)
+		selectedButtonIndex = 0;
+	else {
+		selectedButtonIndex--;
+		if (selectedButtonIndex < 0) {
+			selectedButtonIndex = buttons.size() - 1;
+		}
+	}
 }
 
 // button functions
@@ -286,6 +336,7 @@ void MenuSystem::startGame() {
 	}
 	
 	state.currentState = GameStateType::Playing;
+	selectedButtonIndex = 99;
 }
 
 void MenuSystem::switchConfigMode()
@@ -325,8 +376,11 @@ void MenuSystem::restartGame() {
 	state.timing.accumulator = 0.0;
 	gameController.clearInputBuffer();
 	state.currentState = GameStateType::Menu;
+
+	resetButtonIndex();
+
 	setState(MenuState::Start);
-	// Note: gameOverStateSet flag in main.cpp will be reset on next state transition
+	// gameOverStateSet flag in main.cpp will be reset on next state transition
 }
 
 void MenuSystem::quitGame() {

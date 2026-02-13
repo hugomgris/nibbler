@@ -1,4 +1,5 @@
 #include "../incs/Renderer.hpp"
+#include "../incs/RaylibColors.hpp"
 #include "../incs/ParticleSystem.hpp"
 #include "../incs/TextSystem.hpp"
 #include "../incs/AnimationSystem.hpp"
@@ -8,6 +9,7 @@
 #include "../incs/Food.hpp"
 #include "../incs/DataStructs.hpp"
 #include "../incs/GameController.hpp"
+#include "../incs/InputManager.hpp"
 #include "../incs/Utils.hpp"
 #include "../incs/colors.h"
 #include <thread>
@@ -77,7 +79,10 @@ int main(int argc, char **argv) {
 	Renderer renderer;
 	renderer.init(width, height);
 	
-	ParticleSystem particles(1920, 1080, 10, 0, 30, 0.15f);
+	const int screenWidth = 1920;
+	const int screenHeight = 1080;
+	
+	ParticleSystem particles(screenWidth, screenHeight, 10, 0, 30, 0.15f);
 	
 	TextSystem textSystem;
 	textSystem.init();
@@ -89,6 +94,14 @@ int main(int argc, char **argv) {
 	MenuSystem menu(gameController);
 	menu.init(width, height);
 	menu.setState(MenuState::Start);
+
+	InputManager inputManager;
+	inputManager.registerNavigationCallback([&menu](NavigationAction action) {
+    	menu.handleNavigation(action);
+	});
+	inputManager.registerMouseCallback([&menu](Vector2 pos, bool clicked) {
+		menu.handleMouseInput(pos, clicked);
+	});
 
 	// TIMING and preparations
 	food.replaceInFreeSpace(&state);
@@ -107,42 +120,30 @@ int main(int argc, char **argv) {
 		float deltaTime = frameTime.count();
 		lastTime = currentTime;
 		
-		Input input = renderer.pollInput();
+		// update phase
+		inputManager.update();
 		
-		if (input == Input::Quit) {
-			state.isRunning = false;
-			break;
-		}
-		
-		// STATE MACHINE
 		switch (state.currentState) {
-		case GameStateType::Menu: {
-			gameOverStateInitialized = false;  // Reset for next game over
-			
-			Vector2 mousePos = GetMousePosition();
-				bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-				menu.handleInput(mousePos, mouseClicked);
-				
+			case GameStateType::Menu: {
+				gameOverStateInitialized = false;
+				inputManager.setContext(InputContext::Menu);
 				menu.update(deltaTime, particles, animations);
-				
-				BeginDrawing();
-				ClearBackground(Color{23, 23, 23, 255});
-				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-				menu.render(renderer, textSystem, particles, animations, state);
-				EndMode2D();
-				EndDrawing();
 				break;
 			}
 
-			case GameStateType::Playing:
+			case GameStateType::Playing: {
+				inputManager.setContext(InputContext::Gameplay);
+            	Input input = inputManager.pollGameplayInput();
+				
 				if (input == Input::Pause) {
 					state.isPaused = !state.isPaused;
 					state.currentState = state.isPaused ? 
 						GameStateType::Paused : GameStateType::Playing;
 				}
-				
-				state.timing.accumulator += deltaTime;
+			
 				gameController.bufferInput(input);
+
+				state.timing.accumulator += deltaTime;
 				
 				while (state.timing.accumulator >= FRAME_TIME) {
 					gameController.update();
@@ -154,16 +155,12 @@ int main(int argc, char **argv) {
 						break;
 					}
 				}
-				
-				renderer.render(state, deltaTime);
 				break;
+			}
 				
 			case GameStateType::Paused:
-				if (input == Input::Pause) {
-					state.isPaused = false;
-					state.currentState = GameStateType::Playing;
-				}
-				renderer.render(state, 0.0f);
+				inputManager.setContext(InputContext::Paused);
+				// No update needed while paused
 				break;
 				
 			case GameStateType::GameOver: {
@@ -172,25 +169,74 @@ int main(int argc, char **argv) {
 					gameOverStateInitialized = true;
 				}
 				
+				inputManager.setContext(InputContext::GameOver);
 				particles.update(deltaTime);
-					animations.updateTunnelEffect(deltaTime);
-
-					Vector2 mousePos = GetMousePosition();
-					bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-					menu.handleInput(mousePos, mouseClicked);
-					
-					BeginDrawing();
-					ClearBackground(Color{23, 23, 23, 255});
-					BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-					menu.renderGameOver(renderer, textSystem, particles, animations, state);
-					EndMode2D();
-					// renderer.drawNoiseGrain(); // keeping noise for contrast in game over
-					EndDrawing();
+				animations.updateTunnelEffect(deltaTime);
 				break;
 			}
 		}
 		
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		//rendering phase
+		BeginDrawing();
+		ClearBackground(Color{23, 23, 23, 255});
+		
+		switch (state.currentState) {
+			case GameStateType::Menu: {
+				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+				menu.render(renderer, textSystem, particles, animations, state);
+				EndMode2D();
+				break;
+			}
+
+			case GameStateType::Playing:
+			case GameStateType::Paused: {
+				// Update renderer state
+				renderer.render(state, state.isPaused ? 0.0f : deltaTime);
+				
+				// 3D gameplay rendering (Paused uses same render, just frozen)
+				BeginMode3D(renderer.getCamera());
+				renderer.drawGroundPlane();
+				renderer.drawSnake(state.snake_A, snakeAHidden, 
+					snakeALightFront, snakeALightTop, snakeALightSide,
+					snakeADarkFront, snakeADarkTop, snakeADarkSide);
+				
+				if (state.config.mode == GameMode::MULTI) {
+					renderer.drawSnake(state.snake_B, snakeBHidden,
+						snakeBLightFront, snakeBLightTop, snakeBLightSide,
+						snakeBDarkFront, snakeBDarkTop, snakeBDarkSide);
+				} else if (state.config.mode == GameMode::AI) {
+					renderer.drawSnake(state.snake_B, snakeAIHidden,
+						snakeAILightFront, snakeAILightTop, snakeAILightSide,
+						snakeAIDarkFront, snakeAIDarkTop, snakeAIDarkSide);
+				}
+				
+				renderer.drawFood(state.food);
+				EndMode3D();
+				
+				// UI overlay
+				DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
+				DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
+				DrawFPS(screenWidth - 95, 10);
+				
+				if (state.isPaused) {
+					DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
+				}
+				
+				// Post-processing
+				renderer.drawNoiseGrain();
+				break;
+			}
+				
+			case GameStateType::GameOver: {
+				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+				menu.renderGameOver(renderer, textSystem, particles, animations, state);
+				EndMode2D();
+				// renderer.drawNoiseGrain(); // keeping noise for contrast in game over
+				break;
+			}
+		}
+		
+		EndDrawing();
 	}
 	
 	return 0;

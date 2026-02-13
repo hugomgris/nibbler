@@ -36,9 +36,12 @@ void Renderer::init(int width, int height) {
 	gridWidth = width;
 	gridHeight = height;
 	
+	// IMPORTANT: Set VSync flag BEFORE InitWindow
+	SetConfigFlags(FLAG_VSYNC_HINT);
+	
 	InitWindow(screenWidth, screenHeight, "Nibbler 3D - Raylib");
 	ToggleFullscreen();
-	SetTargetFPS(60);
+	SetTargetFPS(60);  // Lock to 60 FPS
 	
 	setupCamera();
 	
@@ -267,6 +270,7 @@ void Renderer::drawBorder(int thickness) {
 
 
 void Renderer::render(const GameState& state, float deltaTime){
+	// Update internal state (NOT drawing!)
 	camera.fovy = customFov;
 	
 	if (!state.isPaused) {
@@ -279,38 +283,6 @@ void Renderer::render(const GameState& state, float deltaTime){
 		grainFrameTimer = 0.0f;
 		currentGrainFrame = GetRandomValue(0, GRAIN_TEXTURE_COUNT - 1);
 	}
-
-	BeginDrawing();
-	ClearBackground(customBlack);
-	
-	BeginMode3D(camera);
-	
-	drawGroundPlane();
-	//drawWalls();
-	drawSnake(state.snake_A, snakeAHidden, snakeALightFront, snakeALightTop, snakeALightSide, snakeADarkFront, snakeADarkTop, snakeADarkSide);
-	if (state.config.mode == GameMode::MULTI)
-		drawSnake(state.snake_B, snakeBHidden, snakeBLightFront, snakeBLightTop, snakeBLightSide, snakeBDarkFront, snakeBDarkTop, snakeBDarkSide);
-	else if (state.config.mode == GameMode::AI)
-		drawSnake(state.snake_B, snakeAIHidden, snakeAILightFront, snakeAILightTop, snakeAILightSide, snakeAIDarkFront, snakeAIDarkTop, snakeAIDarkSide);
-	drawFood(state.food);
-
-	// DEBUG
-	//DrawGrid(gridWidth, cubeSize);
-	
-	EndMode3D();
-	
-	DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
-	DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
-	DrawFPS(screenWidth - 95, 10);
-
-	if (state.isPaused) {
-		DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack); // this is horribly functional, need to design a proper pause menu system
-    }
-	
-	// Post Processing
-	drawNoiseGrain();
-	
-	EndDrawing();
 }
 
 Input Renderer::pollInput() {
