@@ -4,6 +4,7 @@
 #include "../incs/TextSystem.hpp"
 #include "../incs/AnimationSystem.hpp"
 #include "../incs/MenuSystem.hpp"
+#include "../incs/PostProcessingSystem.hpp"
 #include "../incs/Snake.hpp"
 #include "../incs/SnakeAI.hpp"
 #include "../incs/Food.hpp"
@@ -103,6 +104,10 @@ int main(int argc, char **argv) {
 		menu.handleMouseInput(pos, clicked);
 	});
 
+	PostProcessingSystem postProcess;
+	postProcess.init(screenWidth, screenHeight);
+	postProcess.setConfig(PostProcessingSystem::presetCRTBloom());
+
 	// TIMING and preparations
 	food.replaceInFreeSpace(&state);
 
@@ -177,7 +182,7 @@ int main(int argc, char **argv) {
 		}
 		
 		//rendering phase
-		BeginDrawing();
+		postProcess.beginCapture();
 		ClearBackground(Color{23, 23, 23, 255});
 		
 		switch (state.currentState) {
@@ -218,24 +223,24 @@ int main(int argc, char **argv) {
 				DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
 				DrawFPS(screenWidth - 95, 10);
 				
-				if (state.isPaused) {
-					DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
-				}
-				
-				// Post-processing
-				renderer.drawNoiseGrain();
-				break;
+			if (state.isPaused) {
+				DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
 			}
-				
-			case GameStateType::GameOver: {
+			break;
+		}			case GameStateType::GameOver: {
 				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
 				menu.renderGameOver(renderer, textSystem, particles, animations, state);
 				EndMode2D();
-				// renderer.drawNoiseGrain(); // keeping noise for contrast in game over
 				break;
 			}
 		}
 		
+		postProcess.endCapture();
+		
+		// Apply postprocessing and present to screen
+		BeginDrawing();
+		ClearBackground(BLACK);
+		postProcess.applyAndPresent(deltaTime);
 		EndDrawing();
 	}
 	

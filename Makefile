@@ -23,7 +23,7 @@ INCDIR          := incs
 MAIN_SRC        := main.cpp
 CORE_SRC        := core/GameController.cpp core/InputManager.cpp core/Snake.cpp core/Food.cpp core/Utils.cpp
 AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
-GRAPHICS_SRC    := graphics/Renderer.cpp graphics/TextSystem.cpp graphics/ParticleSystem.cpp graphics/AnimationSystem.cpp graphics/MenuSystem.cpp graphics/RaylibColors.cpp
+GRAPHICS_SRC    := graphics/Renderer.cpp graphics/TextSystem.cpp graphics/ParticleSystem.cpp graphics/AnimationSystem.cpp graphics/MenuSystem.cpp graphics/RaylibColors.cpp graphics/PostProcessingSystem.cpp
 
 ALL_SRC         := $(MAIN_SRC) $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC)
 

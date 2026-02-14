@@ -16,18 +16,11 @@ Renderer::Renderer() :
 	gridHeight(0),
 	screenWidth(1920),
 	screenHeight(1080),
-	accumulatedTime(0.0f),
-	currentGrainFrame(0),
-	grainFrameTimer(0.0f),
-	grainFrameInterval(0.05f) {
+	accumulatedTime(0.0f) {
 		separator = cubeSize * 2;
 	}
 
 Renderer::~Renderer() {
-	// Unload all grain textures
-	for (int i = 0; i < GRAIN_TEXTURE_COUNT; i++) {
-		UnloadTexture(grainTextures[i]);
-	}
 	CloseWindow();
 	std::cout << BYEL << "[Raylib 3D] Destroyed" << RESET << std::endl;
 }
@@ -51,14 +44,6 @@ void Renderer::init(int width, int height) {
 	camera2D.target = (Vector2){ 0.0f, 0.0f };
 	camera2D.rotation = 0.0f;
 	camera2D.zoom = 1.0f;
-	
-	// noise pattern generation
-	for (int i = 0; i < GRAIN_TEXTURE_COUNT; i++) {
-		// seeding for varaition
-		Image grainImage = GenImageWhiteNoise(screenWidth, screenHeight, 0.75f);
-		grainTextures[i] = LoadTextureFromImage(grainImage);
-		UnloadImage(grainImage);
-	}
 	
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
@@ -253,10 +238,6 @@ void Renderer::drawFood(const Food* food) {
 						foodFront, foodHidden, foodTop, foodHidden, foodSide, foodHidden);
 }
 
-void Renderer::drawNoiseGrain() {
-	DrawTextureEx(grainTextures[currentGrainFrame], (Vector2){ 0.0f, 0.0f }, 0.0f, 1.0f, (Color){ 255, 255, 255, 20 });
-}
-
 void Renderer::drawBorder(int thickness) {
 	// Top
 	DrawRectangle(0, 0, screenWidth, thickness, customWhite);
@@ -276,13 +257,6 @@ void Renderer::render(const GameState& state, float deltaTime){
 	if (!state.isPaused) {
         accumulatedTime += deltaTime;
     }
-	
-	// Update film grain pattern at regular intervals
-	grainFrameTimer += deltaTime;
-	if (grainFrameTimer >= grainFrameInterval) {
-		grainFrameTimer = 0.0f;
-		currentGrainFrame = GetRandomValue(0, GRAIN_TEXTURE_COUNT - 1);
-	}
 }
 
 Input Renderer::pollInput() {

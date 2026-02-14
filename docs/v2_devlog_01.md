@@ -6,11 +6,14 @@
 3. [The Snake and the Mouse](#13-the-snake-and-the-mouse)
 4. [It's Not a Sword, It's a Key!](#14-its-not-a-sword-its-a-key)
 5. [Tearing My Screen Appart](#145-tearing-my-screen-appart)
-
+6. [Pre, Peri and Post processing](#16-pre-peri-and-post-processing)
+7. [Hello From the GPU Side](#17-hello-from-the-gpu-side)
 
 
 <br>
 <br>
+
+>*Coming back from way, way down the bottom of this document to have you bare in mind that this is a L O N G devlog. Sorry.*
 
 # 1.1 - It Was Just a Phase
 Here we are, on the other side of what has been tagged as `V1`. Today the two week sprint towards a more mechanically complex, raylib-unified, *snake* based game start, which means that we're having **R E F A C T O R I N G**  for breakfast, lunch and dinner. I've been in this position before, having to plan and layout carefully thought steps to scale *down* a build so that a new development process can start anew from a compact, controlled state of things. Personally, I still find this situations a bit overwhelming, mostly because after spending so much time writing a game that builds and launches and works and doesn't break and explode into pieces, taking it appart feels like playing a risky game of *Jenga*. Or maybe the analogy is not quite precise, because once you take out one piece the whole thing collapses and the next hours are comprised of a mixture of "might as well keep getting all the stuff I think should be out of the new starting point" and "how can I make this compile again for the love of everything sacred". I've being a little overdramatic, I know (must say that if you've arrived to this log after going through all the development journaling done for `V1`, you already know the extent of my dramatism), but it can get tyring. Theres a counterpoint, of course, the same one that's always looming in any programming journey: nothing works until it works, and when it works life becomes wonderful. So, yeah:
@@ -57,6 +60,7 @@ BUT as I lay out plans, I realize something: I need a deep re-structuring proces
 - [x] Animation System
 - [x] Menu system
 - [x] InputManager
+- [ ] Postprocessing System
 - [ ] Custom text system/pipeline/subsystem- [ ] Custom text system/pipeline/subsystem
 
 Inter-system communication will be laid out by passing references. If things get too complicated down the line, which I doubt but who am I to say, I'll transition into an event system with connecting lambda functions. I'll get into system rebuild mode. Wish me luck.
@@ -468,3 +472,581 @@ Following the cliché, the first suspect is never the real culprit. But we have 
 
 <br>
 <br>
+
+## 1.6 Pre, Peri and Post processing
+Having restructured the code in a handful of (the usual) systems, I might as well take the postprocessing out of `Render` and take it into its own system. This will give me more autonomy regarding how the game looks at different states, and a true post processing pipeline will be easier to implement. So, before throwing ourselves into building this new system, and in case you are reading this while building your own engine or game and would like some basics on what postprocessing is and what are the foundations of any usual pipeline in this regard, let's spend some time talking about postprocessing in general.
+
+**Postprocessing is**, generally speaking, **any visual effect applied AFTER a scene has rendered**. Kind of like applying **filters** to how the scene looks, so that the rendering phase gets refactored from a direct rendering-to-screen into a series of steps:
+1. **Render the scene** → Everything that comprises the visual output of the game (Scene, UI, Particles). OR, the specific combination of stuff that you want to be affected by postprocessing, that is (for example, if you wanted to have a non-affected UI on top of your postprocessed image, you'd have to manage that in the drawing order, of course)
+2. **Capture the output into a texture** →  Store what would usually be output to the screen in an image in memory
+3. **Apply effects**→ (Post)Process the texture with the implemented shaders and filters
+4. **Display the result** → Finally, show the (post)processed image on screen.
+
+What this means for the new `PostprocessingSystem` that we want to build is that, although right now we just have a very basic, placeholder-testish noise effect in our postprocessing collection, what we need to build is this new 4-step pipeline. With that, we'll be able to start experimenting with effects and dig around for what feels *good* for the general aesthetics of this `V2` of our turbo *snake*. After some research, it looks like `Raylib` has excellent tools to make this process easy. The logic will be like the following:
+- Create, during game initialization, a **screen size texture** that will be the target of the rendering.
+- Instead of call `BeginDrawing()` directly, call first `BeginTextureMode()` with the initialized screen texture as target.
+- THEN, call `BeginDrawing()` to postprocess the rendered texture, most likely by going through a prewritten shader, using `BeginShaderMode()`.
+- REMEMBER, there needs to be an `UnloadRenderTexture()` call upon game exit, as is the case with any texture created during the game execution.
+
+The shader part is really the complicated one. `Raylib` uses **GLSL Shaders**, which just means that they are `OpenGL` based shaders, which need to be written in a specific way (quite C-like). We'll get into them in a bit, but for now we have to lay out the postprocessing system, for which we'll need:
+- An effect tracker/enum
+- A config data struct
+- Some shader attributes to store prewritten shaders
+- A general rendering flow (begin, end and present the postprocessing pipeline)
+- Togglers and knobs to control the effects and their intesity
+
+All in all, we can start from here:
+```cpp
+enum class PostProcessEffect {
+	None,
+	CRT,
+	Scanlines,
+	Bloom,
+	Vignette,
+	ChromaticAberration,
+	Grain
+};
+
+struct PostProcessConfig {
+	bool enabled = true;
+	std::vector<PostProcessEffect> effects;
+
+	// CRT params
+	float scanlineIntensity = 0.15f;
+	float curvatureAmount = 0.08f;
+	float vigentteStrength = 0.3f;
+	float chromaticAberration = 0.005f;
+	float bloomIntensity = 0.3f;
+	float grainAmount = 0.02f;
+};
+
+class PostProcessingSystem {
+	private:    
+		RenderTexture2D renderTarget;
+		RenderTexture2D bloomBuffer;
+
+		Shader crtShader;
+		Shader bloomShader;
+		Shader compositeShader;
+
+		PostProcessConfig config;
+
+		int screenWidth;
+		int screenHeight;
+		float time;
+
+		// Helpers
+		void applyBloom();
+		void applyCRT();
+		void applyEffect(PostProcessEffect effect);
+
+	public:
+		PostProcessingSystem();
+		~PostProcessingSystem();
+
+		void init(int width, int height);
+		void setConfig(const PostProcessConfig& config);
+
+		// rendering flow
+		void beginCapture();
+		void endCapture();
+		void applyAndPresent(float deltaTime);
+
+		// presets
+		static PostProcessConfig presetCRT();
+		static PostProcessConfig presetClean();
+		static PostProcessConfig presetMenu();
+
+		// runtime control
+		void toggleEffect(PostProcessEffect effect);
+		void setEffectIntensity(PostProcessEffect effect, float intensity);
+
+		RenderTexture2D& getRenderTarget() { return renderTarget; }
+};
+```
+
+The CRT stuff included in this layout is just to test the pipeline. Once it is functioning we can move on to managing everything via GLSL shaders. The definition of the system is nothing to write home about, just some regular management (go to the cpp file to check it out in full). The key insight at this point is how to make the rendering pipeline go through this new post processing steps. In other words, time to change, once again, the main loop, specifically the rendering phase. Lucky us, the changes needed are nothing crazy, as `Raylib` does a lot of the heavy lifting. Just by changing the draw calls to the texture related ones, all the rendering will be targeting the off-screen texture, which will then be presented after applying the active effects:
+```cpp
+//rendering phase
+		postProcess.beginCapture();
+		ClearBackground(Color{23, 23, 23, 255});
+		
+		switch (state.currentState) {
+			case GameStateType::Menu: {
+				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+				menu.render(renderer, textSystem, particles, animations, state);
+				EndMode2D();
+				break;
+			}
+
+			case GameStateType::Playing:
+			case GameStateType::Paused: {
+				// Update renderer state
+				renderer.render(state, state.isPaused ? 0.0f : deltaTime);
+				
+				// 3D gameplay rendering (Paused uses same render, just frozen)
+				BeginMode3D(renderer.getCamera());
+				renderer.drawGroundPlane();
+				renderer.drawSnake(state.snake_A, snakeAHidden, 
+					snakeALightFront, snakeALightTop, snakeALightSide,
+					snakeADarkFront, snakeADarkTop, snakeADarkSide);
+				
+				if (state.config.mode == GameMode::MULTI) {
+					renderer.drawSnake(state.snake_B, snakeBHidden,
+						snakeBLightFront, snakeBLightTop, snakeBLightSide,
+						snakeBDarkFront, snakeBDarkTop, snakeBDarkSide);
+				} else if (state.config.mode == GameMode::AI) {
+					renderer.drawSnake(state.snake_B, snakeAIHidden,
+						snakeAILightFront, snakeAILightTop, snakeAILightSide,
+						snakeAIDarkFront, snakeAIDarkTop, snakeAIDarkSide);
+				}
+				
+				renderer.drawFood(state.food);
+				EndMode3D();
+				
+				// UI overlay
+				DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
+				DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
+				DrawFPS(screenWidth - 95, 10);
+				
+			if (state.isPaused) {
+				DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
+			}
+			break;
+		}			case GameStateType::GameOver: {
+				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
+				menu.renderGameOver(renderer, textSystem, particles, animations, state);
+				EndMode2D();
+				break;
+			}
+		}
+		
+		postProcess.endCapture();
+		
+		// Apply postprocessing and present to screen
+		BeginDrawing();
+		ClearBackground(BLACK);
+		postProcess.applyAndPresent(deltaTime);
+		EndDrawing();
+```
+
+<br>
+<br>
+
+## 1.7 Hello From the GPU Side
+The current (working, mind you n_n) `PostProcessingSystem` has a temporary `CPU` based CRT like effect (a ver simple, *cutre* one, mind me u_u). What we need now is cross over to the `GPU` realm of possibilities, and for that we'll write some `GLSL Shaders` (short for Open**GL** **S**hader **L**anguage). This is not the first time I write an `OpenGL` shader, I already did that in [Scop](https://github.com/hugomgris/scop) and in some `Godot` prototyping (the shaders in this engine are written in a very similar way to `GLSL`). This doesn't mean, AT ALL, that I'm an expert at this, after all shader writing is its own discipline and people out there specialize in it for their whole life, but I know some ways around it.
+
+But before diving into code, I think it's worth taking a step back and really understanding what shaders are, how they work, and why they're so powerful for effects like our CRT monitor simulation. Consider this my attempt to write a crash course in GPU programming for the uniniciated.
+
+<br>
+
+### The Graphics Pipeline: Where Shaders Live
+
+When you tell your computer to draw something on screen, it goes through a **graphics pipeline**. Think of it as an assembly line where your 3D models and 2D textures get transformed into the pixels you see. Here's the simplified version:
+
+```
+Vertex Data → Vertex Shader → Rasterization → Fragment Shader → Screen
+```
+
+**Vertex Shader**: Takes your geometry (vertices, triangles, positions) and transforms them. This is where 3D-to-2D projection happens, where rotation and scaling live. For postprocessing, we mostly don't touch this - we're drawing a fullscreen quad, so vertices are simple. If we wanted to have some geometry deformation effects, like say we wanted to add some noisy volumetric displacement to a model, we would do it via these type of shaders. 
+
+**Rasterization**: The GPU automatically figures out which pixels need to be drawn based on your geometry. This is the "magic" in-between step we don't control directly. That's what the GPU does on its own, at least in regard to the level we're programming at. Simply put, say we were trying to draw a cube in a specific perspective, that would produce a 2D representation based on coloring specific pixels in the screen in this or that color. That is the "translation" made during the rasterization process.
+
+**Fragment Shader**: This is where we spend our time for postprocessing. A fragment shader runs **once per pixel** on the screen. Yes, that means for a 1920x1080 display, your shader code executes over **2 million times per frame**. This is why shaders need to be fast, and why the GPU is so good at this (massive parallelization), in the sense that trying to do this via CPU would result in sparks and explosions. If we take that CRT effect we're aiming from, a single pixel would go through some deviation (curvature effect), recoloring (chromatic aberration, scanlines, vignetting), all depending on where that pixel lands originally in the screen-texture created by the renderer.
+
+<br>
+
+### Why GPU Instead of CPU?
+
+The CPU-based effects I wrote initially (scanlines, vignette, grain) worked, but they were slow. Drawing rectangles or pixels one-by-one on the CPU means:
+- Sequential execution (one thing after another)
+- Lots of draw calls (thousands per frame)
+- CPU-GPU communication overhead
+
+A shader, on the other hand:
+- Runs in **parallel** on thousands of GPU cores simultaneously
+- Executes **once per frame** (one shader invocation, but millions of parallel executions)
+- Lives entirely on the GPU (no CPU-GPU bottleneck)
+
+This is why a shader can do complex per-pixel math (blur, distortion, chromatic aberration) at 60 FPS while CPU code struggles with simple scanlines. And the main reason why you need a good GPU to run games at the higher graphics settings, and why *better* in GPU means more, faster memory.
+
+>A shader code runs **per-pixel, per-frame**. At 1920x1080 @ 60 FPS, that's **124 million executions per second**. This is why seemingly simple code (a few lines of math) can create complex, screen-wide effects - the GPU executes it millions of times in parallel, simultaneously on thousands of cores. This is the fundamental power (and constraint) of shader programming.
+
+<br>
+
+### Anatomy of a GLSL Shader
+
+Let's break down the structure of a very regular, run-of-the-mill GLSL shader using our CRT shader as an example. A fragment shader in GLSL 330 (OpenGL 3.3, which is what Raylib uses) looks like this:
+
+```glsl
+#version 330
+
+// INPUT: Data coming from the vertex shader
+in vec2 fragTexCoord;  // UV coordinates (0-1 range)
+in vec4 fragColor;     // Vertex color (usually not used in postprocessing)
+
+// OUTPUT: The final pixel color we're computing
+out vec4 finalColor;
+
+// UNIFORMS: Values that stay constant for the entire shader invocation
+uniform sampler2D texture0;  // The texture we're sampling from
+uniform vec2 resolution;      // Screen width and height
+uniform float time;           // Time for animations
+
+// MAIN: The function that runs for every single pixel
+void main() {
+    // Sample the texture at this pixel's UV coordinate
+    vec4 color = texture(texture0, fragTexCoord);
+    
+    // Do some math (example: darken)
+    color.rgb *= 0.5;
+    
+    // Output the result
+    finalColor = color;
+}
+```
+
+Let's understand each part:
+
+#### Inputs (`in`)
+Data that varies per-pixel, interpolated from the vertex shader. For a fullscreen quad:
+- `fragTexCoord`: Where we are in the texture (0,0 = top-left, 1,1 = bottom-right)
+- Think of this as the "address" for this pixel
+
+#### Outputs (`out`)
+What color this pixel should be. This is what actually gets drawn to the screen (or to a RenderTexture if we're doing multi-pass effects) after being modified by all the applied effects.
+
+#### Uniforms (`uniform`)
+Values that are **the same** for every pixel in a single frame. These are set from the C++ code:
+- Textures (the image you're processing)
+- Parameters (intensity, time, resolution)
+- Configuration values
+
+**Key insight**: Uniforms don't change within a shader invocation, but you update them every frame from CPU code. You can also understand them as **bridge values** between the CPU, C++ side of the code and the GPU, GLSL side of the graphics processing. Because a shader is a program that gets sent to the GPU, compiled and then executed in a place were we don't have direct reach, we can use the uniforms in our code side to tell the GPU side something like *Hey, the curvature value should be calculated from this float I'm sending you*.
+
+<br>
+
+### GLSL Data Types and Built-in Functions
+
+GLSL has its own type system optimized for graphics:
+
+```glsl
+float x = 1.0;           // Single float
+vec2 pos = vec2(1.0, 2.0);   // 2D vector
+vec3 color = vec3(1.0, 0.5, 0.0);  // RGB
+vec4 rgba = vec4(1.0, 0.5, 0.0, 1.0);  // RGBA
+
+// Component access
+float r = color.r;  // or color.x
+float g = color.g;  // or color.y
+float b = color.b;  // or color.z
+
+// Swizzling (reordering components)
+vec3 bgr = color.bgr;
+vec2 xy = pos.xy;
+```
+
+Useful built-in functions:
+```glsl
+texture(sampler, uv)  // Sample a texture
+mix(a, b, t)          // Linear interpolation: a + (b-a)*t
+smoothstep(e0, e1, x) // Smooth interpolation between edges
+dot(a, b)             // Dot product
+distance(a, b)        // Euclidean distance
+sin(), cos(), tan()   // Trigonometry
+fract(x)              // Fractional part (x - floor(x))
+```
+
+<br>
+
+### The Power of Per-Pixel Computation
+
+Here's where shaders shine: **every pixel can do different math based on its position**. This enables effects that would be impossible (or impractical) on the CPU.
+
+#### Example 1: Vignette (Edge Darkening)
+```glsl
+float vignette(vec2 uv) {
+    // How far is this pixel from the center?
+    float dist = distance(uv, vec2(0.5));
+    
+    // Smoothly darken from center (0.3) to edge (0.8)
+    return smoothstep(0.8, 0.3, dist);
+}
+
+void main() {
+    vec4 color = texture(texture0, fragTexCoord);
+    
+    // Darken based on distance from center
+    color.rgb *= vignette(fragTexCoord);
+    
+    finalColor = color;
+}
+```
+
+Every pixel asks "how far am I from the center?" and darkens accordingly. The GPU does this calculation **2 million times simultaneously**.
+
+#### Example 2: Scanlines
+```glsl
+float scanlines(vec2 uv, float resolution) {
+    // sin() oscillates between -1 and 1
+    // We use the Y coordinate multiplied by screen height
+    float scanline = sin(uv.y * resolution * 2.0) * 0.15;
+    return 1.0 - scanline;  // Darken slightly
+}
+```
+
+The `sin()` function creates a wave pattern. By using `uv.y * resolution`, we get more waves on higher resolution screens, keeping the scanline density consistent.
+
+<br>
+
+### Multi-Pass Rendering: The Bloom Pipeline
+
+Some effects can't be done in a single pass. **Bloom** (the glow around bright areas) requires multiple steps:
+
+```
+Pass 1: Extract Bright Areas
+Original Image → Threshold Filter → Bright Pixels Only
+
+Pass 2: Blur Horizontally
+Bright Pixels → Gaussian Blur (X-axis) → Partially Blurred
+
+Pass 3: Blur Vertically  
+Partially Blurred → Gaussian Blur (Y-axis) → Fully Blurred Glow
+
+Pass 4: Composite
+Original Image + Blurred Glow → Final Image with Bloom
+```
+
+Why separate horizontal and vertical blur? **Optimization**. A 2D Gaussian blur is expensive (checking many neighbors in all directions). But:
+- 1 pass of 2D blur with 9x9 kernel = 81 texture samples per pixel
+- 2 passes of 1D blur (9x1, then 1x9) = 18 texture samples per pixel
+
+Same result, 4.5x faster!
+
+Here's the blur shader in action:
+
+```glsl
+// Horizontal pass (uniform bool horizontal = true)
+vec3 result = texture(texture0, fragTexCoord).rgb * weights[0];
+for (int i = 1; i < 5; i++) {
+    // Sample left and right
+    result += texture(texture0, fragTexCoord + vec2(texelSize.x * i, 0.0)).rgb * weights[i];
+    result += texture(texture0, fragTexCoord - vec2(texelSize.x * i, 0.0)).rgb * weights[i];
+}
+
+// Vertical pass (uniform bool horizontal = false)
+for (int i = 1; i < 5; i++) {
+    // Sample up and down
+    result += texture(texture0, fragTexCoord + vec2(0.0, texelSize.y * i)).rgb * weights[i];
+    result += texture(texture0, fragTexCoord - vec2(0.0, texelSize.y * i)).rgb * weights[i];
+}
+```
+
+The `weights[]` array defines a Gaussian distribution - closer samples contribute more than distant ones.
+
+<br>
+
+### The CRT Effect Breakdown
+
+Now let's dissect our full CRT shader step by step:
+
+#### 1. Barrel Distortion (Curved Screen)
+Old CRT monitors bulged outward. We simulate this with **barrel distortion**:
+
+```glsl
+vec2 curveUV(vec2 uv) {
+    // Convert from [0,1] to [-1,1] (centered at origin)
+    vec2 centered = uv * 2.0 - 1.0;
+    
+    // Calculate squared distance from center
+    float r2 = dot(centered, centered);
+    
+    // The farther from center, the more distortion
+    float distortion = 1.0 + curvatureAmount * r2;
+    
+    // Apply distortion and convert back to [0,1]
+    centered *= distortion;
+    return centered * 0.5 + 0.5;
+}
+```
+
+**Math insight**: `r2 = x² + y²` is the squared distance from the origin. Multiplying our coordinates by `(1 + k·r²)` pushes edge pixels outward more than center pixels, creating the bulge.
+
+#### 2. Chromatic Aberration (RGB Separation)
+Cheap CRT optics couldn't focus all colors equally, causing color fringing at edges:
+
+```glsl
+vec3 color;
+float aberration = chromaticAberration * (distance(fragTexCoord, vec2(0.5)) * 2.0);
+
+// Sample each color channel at slightly offset positions
+color.r = texture(texture0, curvedUV + vec2(aberration, 0.0)).r;   // Red shifts right
+color.g = texture(texture0, curvedUV).g;                            // Green centered
+color.b = texture(texture0, curvedUV - vec2(aberration, 0.0)).b;   // Blue shifts left
+```
+
+We sample the texture **three times** with tiny offsets, then recombine into RGB. The offset increases toward screen edges (where CRT distortion was worst).
+
+#### 3. Scanlines
+```glsl
+color *= scanlines(curvedUV);
+
+float scanlines(vec2 uv) {
+    float scanline = sin(uv.y * resolution.y * 2.0) * scanlineIntensity;
+    return 1.0 - scanline;
+}
+```
+
+The `sin()` wave creates alternating bright/dark bands. Multiplying by `resolution.y` ensures consistent density regardless of screen size.
+
+#### 4. Phosphor Mask (RGB Grid)
+CRT pixels were tiny RGB triads:
+
+```glsl
+vec3 shadowMask(vec2 uv) {
+    float x = fract(uv.x * resolution.x / 3.0);  // 3 pixels per RGB triad
+    
+    if (x < 0.333) {
+        mask.r *= 1.1;  // Boost red
+        mask.gb *= 0.9; // Dim green and blue
+    } else if (x < 0.666) {
+        mask.g *= 1.1;  // Boost green
+        // ... you get the idea
+    }
+    return mask;
+}
+```
+
+`fract()` gives us the fractional part, creating a repeating 0-1 pattern every 3 pixels. We boost one color channel and dim the others, simulating the RGB stripe pattern.
+
+#### 5. Film Grain
+```glsl
+float noise(vec2 co) {
+    return fract(sin(dot(co.xy, vec2(12.9898, 78.233)) + time) * 43758.5453);
+}
+
+// In main():
+float grain = noise(curvedUV * resolution) * grainAmount;
+color += grain;
+```
+
+This is a **pseudo-random noise function**. The magic numbers are chosen so `sin()` produces chaotic values, and `fract()` keeps them in [0,1]. Adding `time` makes the noise animate every frame, simulating analog signal interference.
+
+<br>
+
+### Compositing: Bringing It All Together
+
+Our final CRT+Bloom shader combines everything:
+
+```glsl
+void main() {
+    // Step 1: Curve the UVs
+    vec2 curvedUV = curveUV(fragTexCoord);
+    
+    // Step 2: Sample with chromatic aberration
+    vec3 color = sampleWithChromaticAberration(curvedUV);
+    
+    // Step 3: Add bloom
+    vec3 bloom = texture(bloomTexture, curvedUV).rgb;
+    color += bloom * bloomIntensity;
+    
+    // Step 4: Apply CRT artifacts
+    color *= scanlines(curvedUV);
+    color *= mix(vec3(1.0), shadowMask(curvedUV), 0.3);
+    color *= vignette(fragTexCoord);
+    
+    // Step 5: Add grain
+    color += noise(curvedUV * resolution) * grainAmount;
+    
+    // Step 6: Color grading (warm CRT phosphor tint)
+    color *= vec3(1.0, 0.98, 0.95);
+    
+    finalColor = vec4(color, 1.0);
+}
+```
+
+Each effect builds on the previous, creating a layered aesthetic. The order matters - we curve UVs first so all sampling uses the distorted coordinates, then add bloom, then artifacts.
+
+<br>
+
+### The C++ Side: Feeding the Beast
+
+Shaders don't run in isolation. The C++ code orchestrates everything:
+
+```cpp
+// Load shader
+Shader crtBloomShader = LoadShader(0, "shaders/crt_bloom.fs");
+
+// Set constant uniforms (once at init)
+int resLoc = GetShaderLocation(crtBloomShader, "resolution");
+float res[2] = {1920.0f, 1080.0f};
+SetShaderValue(crtBloomShader, resLoc, res, SHADER_UNIFORM_VEC2);
+
+// Update per-frame uniforms
+float time = GetTime();
+SetShaderValue(crtBloomShader, GetShaderLocation(crtBloomShader, "time"), 
+               &time, SHADER_UNIFORM_FLOAT);
+
+// Activate shader and draw
+BeginShaderMode(crtBloomShader);
+    DrawTexture(renderTarget.texture, 0, 0, WHITE);
+EndShaderMode();
+```
+
+**Key workflow**:
+1. Render the game to a `RenderTexture` (offscreen buffer)
+2. For bloom: Extract bright areas, blur them (multi-pass)
+3. Activate the postprocessing shader
+4. Bind textures (`texture0` = game, `bloomTexture` = blurred glow)
+5. Draw a fullscreen quad - the shader runs on every pixel
+6. Present to screen
+
+<br>
+
+### Performance Considerations
+
+Shaders are fast, but not free:
+
+**Expensive Operations** (avoid in shaders):
+- Loops with variable length
+- Branching (if/else based on varying data)
+- Dependent texture reads (using one texture read to compute UVs for another)
+
+**Cheap Operations**:
+- Math (sin, cos, sqrt, pow - all native GPU instructions)
+- Swizzling (color.bgr, uv.yx - free, just register shuffling)
+- Texture reads with constant offsets
+
+**Optimization Tricks**:
+- Use lower-res buffers for blur passes (I'm using half resolution)
+- Precompute expensive functions (Gaussian weights)
+- Combine multiple effects into one shader (fewer passes)
+
+Our bloom is multi-pass by necessity, but the final CRT+Bloom shader does 10+ effects in a single pass, which is, if I may say so, quite efficient.
+
+<br>
+
+### Debugging Shaders: It's Painful
+
+Shader debugging is notoriously hard:
+- No debugger (you can't step through GPU code)
+- No print statements
+- Errors are cryptic
+
+**Strategies**:
+- Output intermediate values as colors (`finalColor = vec4(someValue, 0, 0, 1)` shows value as red intensity)
+- Comment out effects one by one to isolate issues
+- Test on simple geometry first (a single quad)
+- Use shader validation tools (GLSL compiler errors from Raylib)
+
+<br>
+
+>**Resources**:
+>- [The Book of Shaders](https://thebookofshaders.com/) - Interactive GLSL tutorial
+>- [Shadertoy](https://www.shadertoy.com/) - Thousands of example shaders
+>- [Raylib Shaders Examples](https://github.com/raysan5/raylib/tree/master/examples/shaders)
+
+
+<br>
+<br>
+ 

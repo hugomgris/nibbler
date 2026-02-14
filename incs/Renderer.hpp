@@ -34,13 +34,6 @@ private:
 
 	Camera3D	camera;
 	Camera2D	camera2D;
-
-	// Postprocessing noise system
-	static const int							GRAIN_TEXTURE_COUNT = 8;
-	std::array<Texture2D, GRAIN_TEXTURE_COUNT>	grainTextures;
-	int											currentGrainFrame;
-	float										grainFrameTimer;
-	float										grainFrameInterval;
 	
 public:
 	Renderer();
@@ -62,7 +55,6 @@ public:
 	void drawFood(const Food* food);
 	void drawCubeCustomFaces(Vector3 position, float width, float height, float length,
 	                         Color front, Color back, Color top, Color bottom, Color right, Color left);
-	void drawNoiseGrain();  // Post Processing
 	void drawBorder(int thickness);  // Menu/GameOver border
 
 public:
