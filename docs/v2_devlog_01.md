@@ -60,7 +60,7 @@ BUT as I lay out plans, I realize something: I need a deep re-structuring proces
 - [x] Animation System
 - [x] Menu system
 - [x] InputManager
-- [ ] Postprocessing System
+- [x] Postprocessing System
 - [ ] Custom text system/pipeline/subsystem- [ ] Custom text system/pipeline/subsystem
 
 Inter-system communication will be laid out by passing references. If things get too complicated down the line, which I doubt but who am I to say, I'll transition into an event system with connecting lambda functions. I'll get into system rebuild mode. Wish me luck.
