@@ -1,4 +1,4 @@
-#include "../incs/Renderer.hpp"
+#include "../incs/Renderer3D.hpp"
 #include "../incs/RaylibColors.hpp"
 #include "../incs/ParticleSystem.hpp"
 #include "../incs/TextSystem.hpp"
@@ -70,6 +70,7 @@ int main(int argc, char **argv) {
 	state.score = 0;
 	state.scoreB = 0;
 	state.config.mode = GameMode::SINGLE;
+	state.renderMode = RenderMode::MODE3D;
 	state.timing.accumulator = 0.0f;
 	state.aiController = nullptr;
 
@@ -77,8 +78,8 @@ int main(int argc, char **argv) {
 	GameController gameController(&state);
 	gameController.setAIController(nullptr);
 
-	Renderer renderer;
-	renderer.init(width, height);
+	Renderer3D renderer3D;
+	renderer3D.init(width, height);
 	
 	const int screenWidth = 1920;
 	const int screenHeight = 1080;
@@ -188,34 +189,34 @@ int main(int argc, char **argv) {
 		switch (state.currentState) {
 			case GameStateType::Menu: {
 				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-				menu.render(renderer, textSystem, particles, animations, state);
+				menu.render(renderer3D, textSystem, particles, animations, state);
 				EndMode2D();
 				break;
 			}
 
 			case GameStateType::Playing:
 			case GameStateType::Paused: {
-				// Update renderer state
-				renderer.render(state, state.isPaused ? 0.0f : deltaTime);
+				// Update renderer3D state
+				renderer3D.render(state, state.isPaused ? 0.0f : deltaTime);
 				
 				// 3D gameplay rendering (Paused uses same render, just frozen)
-				BeginMode3D(renderer.getCamera());
-				renderer.drawGroundPlane();
-				renderer.drawSnake(state.snake_A, snakeAHidden, 
+				BeginMode3D(renderer3D.getCamera());
+				renderer3D.drawGroundPlane();
+				renderer3D.drawSnake(state.snake_A, snakeAHidden, 
 					snakeALightFront, snakeALightTop, snakeALightSide,
 					snakeADarkFront, snakeADarkTop, snakeADarkSide);
 				
 				if (state.config.mode == GameMode::MULTI) {
-					renderer.drawSnake(state.snake_B, snakeBHidden,
+					renderer3D.drawSnake(state.snake_B, snakeBHidden,
 						snakeBLightFront, snakeBLightTop, snakeBLightSide,
 						snakeBDarkFront, snakeBDarkTop, snakeBDarkSide);
 				} else if (state.config.mode == GameMode::AI) {
-					renderer.drawSnake(state.snake_B, snakeAIHidden,
+					renderer3D.drawSnake(state.snake_B, snakeAIHidden,
 						snakeAILightFront, snakeAILightTop, snakeAILightSide,
 						snakeAIDarkFront, snakeAIDarkTop, snakeAIDarkSide);
 				}
 				
-				renderer.drawFood(state.food);
+				renderer3D.drawFood(state.food);
 				EndMode3D();
 				
 				// UI overlay
@@ -229,7 +230,7 @@ int main(int argc, char **argv) {
 			break;
 		}			case GameStateType::GameOver: {
 				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-				menu.renderGameOver(renderer, textSystem, particles, animations, state);
+				menu.renderGameOver(renderer3D, textSystem, particles, animations, state);
 				EndMode2D();
 				break;
 			}

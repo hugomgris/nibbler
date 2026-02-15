@@ -7,7 +7,7 @@
 #include <raylib.h>
 #include <vector>
 
-class Renderer;
+class Renderer3D;
 class ParticleSystem;
 class TextSystem;
 class AnimationSystem;
@@ -56,10 +56,10 @@ class MenuSystem {
 
 		// update and render for each menu state
 		void update(float deltaTime, ParticleSystem& particles, AnimationSystem& animations);
-		void render(Renderer &renderer, TextSystem& textSystem,
+		void render(Renderer3D &renderer3D, TextSystem& textSystem,
 					ParticleSystem& particles, AnimationSystem& animations,
 					const GameState& state);
-		void renderGameOver(Renderer &renderer, TextSystem& textSystem,
+		void renderGameOver(Renderer3D &renderer3D, TextSystem& textSystem,
 							ParticleSystem& particles, AnimationSystem& animations,
 							const GameState& state);        // input handling
 		//void handleInput(Vector2 mousePos, bool mouseClicked);

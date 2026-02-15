@@ -18,7 +18,7 @@ class ParticleSystem;
 class AnimationSystem;
 class MenuSystem;
 
-class Renderer {
+class Renderer3D {
 private:
 	float	cubeSize;
 	float	cameraSize;
@@ -36,10 +36,10 @@ private:
 	Camera2D	camera2D;
 	
 public:
-	Renderer();
-	Renderer(const Renderer &other) = delete;
-	Renderer &operator=(const Renderer &other) = delete;
-	~Renderer();
+	Renderer3D();
+	Renderer3D(const Renderer3D &other) = delete;
+	Renderer3D &operator=(const Renderer3D &other) = delete;
+	~Renderer3D();
 
 	float getCubeSize() const;
     float getSeparator() const;
@@ -60,5 +60,4 @@ public:
 public:
 	void init(int width, int height);
 	void render(const GameState& state, float deltaTime);
-	Input pollInput();
 };

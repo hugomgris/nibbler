@@ -1,5 +1,5 @@
 #include "../../incs/MenuSystem.hpp"
-#include "../../incs/Renderer.hpp"
+#include "../../incs/Renderer3D.hpp"
 #include "../../incs/ParticleSystem.hpp"
 #include "../../incs/TextSystem.hpp"
 #include "../../incs/AnimationSystem.hpp"
@@ -159,7 +159,7 @@ void MenuSystem::update(float deltaTime, ParticleSystem& particles, AnimationSys
 	animations.updateTunnelEffect(deltaTime);
 }
 
-void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
+void MenuSystem::render(Renderer3D& renderer, TextSystem& textSystem,
 						ParticleSystem& particles, AnimationSystem& animations,
 						const GameState& state) {
 	int screenCenterX = screenWidth / 2;
@@ -206,7 +206,7 @@ void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 	renderer.drawBorder(25);
 }
 
-void MenuSystem::renderGameOver(Renderer& renderer, TextSystem& textSystem,
+void MenuSystem::renderGameOver(Renderer3D& renderer, TextSystem& textSystem,
 								ParticleSystem& particles, AnimationSystem& animations,
 								const GameState& state) {
 	int screenCenterX = screenWidth / 2;

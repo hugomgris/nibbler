@@ -63,6 +63,8 @@ BUT as I lay out plans, I realize something: I need a deep re-structuring proces
 - [x] Postprocessing System
 - [ ] Custom text system/pipeline/subsystem- [ ] Custom text system/pipeline/subsystem
 - [ ] *Fix the test suite (and extend it)*
+- [ ] *Port the 2D realm*
+- [ ] *Port the ASCII realm*
 
 Inter-system communication will be laid out by passing references. If things get too complicated down the line, which I doubt but who am I to say, I'll transition into an event system with connecting lambda functions. I'll get into system rebuild mode. Wish me luck.
 
@@ -143,10 +145,10 @@ class MenuSystem {
 
 		// update and render for each menu state
 		void update(float deltaTime, ParticleSystem& particles, AnimationSystem& animations);
-		void render(Renderer &renderer, TextSystem& textSystem,
+		void render(Renderer3D &renderer3D, TextSystem& textSystem,
 					ParticleSystem& particles, AnimationSystem& animations,
 					const GameState& state);
-		void renderGameOver(Renderer &renderer, TextSystem& textSystem,
+		void renderGameOver(Renderer3D &renderer3D, TextSystem& textSystem,
 							ParticleSystem& particles, AnimationSystem& animations,
 							const GameState& state);
 		void handleInput(Vector2 mousePos, bool mouseClicked);

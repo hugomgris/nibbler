@@ -26,6 +26,12 @@ enum class GameMode {
 	AI
 };
 
+enum class RenderMode {
+	ASCII,
+	MODE2D,
+	MODE3D
+};
+
 struct GameConfig {
 	GameMode	mode;
 };
@@ -50,6 +56,7 @@ struct GameState {
 	int							scoreB;
 	GameConfig					config;
 	GameTiming					timing;
+	RenderMode					renderMode;
 	std::unique_ptr<SnakeAI>	aiController;
 };
 

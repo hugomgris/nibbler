@@ -21,7 +21,7 @@ uniform float chromaticAberration;
 uniform float grainAmount;
 uniform float bloomIntensity;
 
-// Barrel distortion (CRT curvature)
+// Barrel distortion
 vec2 curveUV(vec2 uv) {
     if (curvatureAmount <= 0.0) return uv;
     
@@ -44,12 +44,12 @@ float vignette(vec2 uv) {
     return smoothstep(0.8, 0.3, dist * vignetteStrength);
 }
 
-// Simple noise function
+// noise
 float noise(vec2 co) {
     return fract(sin(dot(co.xy, vec2(12.9898, 78.233)) + time) * 43758.5453);
 }
 
-// RGB shadow mask (phosphor grid)
+// RGB phosphor grid
 vec3 shadowMask(vec2 uv) {
     vec3 mask = vec3(1.0);
     float x = fract(uv.x * resolution.x / 3.0);

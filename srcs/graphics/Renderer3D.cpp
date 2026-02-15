@@ -1,4 +1,4 @@
-#include "../../incs/Renderer.hpp"
+#include "../../incs/Renderer3D.hpp"
 #include "../../incs/Snake.hpp"
 #include "../../incs/Food.hpp"
 #include "../../incs/colors.h"
@@ -9,7 +9,7 @@
 #include "../../incs/MenuSystem.hpp"
 #include <rlgl.h>  // For low-level drawing functions (rlPushMatrix, rlBegin, etc.)
 
-Renderer::Renderer() :
+Renderer3D::Renderer3D() :
 	cubeSize(2.0f),
 	menuFov(50.0f),
 	gridWidth(0),
@@ -20,12 +20,12 @@ Renderer::Renderer() :
 		separator = cubeSize * 2;
 	}
 
-Renderer::~Renderer() {
+Renderer3D::~Renderer3D() {
 	CloseWindow();
 	std::cout << BYEL << "[Raylib 3D] Destroyed" << RESET << std::endl;
 }
 
-void Renderer::init(int width, int height) {
+void Renderer3D::init(int width, int height) {
 	gridWidth = width;
 	gridHeight = height;
 	
@@ -48,7 +48,7 @@ void Renderer::init(int width, int height) {
 	std::cout << BYEL << "[Raylib 3D] Initialized: " << width << "x" << height << RESET << std::endl;
 }
 
-void Renderer::drawCubeCustomFaces(Vector3 position, float width, float height, float length,
+void Renderer3D::drawCubeCustomFaces(Vector3 position, float width, float height, float length,
                                          Color front, Color back, Color top, Color bottom, Color right, Color left) {
 	float x = position.x;
 	float y = position.y;
@@ -106,7 +106,7 @@ void Renderer::drawCubeCustomFaces(Vector3 position, float width, float height, 
 	rlPopMatrix();
 }
 
-void Renderer::setupCamera() {
+void Renderer3D::setupCamera() {
 	// Grid is now centered at origin (0, 0, 0)
 	float centerX = 0.0f;
 	float centerZ = 0.0f;
@@ -133,7 +133,7 @@ void Renderer::setupCamera() {
 	camera.projection = CAMERA_ORTHOGRAPHIC;
 }
 
-void Renderer::drawGroundPlane() {
+void Renderer3D::drawGroundPlane() {
 	float offsetX = (gridWidth * cubeSize) / 2.0f;
 	float offsetZ = (gridHeight * cubeSize) / 2.0f;
 	
@@ -158,7 +158,7 @@ void Renderer::drawGroundPlane() {
 }
 
 // not used right now, but not sure if deprecated yet either, so keeping it here for now
-void Renderer::drawWalls() {
+void Renderer3D::drawWalls() {
 	for (int level = 0; level < 3; level++) {
 		float yPos = (level) * cubeSize;
 		
@@ -184,7 +184,7 @@ void Renderer::drawWalls() {
 	}
 }
 
-void Renderer::drawSnake(const Snake* snake, Color hidden,
+void Renderer3D::drawSnake(const Snake* snake, Color hidden,
 	Color lightFront,  Color lightTop, Color lightSide,
 	Color darkFront, Color darkTop, Color darkSide) {
 	float yPos = cubeSize;
@@ -217,7 +217,7 @@ void Renderer::drawSnake(const Snake* snake, Color hidden,
 	}
 }
 
-void Renderer::drawFood(const Food* food) {
+void Renderer3D::drawFood(const Food* food) {
 	float yPos = cubeSize;
 	
 	// Calculate offset to match grid centering
@@ -238,7 +238,7 @@ void Renderer::drawFood(const Food* food) {
 						foodFront, foodHidden, foodTop, foodHidden, foodSide, foodHidden);
 }
 
-void Renderer::drawBorder(int thickness) {
+void Renderer3D::drawBorder(int thickness) {
 	// Top
 	DrawRectangle(0, 0, screenWidth, thickness, customWhite);
 	// Bottom
@@ -250,7 +250,7 @@ void Renderer::drawBorder(int thickness) {
 }
 
 
-void Renderer::render(const GameState& state, float deltaTime){
+void Renderer3D::render(const GameState& state, float deltaTime){
 	// Update internal state (NOT drawing!)
 	camera.fovy = customFov;
 	
@@ -259,27 +259,7 @@ void Renderer::render(const GameState& state, float deltaTime){
     }
 }
 
-Input Renderer::pollInput() {
-	if (IsKeyPressed(KEY_UP))		return Input::Up_A;
-	if (IsKeyPressed(KEY_DOWN))		return Input::Down_A;
-	if (IsKeyPressed(KEY_LEFT))		return Input::Left_A;
-	if (IsKeyPressed(KEY_RIGHT))	return Input::Right_A;
-	if (IsKeyPressed(KEY_W))		return Input::Up_B;
-	if (IsKeyPressed(KEY_S))		return Input::Down_B;
-	if (IsKeyPressed(KEY_A))		return Input::Left_B;
-	if (IsKeyPressed(KEY_D))		return Input::Right_B;
-	if (IsKeyPressed(KEY_Q))		return Input::Quit;
-	if (IsKeyPressed(KEY_ESCAPE))	return Input::Quit;
-	if (IsKeyPressed(KEY_SPACE))	return Input::Pause;
-	if (IsKeyPressed(KEY_ENTER))	return Input::Enter;
-	if (IsKeyPressed(KEY_KP_ENTER))	return Input::Enter;
-	
-	if (WindowShouldClose())		return Input::Quit;
-	
-	return Input::None;
-}
-
-float Renderer::getCubeSize() const { return cubeSize; }
-float Renderer::getSeparator() const { return separator; }
-Camera3D& Renderer::getCamera() { return camera; }
-float& Renderer::getAccumulatedTime() { return accumulatedTime; }
+float Renderer3D::getCubeSize() const { return cubeSize; }
+float Renderer3D::getSeparator() const { return separator; }
+Camera3D& Renderer3D::getCamera() { return camera; }
+float& Renderer3D::getAccumulatedTime() { return accumulatedTime; }

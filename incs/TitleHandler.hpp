@@ -5,17 +5,17 @@
 #include <vector>
 
 // Forward declaration to avoid circular dependency
-class Renderer;
+class Renderer3D;
 class TitleHandler {
 	private:
-		Renderer& renderer;
+		Renderer3D& renderer;
 		
 		// Helper to draw multiple rectangles at once
 		void drawRects(const std::vector<Rectangle>& rects, Color color);
 
 	public:
 		TitleHandler() = delete;
-		TitleHandler(Renderer& parent);
+		TitleHandler(Renderer3D& parent);
 		TitleHandler(const TitleHandler &other) = delete;
 		TitleHandler &operator=(const TitleHandler &other) = delete;
 

@@ -328,12 +328,12 @@ PostProcessConfig PostProcessingSystem::presetCRTBloom() {
 	PostProcessConfig cfg;
 	cfg.enabled = true;
 	cfg.effects = { PostProcessEffect::CRT, PostProcessEffect::Bloom };
-	cfg.scanlineIntensity = 0.15f;
+	cfg.scanlineIntensity = 0.3f;
 	cfg.curvatureAmount = 0.04f;
 	cfg.vignetteStrength = 0.6f;
 	cfg.chromaticAberration = 0.0015f;
 	cfg.grainAmount = 0.08f;
-	cfg.bloomIntensity = 0.25f;
+	cfg.bloomIntensity = 0.30f;
 	return cfg;
 }
 
