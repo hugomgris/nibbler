@@ -333,7 +333,7 @@ PostProcessConfig PostProcessingSystem::presetCRTBloom() {
 	cfg.vignetteStrength = 0.6f;
 	cfg.chromaticAberration = 0.0015f;
 	cfg.grainAmount = 0.08f;
-	cfg.bloomIntensity = 0.30f;
+	cfg.bloomIntensity = 0.20f;
 	return cfg;
 }
 

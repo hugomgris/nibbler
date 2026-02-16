@@ -184,8 +184,6 @@ int main(int argc, char **argv) {
 				}
 				
 				inputManager.setContext(InputContext::GameOver);
-				particles.update(deltaTime);
-				animations.updateTunnelEffect(deltaTime);
 				break;
 			}
 		}
