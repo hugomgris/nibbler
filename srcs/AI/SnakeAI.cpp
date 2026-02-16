@@ -43,7 +43,7 @@ Input SnakeAI::goToFood(const GameState& state) {
 	if (!path.empty()) {
 		// tail reachable check
 		if (config.useSafetyCheck) {
-			if (!floodFill.canReachTail(state, *state.snake_B, path)) {
+			if (!floodFill.canReachTail(state, state.snake_B, path)) {
 				// if the path is unsafe, go into survival mode (square movement, basically)
 				return survivalMode(state);
 			}

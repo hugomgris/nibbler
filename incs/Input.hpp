@@ -9,9 +9,8 @@ Each library will map to this enum:
 
 enum class Input {
 	None,
-	SwitchLib1,
-	SwitchLib2,
-	SwitchLib3,
+	Switch2D,
+	Switch3D,
 	Up,			// for compatibility, will be deleted once every library is updated to handle multiple snakes
 	Down,		// for compatibility, will be deleted once every library is updated to handle multiple snakes
 	Left,		// for compatibility, will be deleted once every library is updated to handle multiple snakes
@@ -27,4 +26,5 @@ enum class Input {
 	Quit,
 	Pause,
 	Enter,
+	ToggleFS
 };

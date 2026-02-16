@@ -18,8 +18,8 @@ class ScoreTest : public ::testing::Test {
 			config = std::make_unique<GameConfig>(GameConfig{GameMode::SINGLE});
 			state = std::make_unique<GameState>(GameState{
 				20, 20,
-				*snake, nullptr,
-				*food,
+				snake.get(), nullptr,
+				food.get(),
 				false, true, false,
 				GameStateType::Playing,
 				0, 0,
@@ -32,7 +32,7 @@ class ScoreTest : public ::testing::Test {
 };
 
 TEST_F(ScoreTest, ScoreUpdate) {
-	Snake &snakeRef = state->snake_A;
+	Snake &snakeRef = *state->snake_A;
 	int score = state->score;
 
 	// Normalize direction to go upwards
@@ -47,15 +47,15 @@ TEST_F(ScoreTest, ScoreUpdate) {
 	}
 	
 	//Force a food position ABOVE the snake head and to its RIGHT
-	while (state->food.getPosition().x <= snakeRef.getSegments()[0].x || state->food.getPosition().y >= snakeRef.getSegments()[0].y)
-		state->food.replaceInFreeSpace(state.get());
+	while (state->food->getPosition().x <= snakeRef.getSegments()[0].x || state->food->getPosition().y >= snakeRef.getSegments()[0].y)
+		state->food->replaceInFreeSpace(state.get());
 
-	Vec2 foodPosition = state->food.getPosition();
+	Vec2 foodPosition = state->food->getPosition();
 
-	EXPECT_TRUE(state->food.getPosition().x > snakeRef.getSegments()[0].x && state->food.getPosition().y < snakeRef.getSegments()[0].y);
+	EXPECT_TRUE(state->food->getPosition().x > snakeRef.getSegments()[0].x && state->food->getPosition().y < snakeRef.getSegments()[0].y);
 
 	// Move the head of the snake to collide with the food
-	int i = state->snake_A.getSegments()[0].y - state->food.getPosition().y;
+	int i = state->snake_A->getSegments()[0].y - state->food->getPosition().y;
 
 	while (i > 0) {
 		manager->update();
@@ -63,17 +63,17 @@ TEST_F(ScoreTest, ScoreUpdate) {
 	}
 
 	snakeRef.changeDirection(Direction::Right);
-	i = state->food.getPosition().x - state->snake_A.getSegments()[0].x;
+	i = state->food->getPosition().x - state->snake_A->getSegments()[0].x;
 
 	// midway check -> food should still be in the same position
-	EXPECT_TRUE(foodPosition.x == state->food.getPosition().x && foodPosition.y == state->food.getPosition().y);
+	EXPECT_TRUE(foodPosition.x == state->food->getPosition().x && foodPosition.y == state->food->getPosition().y);
 
 	while (i > 0) {
 		manager->update();
 		i--;
 	}
 	
-	Vec2 newFoodPosition = state->food.getPosition();
+	Vec2 newFoodPosition = state->food->getPosition();
 
 	if (foodPosition.x == newFoodPosition.x)
 		EXPECT_TRUE(foodPosition.y != newFoodPosition.y);

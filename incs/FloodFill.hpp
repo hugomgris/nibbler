@@ -24,7 +24,7 @@ public:
 	
 	bool canReachTail(
 		const GameState& state,
-		const Snake& aiSnake,
+		const Snake* aiSnake,
 		const std::vector<Vec2>& proposedPath
 	);
 };

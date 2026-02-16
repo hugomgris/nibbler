@@ -24,8 +24,8 @@ protected:
         config = std::make_unique<GameConfig>(GameConfig{GameMode::AI});
         state = std::make_unique<GameState>(GameState{
             20, 20,
-            *snakeA, snakeB.get(),
-            *food,
+            snakeA.get(), snakeB.get(),
+            food.get(),
             false, true, false,
             GameStateType::Playing,
             0, 0,
@@ -65,7 +65,7 @@ TEST_F(AIIntegrationTest, AIMovesTowardFood) {
     // Position food away from AI snake
     Vec2 aiHead = state->snake_B->getSegments()[0];
     Vec2 foodPos = {aiHead.x + 5, aiHead.y};
-    state->food = Food(foodPos, 20, 20);
+    state->food = std::make_unique<Food>(foodPos, 20, 20).get();
     
     Input move = aiHard->decideNextMove(*state);
     
@@ -169,7 +169,7 @@ TEST_F(AIIntegrationTest, PathfindingIntegration) {
     }
     
     // Update food position
-    state->food = Food(foodPos, 20, 20);
+    state->food = std::make_unique<Food>(foodPos, 20, 20).get();
     
     PathFinder pathfinder;
     std::vector<Vec2> path = pathfinder.findPath(*state, head, foodPos, 200);

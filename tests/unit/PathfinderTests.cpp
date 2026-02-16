@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "../../incs/Pathfinder.hpp"
 #include "../../incs/Snake.hpp"
+#include "../../incs/SnakeAI.hpp"
 #include "../../incs/DataStructs.hpp"
 #include "../fixtures/TestHelpers.hpp"
 
@@ -18,8 +19,8 @@ protected:
 		config = std::make_unique<GameConfig>(GameConfig{GameMode::SINGLE});
 		state = std::make_unique<GameState>(GameState{
 			20, 20,
-			*snake, nullptr,
-			*food,
+			snake.get(), nullptr,
+			food.get(),
 			false, true, false,
 			GameStateType::Playing,
 			0, 0,

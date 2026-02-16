@@ -1,5 +1,5 @@
 #include "../../incs/MenuSystem.hpp"
-#include "../../incs/Renderer3D.hpp"
+#include "../../incs/Renderer.hpp"
 #include "../../incs/ParticleSystem.hpp"
 #include "../../incs/TextSystem.hpp"
 #include "../../incs/AnimationSystem.hpp"
@@ -151,15 +151,9 @@ void MenuSystem::spawnMenuParticles(float deltaTime, ParticleSystem& particles) 
 void MenuSystem::update(float deltaTime, ParticleSystem& particles, AnimationSystem& animations) {
 	// Spawn menu-specific particles
 	spawnMenuParticles(deltaTime, particles);
-	
-	// Update particles
-	particles.update(deltaTime);
-	
-	// Update animations (tunnel effect)
-	animations.updateTunnelEffect(deltaTime);
 }
 
-void MenuSystem::render(Renderer3D& renderer, TextSystem& textSystem,
+void MenuSystem::render(Renderer& renderer, TextSystem& textSystem,
 						ParticleSystem& particles, AnimationSystem& animations,
 						const GameState& state) {
 	int screenCenterX = screenWidth / 2;
@@ -202,11 +196,11 @@ void MenuSystem::render(Renderer3D& renderer, TextSystem& textSystem,
 	// Render tunnel effect
 	animations.renderTunnelEffect();
 	
-	// Render border
-	renderer.drawBorder(25);
+	// Render fullscreen border
+	renderer.drawBorderFullscreen(25);
 }
 
-void MenuSystem::renderGameOver(Renderer3D& renderer, TextSystem& textSystem,
+void MenuSystem::renderGameOver(Renderer& renderer, TextSystem& textSystem,
 								ParticleSystem& particles, AnimationSystem& animations,
 								const GameState& state) {
 	int screenCenterX = screenWidth / 2;
@@ -240,8 +234,8 @@ void MenuSystem::renderGameOver(Renderer3D& renderer, TextSystem& textSystem,
 	// Render tunnel effect
 	animations.renderTunnelEffect();
 	
-	// Render border
-	renderer.drawBorder(25);
+	// Render fullscreen border
+	renderer.drawBorderFullscreen(25);
 }
 
 // input related methods

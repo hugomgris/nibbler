@@ -13,9 +13,9 @@ namespace TestHelpers {
 		return GameState {
 			width,
 			height,
-			snake,
+			&snake,
 			nullptr,
-			food,
+			&food,
 			false,					// gameover
 			true,					// isRunning
 			false,					// isPaused
