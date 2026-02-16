@@ -22,7 +22,7 @@ class Renderer3D {
 private:
 	float	cubeSize;
 	float	cameraSize;
-	float 	menuFov;
+	//float 	menuFov;
 	float	customFov;
 	float	separator;
 	int		gridWidth;

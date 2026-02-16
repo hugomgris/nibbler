@@ -11,7 +11,7 @@
 
 Renderer3D::Renderer3D() :
 	cubeSize(2.0f),
-	menuFov(50.0f),
+	//menuFov(50.0f),
 	gridWidth(0),
 	gridHeight(0),
 	screenWidth(1920),

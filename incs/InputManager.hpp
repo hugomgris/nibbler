@@ -62,8 +62,9 @@ class InputManager {
 		InputContext getContext() const { return currentContext; }
 		MouseState getMouseState() const { return mouseState; }
 
-		// direct input polling queries
+		// direct input polling queries and input management
 		Input pollGameplayInput();
+		void processInput(const Input input, GameState& state);
 
 		// conf
 		void remapKey(NavigationAction action, int key);

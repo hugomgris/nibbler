@@ -141,11 +141,8 @@ int main(int argc, char **argv) {
 				inputManager.setContext(InputContext::Gameplay);
             	Input input = inputManager.pollGameplayInput();
 				
-				if (input == Input::Pause) {
-					state.isPaused = !state.isPaused;
-					state.currentState = state.isPaused ? 
-						GameStateType::Paused : GameStateType::Playing;
-				}
+				if (input == Input::Pause)
+					inputManager.processInput(input, state);
 			
 				gameController.bufferInput(input);
 
@@ -164,10 +161,14 @@ int main(int argc, char **argv) {
 				break;
 			}
 				
-			case GameStateType::Paused:
+			case GameStateType::Paused: {
 				inputManager.setContext(InputContext::Paused);
-				// No update needed while paused
+            	Input input = inputManager.pollGameplayInput();
+				
+				if (input == Input::Pause)
+					inputManager.processInput(input, state);
 				break;
+			}
 				
 			case GameStateType::GameOver: {
 				if (!gameOverStateInitialized) {

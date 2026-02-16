@@ -21,9 +21,25 @@ INCDIR          := incs
 # -=-=-=-=-    SOURCE FILES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 MAIN_SRC        := main.cpp
-CORE_SRC        := core/GameController.cpp core/InputManager.cpp core/Snake.cpp core/Food.cpp core/Utils.cpp
-AI_SRC          := AI/AIConfig.cpp AI/FloodFill.cpp AI/Pathfinder.cpp AI/SnakeAI.cpp AI/GridHelper.cpp
-GRAPHICS_SRC    := graphics/Renderer3D.cpp graphics/Renderer2D.cpp graphics/TextSystem.cpp graphics/ParticleSystem.cpp graphics/AnimationSystem.cpp graphics/MenuSystem.cpp graphics/RaylibColors.cpp graphics/PostProcessingSystem.cpp
+CORE_SRC        := core/GameController.cpp \
+					core/InputManager.cpp \
+					core/Snake.cpp \
+					core/Food.cpp \
+					core/Utils.cpp
+
+AI_SRC          := AI/AIConfig.cpp \
+					AI/FloodFill.cpp \
+					AI/Pathfinder.cpp \
+					AI/SnakeAI.cpp \
+					AI/GridHelper.cpp
+
+GRAPHICS_SRC    := graphics/Renderer3D.cpp \
+					graphics/TextSystem.cpp \
+					graphics/ParticleSystem.cpp \
+					graphics/AnimationSystem.cpp \
+					graphics/MenuSystem.cpp \
+					graphics/RaylibColors.cpp \
+					graphics/PostProcessingSystem.cpp
 
 ALL_SRC         := $(MAIN_SRC) $(CORE_SRC) $(AI_SRC) $(GRAPHICS_SRC)
 
@@ -38,7 +54,17 @@ INCLUDES        := -I$(INCDIR)
 # -=-=-=-=-    FLAGS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
 CC              := c++
-CFLAGS          := -Wall -Wextra -Werror -std=c++20 -g3 -O0 $(INCLUDES) #-fsanitize=address
+CFLAGS := -std=c++20 -g3 -O0 -Wall -Wextra \
+			-Wno-unused-parameter \
+			-Wno-unused-variable \
+			-Wno-sign-compare \
+			$(INCLUDES)
+
+# PRODUCTION FLAGS#
+#CFLAGS := -std=c++20 -g3 -O0 -Wall -Wextra -Werror \
+			-Wno-unused-parameter \
+			$(INCLUDES)
+
 DEPFLAGS        := -MMD -MP
 
 # -=-=-=-=-    EXTERNAL LIBRARIES -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
@@ -112,7 +138,7 @@ $(RAYLIB_SRC_DIR)/libraylib.a:
 	@cd $(RAYLIB_SRC_DIR) && $(MAKE) PLATFORM=PLATFORM_DESKTOP
 	@echo "$(GREEN)✓ Raylib built successfully$(DEF_COLOR)"
 
-$(NAME): $(OBJS)
+$(NAME): $(OBJS) Makefile
 	@echo "$(CYAN)Linking $(NAME)...$(DEF_COLOR)"
 	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(ALL_LIBS)
 	@echo "$(GREEN)Snakeboarding is not a crime!$(DEF_COLOR)"

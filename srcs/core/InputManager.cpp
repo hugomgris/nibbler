@@ -74,6 +74,14 @@ Input InputManager::pollGameplayInput() {
 	return Input::None;
 }
 
+void InputManager::processInput(const Input input, GameState& state) {
+	if (input == Input::Pause &&
+		(state.currentState == GameStateType::Playing || state.currentState == GameStateType::Paused)) {
+		state.isPaused = !state.isPaused;
+		state.currentState = state.isPaused ? GameStateType::Paused : GameStateType::Playing;
+	}
+}
+
 void InputManager::registerNavigationCallback(std::function<void(NavigationAction)> callback) {
 	onNavigation = callback;
 }

@@ -110,6 +110,6 @@ void AnimationSystem::updateScreenShake(float deltaTime) {
     
     // Simple random shake within intensity bounds
     float intensity = shakeConfig.intensity * (shakeTimer / shakeConfig.duration);
-    shakeOffset.x = (static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f) * intensity;
-    shakeOffset.y = (static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f) * intensity;
+    shakeOffset.x = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 2.0f - 1.0f) * intensity;
+    shakeOffset.y = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 2.0f - 1.0f) * intensity;
 }
