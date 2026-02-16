@@ -22,6 +22,7 @@ jobs:
         sudo apt-get install -y \
           build-essential \
           cmake \
+          git \
           libx11-dev \
           libxrandr-dev \
           libxinerama-dev \
@@ -29,37 +30,32 @@ jobs:
           libxi-dev \
           libgl1-mesa-dev \
           libglu1-mesa-dev \
-          libsdl2-dev \
-          libsdl2-ttf-dev \
-          libsdl2-mixer-dev \
-          libncurses-dev \
-          pkg-config \
-          git
+          libasound2-dev \
+          mesa-common-dev \
+          libglfw3-dev \
+          pkg-config
     
     - name: Cache libraries
       uses: actions/cache@v4
       with:
         path: |
-          libs/SDL2
-          libs/SDL_ttf
-          libs/SDL_mixer
           libs/raylib
-          libs/ncurses
           libs/googletest
-        key: ${{ runner.os }}-libs-${{ hashFiles('Makefile') }}-v2
+        key: ${{ runner.os }}-libs-${{ hashFiles('Makefile') }}-raylib-v2
         restore-keys: |
           ${{ runner.os }}-libs-
     
-    - name: Build libraries
+    - name: Build Raylib
       run: |
-        make check_libs
-        make check_gtest
+        if [ ! -f "libs/raylib/src/libraylib.a" ]; then
+          mkdir -p libs
+          git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git libs/raylib
+          cd libs/raylib/src
+          make PLATFORM=PLATFORM_DESKTOP
+        fi
     
-    - name: Verify SDL2 installation
-      run: |
-        ls -la libs/SDL2/ || echo "SDL2 not in libs/"
-        ls -la libs/SDL2/include/ || echo "SDL2 include not found"
-        ls -la libs/SDL2/build/ || echo "SDL2 build not found"
+    - name: Build Google Test
+      run: make check_gtest
     
     - name: Build project
       run: make all
@@ -67,11 +63,13 @@ jobs:
     - name: Run tests
       run: make test
     
-    - name: Upload test results
+    - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
+        name: build-artifacts
         path: |
+          rosario
           run_tests
+          test_results.json
           *.log

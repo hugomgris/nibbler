@@ -128,14 +128,28 @@ check_gtest:
 		echo "$(GREEN)Google Test already built$(DEF_COLOR)"; \
 	fi
 
+check_raylib:
+	@if [ ! -f "$(RAYLIB_SRC_DIR)/libraylib.a" ]; then \
+		echo "$(YELLOW)Raylib not found. Building...$(DEF_COLOR)"; \
+		$(MAKE) $(RAYLIB_SRC_DIR)/libraylib.a; \
+	else \
+		echo "$(GREEN)Raylib already built$(DEF_COLOR)"; \
+	fi
+
 $(RAYLIB_SRC_DIR)/libraylib.a:
 	@echo "$(YELLOW)Raylib not found. Cloning and building...$(DEF_COLOR)"
 	@mkdir -p $(LIB_DIR)
 	@if [ ! -d "$(RAYLIB_DIR)" ]; then \
+		echo "$(CYAN)Cloning Raylib $(RAYLIB_VERSION)...$(DEF_COLOR)"; \
 		git clone --depth 1 --branch $(RAYLIB_VERSION) $(RAYLIB_REPO) $(RAYLIB_DIR); \
 	fi
 	@echo "$(CYAN)Building Raylib...$(DEF_COLOR)"
-	@cd $(RAYLIB_SRC_DIR) && $(MAKE) PLATFORM=PLATFORM_DESKTOP
+	@if [ -d "$(RAYLIB_SRC_DIR)" ]; then \
+		cd $(RAYLIB_SRC_DIR) && $(MAKE) PLATFORM=PLATFORM_DESKTOP; \
+	else \
+		echo "$(RED)ERROR: Raylib source directory not found!$(DEF_COLOR)"; \
+		exit 1; \
+	fi
 	@echo "$(GREEN)✓ Raylib built successfully$(DEF_COLOR)"
 
 $(NAME): $(OBJS) Makefile
@@ -153,7 +167,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 # -=-=-=-=-    TEST TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-test: check_gtest $(RAYLIB_SRC_DIR)/libraylib.a $(TEST_BINARY)
+test: check_gtest check_raylib $(TEST_BINARY)
 	@echo "$(CYAN)Running tests...$(DEF_COLOR)"
 	./$(TEST_BINARY)
 
@@ -206,4 +220,4 @@ info:
 	@echo "Raylib:   $(RAYLIB_LIBS)"
 	@echo "SDL2:     $(SDL_LIBS)"
 
-.PHONY: all clean fclean re test check_gtest
+.PHONY: all clean fclean re test check_gtest check_raylib
