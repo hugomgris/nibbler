@@ -5,19 +5,19 @@
 - [x] Remove NCurses/SDL source files
 - [x] Remove libs/ directory  
 - [x] Remove IGraphic, IAudio, LibraryManager
-- [ ] Port SDL menu to Raylib (1:1)
-- [ ] Update GameState (use std::optional<Snake>)
-- [ ] Get Raylib-only build working
-- [ ] Update Makefile for single-library build
+- [x] Port SDL menu to Raylib (1:1)
+- [x] Update GameState (use std::optional<Snake>)
+- [x] Get Raylib-only build working
+- [x] Update Makefile for single-library build
 
 ### Day 3-4: Particle & Polish
-- [ ] Port SDL ParticleSystem to Raylib
-- [ ] Port text rendering pipeline
-- [ ] Verify AI mode works
+- [x] Port SDL ParticleSystem to Raylib
+- [x] Port text rendering pipeline
+- [x] Verify AI mode works
 
 ### Day 5-7: Game Feel
-- [ ] Screen effects (shake, zoom)
-- [ ] Particle feedback
+- [x] Screen effects (shake, zoom)
+- [x] Particle feedback
 - [ ] Audio integration
 - [ ] Camera transitions
 
