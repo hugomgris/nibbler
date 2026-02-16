@@ -47,6 +47,7 @@ class AnimationSystem {
 		TunnelConfig                                    currentTunnelConfig;
 		ScreenShakeConfig                               shakeConfig;
 		bool                                            tunnelEffectEnabled;
+		float											tunnelLineThickness;
 
 		// currently unused
 		float   shakeTimer;

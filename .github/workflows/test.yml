@@ -37,7 +37,6 @@ jobs:
     
     - name: Build testable objects
       run: |
-        make directories
         make $(make -pn | grep -E '^TESTABLE_OBJS' | cut -d= -f2)
     
     - name: Build and run tests
