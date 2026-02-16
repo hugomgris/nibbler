@@ -1,4 +1,5 @@
 #include "../../incs/InputManager.hpp"
+#include <iostream>
 
 InputManager::InputManager() : currentContext(InputContext::Menu) {
 	keyboardMappings[NavigationAction::Up] = KEY_UP;
@@ -67,7 +68,9 @@ Input InputManager::pollGameplayInput() {
 	if (IsKeyPressed(KEY_ESCAPE))	return Input::Quit;
 	if (IsKeyPressed(KEY_SPACE))	return Input::Pause;
 	if (IsKeyPressed(KEY_ENTER))	return Input::Enter;
-	if (IsKeyPressed(KEY_KP_ENTER))	return Input::Enter;
+	if (IsKeyPressed(KEY_ONE))		return Input::Switch2D;
+	if (IsKeyPressed(KEY_TWO))		return Input::Switch3D;
+	if (IsKeyPressed(KEY_KP_ENTER))	return Input::ToggleFS;
 	
 	if (WindowShouldClose())		return Input::Quit;
 	
@@ -79,6 +82,19 @@ void InputManager::processInput(const Input input, GameState& state) {
 		(state.currentState == GameStateType::Playing || state.currentState == GameStateType::Paused)) {
 		state.isPaused = !state.isPaused;
 		state.currentState = state.isPaused ? GameStateType::Paused : GameStateType::Playing;
+		return;
+	}
+
+	RenderMode renderMode = state.renderMode;
+	std::cout << "rendermode:" << static_cast<int>(renderMode) << std::endl;
+	if (input == Input::Switch2D && renderMode == RenderMode::MODE3D) {
+		state.renderMode = RenderMode::MODE2D;
+		std::cout << "SWITCHING TO 2D MODE" << std::endl;
+	}
+	else if (input == Input::Switch3D && renderMode == RenderMode::MODE2D)
+	{
+		state.renderMode = RenderMode::MODE3D;
+		std::cout << "SWITCHING TO 3D MODE" << std::endl;
 	}
 }
 

@@ -33,7 +33,7 @@ AI_SRC          := AI/AIConfig.cpp \
 					AI/SnakeAI.cpp \
 					AI/GridHelper.cpp
 
-GRAPHICS_SRC    := graphics/Renderer3D.cpp \
+GRAPHICS_SRC    := graphics/Renderer.cpp \
 					graphics/TextSystem.cpp \
 					graphics/ParticleSystem.cpp \
 					graphics/AnimationSystem.cpp \

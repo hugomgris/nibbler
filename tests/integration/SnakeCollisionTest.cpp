@@ -18,8 +18,8 @@ class SnakeCollisionTest : public ::testing::Test {
 			config = std::make_unique<GameConfig>(GameConfig{GameMode::SINGLE});
 			state = std::make_unique<GameState>(GameState{
 				20, 20,
-				*snake, nullptr,
-				*food,
+				snake.get(), nullptr,
+				food.get(),
 				false, true, false,
 				GameStateType::Playing,
 				0, 0,
@@ -32,7 +32,7 @@ class SnakeCollisionTest : public ::testing::Test {
 };
 
 TEST_F(SnakeCollisionTest, SelfCollision) {
-	Snake &snakeRef = state->snake_A;
+	Snake &snakeRef = *state->snake_A;
 	
 	if (snakeRef.getDirection() != Direction::Right)
 		snakeRef.changeDirection(Direction::Left);
@@ -74,7 +74,7 @@ TEST_F(SnakeCollisionTest, SelfCollision) {
 }
 
 TEST_F(SnakeCollisionTest, WallCollision) {
-	Snake &snakeRef = state->snake_A;
+	Snake &snakeRef = *state->snake_A;
 
 	// Normalize direction to go upwards
 	if (snakeRef.getDirection() == Direction::Right || snakeRef.getDirection() == Direction::Left) {

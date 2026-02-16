@@ -2,7 +2,7 @@
 #include "../../incs/Renderer3D.hpp"
 #include <raymath.h>
 
-TextRenderer::TextRenderer(Renderer3D& parent) 
+TextRenderer::TextRenderer(Renderer& parent) 
 	: renderer(parent), fontSize(34), smallFontSize(24), smallMode(false) {
 	loadFont();
 	

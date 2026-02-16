@@ -1,4 +1,4 @@
-#include "../incs/Renderer3D.hpp"
+#include "../incs/Renderer.hpp"
 #include "../incs/RaylibColors.hpp"
 #include "../incs/ParticleSystem.hpp"
 #include "../incs/TextSystem.hpp"
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 	state.score = 0;
 	state.scoreB = 0;
 	state.config.mode = GameMode::SINGLE;
-	state.renderMode = RenderMode::MODE3D;
+	state.renderMode = RenderMode::MODE2D;
 	state.timing.accumulator = 0.0f;
 	state.aiController = nullptr;
 
@@ -78,8 +78,8 @@ int main(int argc, char **argv) {
 	GameController gameController(&state);
 	gameController.setAIController(nullptr);
 
-	Renderer3D renderer3D;
-	renderer3D.init(width, height);
+	Renderer renderer;
+	renderer.init(width, height);
 	
 	const int screenWidth = 1920;
 	const int screenHeight = 1080;
@@ -128,6 +128,12 @@ int main(int argc, char **argv) {
 		
 		// update phase
 		inputManager.update();
+
+		// general, cross modes poll input
+		Input preInput = inputManager.pollGameplayInput();
+		if (preInput == Input::ToggleFS) {
+			ToggleFullscreen();
+		}
 		
 		switch (state.currentState) {
 			case GameStateType::Menu: {
@@ -142,6 +148,8 @@ int main(int argc, char **argv) {
             	Input input = inputManager.pollGameplayInput();
 				
 				if (input == Input::Pause)
+					inputManager.processInput(input, state);
+				else if (input == Input::Switch2D || input == Input::Switch3D)
 					inputManager.processInput(input, state);
 			
 				gameController.bufferInput(input);
@@ -167,7 +175,6 @@ int main(int argc, char **argv) {
 				
 				if (input == Input::Pause)
 					inputManager.processInput(input, state);
-				break;
 			}
 				
 			case GameStateType::GameOver: {
@@ -186,52 +193,55 @@ int main(int argc, char **argv) {
 		//rendering phase
 		postProcess.beginCapture();
 		ClearBackground(Color{23, 23, 23, 255});
+
+		// Update particles
+		particles.update(deltaTime);
+				
+		// Update animations (tunnel effect)
+		animations.updateTunnelEffect(deltaTime);
 		
 		switch (state.currentState) {
 			case GameStateType::Menu: {
-				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-				menu.render(renderer3D, textSystem, particles, animations, state);
+				BeginMode2D(renderer.getCamera2D());
+				menu.render(renderer, textSystem, particles, animations, state);
 				EndMode2D();
 				break;
 			}
 
 			case GameStateType::Playing:
 			case GameStateType::Paused: {
-				// Update renderer3D state
-				renderer3D.render(state, state.isPaused ? 0.0f : deltaTime);
-				
-				// 3D gameplay rendering (Paused uses same render, just frozen)
-				BeginMode3D(renderer3D.getCamera());
-				renderer3D.drawGroundPlane();
-				renderer3D.drawSnake(state.snake_A, snakeAHidden, 
-					snakeALightFront, snakeALightTop, snakeALightSide,
-					snakeADarkFront, snakeADarkTop, snakeADarkSide);
-				
-				if (state.config.mode == GameMode::MULTI) {
-					renderer3D.drawSnake(state.snake_B, snakeBHidden,
-						snakeBLightFront, snakeBLightTop, snakeBLightSide,
-						snakeBDarkFront, snakeBDarkTop, snakeBDarkSide);
-				} else if (state.config.mode == GameMode::AI) {
-					renderer3D.drawSnake(state.snake_B, snakeAIHidden,
-						snakeAILightFront, snakeAILightTop, snakeAILightSide,
-						snakeAIDarkFront, snakeAIDarkTop, snakeAIDarkSide);
+				switch (state.renderMode) {
+					case RenderMode::MODE3D:
+						// 3D gameplay rendering (Paused uses same render, just frozen)
+						BeginMode3D(renderer.getCamera3D());
+						renderer.render3D(state, state.isPaused ? 0.0f : deltaTime);
+						EndMode3D();
+						
+						// UI overlay
+						/* DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
+						DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
+						DrawFPS(screenWidth - 95, 10); */
+						break;
+
+					case RenderMode::MODE2D:
+						// Update renderer state
+						BeginMode2D(renderer.getCamera2D());
+						renderer.render2D(state, state.isPaused ? 0.0f : deltaTime, particles, animations, snakeALightTop);
+						//renderer.drawSnake2D(state.snake_A);
+						//renderer.drawFood2D(state.food);
+						EndMode2D();
+						break;
 				}
 				
-				renderer3D.drawFood(state.food);
-				EndMode3D();
-				
-				// UI overlay
-				DrawText("Press 1/2/3 to switch libraries", 10, 10, 20, customWhite);
-				DrawText("Arrow keys to move, Q/ESC to quit", 10, 35, 20, customWhite);
-				DrawFPS(screenWidth - 95, 10);
-				
-			if (state.isPaused) {
-				DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
-			}
-			break;
-		}			case GameStateType::GameOver: {
+				if (state.isPaused) {
+					DrawText("PAUSED", screenWidth / 2 - 60, screenHeight / 2, 40, customBlack);
+				}
+				break;
+			}			
+		
+			case GameStateType::GameOver: {
 				BeginMode2D((Camera2D){(Vector2){0.0f, 0.0f}, (Vector2){0.0f, 0.0f}, 0.0f, 1.0f});
-				menu.renderGameOver(renderer3D, textSystem, particles, animations, state);
+				menu.renderGameOver(renderer, textSystem, particles, animations, state);
 				EndMode2D();
 				break;
 			}

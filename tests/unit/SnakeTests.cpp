@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../../incs/Snake.hpp"
+#include "../../incs/SnakeAI.hpp"
 #include "../../incs/DataStructs.hpp"
 #include "../fixtures/TestHelpers.hpp"
 

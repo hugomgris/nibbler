@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "../../incs/FloodFill.hpp"
 #include "../../incs/Snake.hpp"
+#include "../../incs/SnakeAI.hpp"
 #include "../../incs/DataStructs.hpp"
 #include "../fixtures/TestHelpers.hpp"
 
@@ -18,8 +19,8 @@ protected:
         config = std::make_unique<GameConfig>(GameConfig{GameMode::SINGLE});
         state = std::make_unique<GameState>(GameState{
             20, 20,
-            *snake, nullptr,
-            *food,
+            snake.get(), nullptr,
+            food.get(),
             false, true, false,
             GameStateType::Playing,
             0, 0,
@@ -57,7 +58,7 @@ TEST_F(FloodFillTest, WallReachability) {
 // 3 - blocked position has zero reachability
 TEST_F(FloodFillTest, BlockedPosition) {
     // Try to count from a position occupied by snake
-    const Vec2* segments = state->snake_A.getSegments();
+    const Vec2* segments = state->snake_A->getSegments();
     Vec2 snakeHead = segments[0];
     
     // Start counting from snake's own position
@@ -71,8 +72,8 @@ TEST_F(FloodFillTest, BlockedPosition) {
 
 // 4 - ignorePositions parameter works
 TEST_F(FloodFillTest, IgnorePositionsWorks) {
-    const Vec2* segments = state->snake_A.getSegments();
-    Vec2 snakeTail = segments[state->snake_A.getLength() - 1];
+    const Vec2* segments = state->snake_A->getSegments();
+    Vec2 snakeTail = segments[state->snake_A->getLength() - 1];
     
     // Count from a safe position without ignoring tail
     Vec2 safeStart = {0, 0};
@@ -97,8 +98,8 @@ TEST_F(FloodFillTest, OutOfBoundsStart) {
 
 // 6 - Multiple ignore positions
 TEST_F(FloodFillTest, MultipleIgnorePositions) {
-    const Vec2* segments = state->snake_A.getSegments();
-    int length = state->snake_A.getLength();
+    const Vec2* segments = state->snake_A->getSegments();
+    int length = state->snake_A->getLength();
     
     // Create ignore list with all snake segments
     std::vector<Vec2> ignoreAll;
@@ -151,7 +152,7 @@ TEST_F(FloodFillTest, SafePathReturnsTrue) {
 // 10 - path to food checks growth
 TEST_F(FloodFillTest, PathAccountsForGrowth) {
     // Path that ends at food position
-    Vec2 foodPos = state->food.getPosition();
+    Vec2 foodPos = state->food->getPosition();
     std::vector<Vec2> pathToFood = {foodPos};
     
     bool result = floodFill->canReachTail(*state, state->snake_A, pathToFood);
@@ -163,7 +164,7 @@ TEST_F(FloodFillTest, PathAccountsForGrowth) {
 // 11 - long snake in small space
 TEST_F(FloodFillTest, LongSnakeInTightSpace) {
     // Grow the snake significantly
-    Snake& snakeRef = state->snake_A;
+    Snake& snakeRef = *state->snake_A;
     
     for (int i = 0; i < 50; i++) {
         snakeRef.grow();
@@ -176,7 +177,7 @@ TEST_F(FloodFillTest, LongSnakeInTightSpace) {
         {1, 2}
     };
     
-    bool result = floodFill->canReachTail(*state, snakeRef, shortPath);
+    bool result = floodFill->canReachTail(*state, &snakeRef, shortPath);
     
     // With a very long snake, space is limited
     // Result depends on snake position, but **should not crash**
@@ -185,12 +186,12 @@ TEST_F(FloodFillTest, LongSnakeInTightSpace) {
 
 // 12 - path requires exactly enough space
 TEST_F(FloodFillTest, ExactSpaceRequired) {
-    Snake& snakeRef = state->snake_A;
+    Snake& snakeRef = *state->snake_A;
     
     // Create path
     std::vector<Vec2> path = {{0, 0}};
     
-    bool result = floodFill->canReachTail(*state, snakeRef, path);
+    bool result = floodFill->canReachTail(*state, &snakeRef, path);
     
     // Logic: reachableCells >= length + 1, should be true in open grid
     EXPECT_TRUE(result);
@@ -198,7 +199,7 @@ TEST_F(FloodFillTest, ExactSpaceRequired) {
 
 // 13 - tail position is properly ignored
 TEST_F(FloodFillTest, TailPositionIgnored) {
-    Snake& snakeRef = state->snake_A;
+    Snake& snakeRef = *state->snake_A;
     const Vec2* segments = snakeRef.getSegments();
     int length = snakeRef.getLength();
     
@@ -207,7 +208,7 @@ TEST_F(FloodFillTest, TailPositionIgnored) {
     // Path that ends near tail
     std::vector<Vec2> pathNearTail = {tailPos};
     
-    bool result = floodFill->canReachTail(*state, snakeRef, pathNearTail);
+    bool result = floodFill->canReachTail(*state, &snakeRef, pathNearTail);
     
     // Should ignore the tail position when counting reachable
     EXPECT_TRUE(result || !result);  // just cheking if it is still runing!!
@@ -215,7 +216,7 @@ TEST_F(FloodFillTest, TailPositionIgnored) {
 
 // 14 - integration with actual game state
 TEST_F(FloodFillTest, RealGameScenario) {
-    Snake& snakeRef = state->snake_A;
+    Snake& snakeRef = *state->snake_A;
     
     // Normalize snake direction
     if (snakeRef.getDirection() == Direction::Right || 
@@ -231,7 +232,7 @@ TEST_F(FloodFillTest, RealGameScenario) {
     
     // Create realistic, simple straight path toward food
     Vec2 head = snakeRef.getSegments()[0];
-    Vec2 foodPos = state->food.getPosition();
+    Vec2 foodPos = state->food->getPosition();
     
     std::vector<Vec2> path;
     if (head.y > foodPos.y) {
@@ -241,7 +242,7 @@ TEST_F(FloodFillTest, RealGameScenario) {
     }
     
     if (!path.empty()) {
-        bool result = floodFill->canReachTail(*state, snakeRef, path);
+        bool result = floodFill->canReachTail(*state, &snakeRef, path);
         
         // In early game with small snake, should be safe
         EXPECT_TRUE(result);

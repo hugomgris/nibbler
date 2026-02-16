@@ -6,7 +6,7 @@
 
 class TextRenderer {
 	private:
-		Renderer3D&		renderer;
+		Renderer&		renderer;
 		Font			customFont;
 		int				fontSize;
 		int				smallFontSize;
@@ -19,7 +19,7 @@ class TextRenderer {
 
 	public:
 		TextRenderer() = delete;
-		TextRenderer(Renderer3D& parent);
+		TextRenderer(Renderer& parent);
 		TextRenderer(const TextRenderer &other) = delete;
 		TextRenderer &operator=(const TextRenderer &other) = delete;
 

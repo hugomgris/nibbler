@@ -8,6 +8,7 @@
 5. [Tearing My Screen Appart](#145-tearing-my-screen-appart)
 6. [Pre, Peri and Post processing](#16-pre-peri-and-post-processing)
 7. [Hello From the GPU Side](#17-hello-from-the-gpu-side)
+8. [The Two Dimension Comeback](#18-the-two-dimension-comeback)
 
 
 <br>
@@ -62,9 +63,9 @@ BUT as I lay out plans, I realize something: I need a deep re-structuring proces
 - [x] InputManager
 - [x] Postprocessing System
 - [ ] Custom text system/pipeline/subsystem- [ ] Custom text system/pipeline/subsystem
-- [ ] *Fix the test suite (and extend it)*
-- [ ] *Port the 2D realm*
-- [ ] *Port the ASCII realm*
+- [x] *Fix the test suite (and extend it)*
+- [x] *Port the 2D realm*
+- [ ] *Port the ASCII realm (maybe)*
 
 Inter-system communication will be laid out by passing references. If things get too complicated down the line, which I doubt but who am I to say, I'll transition into an event system with connecting lambda functions. I'll get into system rebuild mode. Wish me luck.
 
@@ -1053,3 +1054,81 @@ Shader debugging is notoriously hard:
 <br>
 <br>
  
+
+
+ ## 1.8 The Two Dimension Comeback
+ Porting the `2D` rendering that was previously done via `SDL`, in `V1`, was something that I could no longer keep postponing. The porting process itself was not what I was dreading, but the fact that back there the `SDL` pipeline was based in its own window, which had a size calculation based in the cell unit size fixed for the 2D drawing. This announced trouble, as `V2` is renered in full screen 1920x1080, so handling a dynamic sized 2D game arena seemed tricky. And so was the case, although in a much more manageable way than I predicted. I basically had to prepare some parts of the pipelines (border drawing, depth line animation, ...) to handle both the full screen, horizontal case and some custom values for specific game arena sizes. there are still things to be tweaked, but here's how it looks right now:
+
+ <img src="2D_port_01.png" alt="2D port initial state visualization" height=500>
+ <img src="2D_port_02.png" alt="2D port initial state visualization" height=500>
+
+ My first approach towards the 3D-2D coexistance was to build two specialized renderers, which soon revealed itself as a poor choice, as the game window creation and management was done by the already existing renderer, and making another one would bring problems in that regard. Scratched it, did some rethinking and ended up with a much simpler approach: **one renderer, two pipelines**. A much more extensible one, additionaly, as new pipelines can be easily added following the same logic. How the 2D rendering works itself:
+ - Renderer has two cameras, a 3D and a 2D one
+ - When wanting to render in 3D, Raylib's `Begin3DMode()` function gets called, passing the 3D camera to it. Same happens with `Begin2DMode()` in its case.
+ - The pipeline is made of a chain of 2D drawing functions, amon which some calculations are done to know where the borders and animated background lines should be placed and rendered:
+
+```cpp
+ void Renderer::render2D(const GameState& state, float deltaTime, ParticleSystem& particles, AnimationSystem& animations, Color color){
+	if (!state.isPaused) {
+        accumulatedTime += deltaTime;
+    }
+
+	// Render background effects
+	particles.render();
+	
+	// Render tunnel effect with custom centered border
+	animations.renderTunnelEffectCustom(
+		static_cast<int>(arenaOffsetX),
+		static_cast<int>(arenaOffsetY),
+		static_cast<int>(arenaOffsetX + arenaWidth),
+		static_cast<int>(arenaOffsetY + arenaHeight)
+	);
+
+	// Draw snakes
+	drawSnake2D(state.snake_A, color, particles, snakeA_tailState);
+	
+	if (state.config.mode == GameMode::MULTI) {
+		drawSnake2D(state.snake_B, snakeBLightFront, particles, snakeB_tailState);
+	} else if (state.config.mode == GameMode::AI)
+		drawSnake2D(state.snake_B, snakeAILightSide, particles, snakeB_tailState);
+
+	// Draw food
+	drawFood2D(state.food, particles);
+
+	// Draw centered border for 2D game
+	drawBorderCentered(borderThickness);
+}
+```
+
+> The update call to particles an animations happens no matter the state and renderer pipeline call, as they need to be updated in any case
+
+And as this meant consolidating a general entry point in the renderer for the 2D pipeline, I might as well do the same for the 3D one, as some of the drawing calls are still placed in `Main`, which is making some angels weep.
+```cpp
+void Renderer::render3D(const GameState& state, float deltaTime){
+	camera3D.fovy = customFov;
+	
+	if (!state.isPaused) {
+        accumulatedTime += deltaTime;
+    }
+
+	drawGroundPlane3D();
+	drawSnake3D(state.snake_A, snakeAHidden, 
+							snakeALightFront, snakeALightTop, snakeALightSide,
+							snakeADarkFront, snakeADarkTop, snakeADarkSide);
+	
+	if (state.config.mode == GameMode::MULTI) {
+		drawSnake3D(state.snake_B, snakeBHidden,
+			snakeBLightFront, snakeBLightTop, snakeBLightSide,
+			snakeBDarkFront, snakeBDarkTop, snakeBDarkSide);
+	} else if (state.config.mode == GameMode::AI) {
+		drawSnake3D(state.snake_B, snakeAIHidden,
+			snakeAILightFront, snakeAILightTop, snakeAILightSide,
+			snakeAIDarkFront, snakeAIDarkTop, snakeAIDarkSide);
+	}
+
+	drawFood3D(state.food);
+}
+```
+
+And we can consider both of the pipelines done in their new, `V2` states.
+

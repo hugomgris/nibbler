@@ -95,6 +95,45 @@ void AnimationSystem::renderTunnelEffect() const {
     }
 }
 
+void AnimationSystem::renderTunnelEffectCustom(int borderLeft, int borderTop, int borderRight, int borderBottom) const {
+    if (!tunnelEffectEnabled || tunnelLines.empty()) return;
+
+    int contentInset = currentTunnelConfig.contentInset;
+    
+    int startLeft = borderLeft + contentInset;
+    int startTop = borderTop + contentInset;
+    int startRight = borderRight - contentInset;
+    int startBottom = borderBottom - contentInset;
+
+    int maxTravelX = contentInset;
+    int maxTravelY = contentInset;
+
+    for (const auto& line : tunnelLines) {
+        float easedProgress = easeInQuad(line.progress);
+        int travelX = static_cast<int>(easedProgress * maxTravelX);
+        int travelY = static_cast<int>(easedProgress * maxTravelY);
+
+        int left = startLeft - travelX;
+        int top = startTop - travelY;
+        int right = startRight + travelX;
+        int bottom = startBottom + travelY;
+
+        // Apply fade-in effect based on progress
+        unsigned char alpha = static_cast<unsigned char>(line.progress * 255);
+        Color fadedColor = currentTunnelConfig.lineColor;
+        fadedColor.a = alpha;
+
+        // Top line
+        DrawLine(left, top, right, top, fadedColor);
+        // Bottom line
+        DrawLine(left, bottom, right, bottom, fadedColor);
+        // Left line
+        DrawLine(left, top, left, bottom, fadedColor);
+        // Right line
+        DrawLine(right, top, right, bottom, fadedColor);
+    }
+}
+
 void AnimationSystem::triggerScreenShake(const ScreenShakeConfig &config) {
     shakeConfig = config;
     shakeTimer = config.duration;

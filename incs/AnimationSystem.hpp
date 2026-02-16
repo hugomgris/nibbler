@@ -75,13 +75,12 @@ class AnimationSystem {
 
 		void init(int width, int heigth);
 
-		// tunnel effect managers
-		void enableTunnelEffect(bool enabled, const TunnelConfig &config = TunnelConfig::menu());
-		void updateTunnelEffect(float deltaTime);
-		void renderTunnelEffect() const;
-		void clearTunnelEffect();
-
-		// tunnel effect getters
+	// tunnel effect managers
+	void enableTunnelEffect(bool enabled, const TunnelConfig &config = TunnelConfig::menu());
+	void updateTunnelEffect(float deltaTime);
+	void renderTunnelEffect() const;
+	void renderTunnelEffectCustom(int left, int top, int right, int bottom) const;  // Custom border area
+	void clearTunnelEffect();		// tunnel effect getters
 		const std::vector<TunnelLine>& getTunnelLines() const { return tunnelLines; }
 		const TunnelConfig& getTunnelConfig() const { return currentTunnelConfig; }
 		bool isTunnelEffectEnabled() const { return tunnelEffectEnabled; }

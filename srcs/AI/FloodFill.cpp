@@ -33,7 +33,7 @@ int FloodFill::countReachable(const GameState& state, Vec2 start,
 	return count;
 }
 
-bool FloodFill::canReachTail(const GameState &state, const Snake &aiSnake, const std::vector<Vec2> &proposedPath) {
+bool FloodFill::canReachTail(const GameState &state, const Snake *aiSnake, const std::vector<Vec2> &proposedPath) {
 	if (proposedPath.empty())
 		return false;
 
@@ -41,8 +41,8 @@ bool FloodFill::canReachTail(const GameState &state, const Snake &aiSnake, const
 	Vec2 newHead = proposedPath[proposedPath.size() - 1];
 
 	// 2 Calculate new tail position
-	const Vec2 *segments = aiSnake.getSegments();
-	int length = aiSnake.getLength();
+	const Vec2 *segments = aiSnake->getSegments();
+	int length = aiSnake->getLength();
 
 	Vec2 currentTail = segments[length - 1];
 
