@@ -1132,3 +1132,5 @@ void Renderer::render3D(const GameState& state, float deltaTime){
 
 And we can consider both of the pipelines done in their new, `V2` states.
 
+It's to move on and implement some gameplay design stuff. Wish me luck!
+
