@@ -317,7 +317,7 @@ directories:
 	@mkdir -p $(DEPDIR)/libs
 
 game: re
-	./nibbler 30 30
+	./nibbler 30 30 SDL
 
 # -=-=-=-=-    TEST TARGETS -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 

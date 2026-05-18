@@ -23,13 +23,33 @@ void cleanupNCurses() {
 	}
 }
 
-bool parseArguments(int argc, char **argv)
+void printUsage() {
+	std::cerr << BYEL << "Usage: ./nibbler <width> <height> <library" << RESET << std::endl;
+	std::cerr << BBLU << "Supported libraries: ncurses, SDL, raylib" << std::endl;
+}
+
+bool parseArguments(int argc, char **argv, int *library)
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
-		if (str.find_first_not_of("0123456789") != std::string::npos) {
-			std::cerr << "error: bad argument {" << argv[i] << "}: only numeric arguments accepted" << std::endl;
+		if (i < 3 && str.find_first_not_of("0123456789") != std::string::npos) {
+			std::cerr << "error: bad argument {" << argv[i] << "}: only positive numeric arguments accepted for arena dimensions" << std::endl;
 			return false;
+		}
+
+		if (i == 3)
+		{
+			if (str == "ncurses") {
+				*library = 0;
+			} else if (str == "SDL") {
+				*library = 1;
+			} else if (str == "raylib") {
+				*library = 2;
+			} else {
+				std::cerr << "error: bad argument {" << argv[i] << "}: invalid library name" << std::endl;
+				printUsage();
+				return false;
+			}
 		}
 	}
 
@@ -40,7 +60,6 @@ void switchConfigMode(GameConfig &config)
 {
 	switch (config.mode)
 	{
-		// if implemented handle cycling with AI
 		case GameMode::SINGLE:
 			config.mode = GameMode::MULTI;
 			break;
@@ -56,15 +75,25 @@ void switchConfigMode(GameConfig &config)
 }
 
 int main(int argc, char **argv) {
-	std::atexit(cleanupNCurses); // This might not be necessary after switching to an external, dynamically linked Ncurses, but we'll leave it just in case (legacy!)
+	std::atexit(cleanupNCurses);
 	
-	if (argc != 3)
+	if (argc == 2) {
+		std::string str(argv[1]);
+		if (str == "help") {
+			printUsage();
+			return 0;
+		}
+	}
+	
+	if (argc != 4)
 	{
-		std::cerr << BYEL << "Usage: ./nibbler <width> <height>" << RESET << std::endl;
+		printUsage();
 		return 1;
 	}
 
-	if (!parseArguments(argc, argv))
+	int currentLib = -1;
+
+	if (!parseArguments(argc, argv, &currentLib))
 	{
 		return 1;
 	}
@@ -74,7 +103,7 @@ int main(int argc, char **argv) {
 
 	if (width < 16 || height < 16 || width > 41 || height > 41)
 	{
-		std::cerr << "Minimal arena width and height values are 16 units! Try running again with those or higher values!" << std::endl;
+		std::cerr << "Error: Height and width values must be between 16 and 41" << std::endl;
 		return 1;
 	}
 
@@ -87,8 +116,6 @@ int main(int argc, char **argv) {
 	};
 
 	const std::string audioLib = "./nibbler_sdl_mix.so";
-
-	int currentLib = 0;
 
 	LibraryManager libManager;
 	if (!libManager.loadGraphicLib(graphicLibs[currentLib].data()) || !libManager.loadAudioLib(audioLib.c_str()))
